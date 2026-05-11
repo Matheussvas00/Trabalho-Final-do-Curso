@@ -1,0 +1,277 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Gerenciar Disciplinas — Admin | UniClass{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+{% endblock %}
+
+{% block body %}
+<body class="dashboard-body">
+
+{% include 'dashboard/partials/_sidebar.html' with active_page='disciplinas' %}
+
+<div class="uc-main" id="ucMain">
+
+    <!-- Topbar -->
+    <header class="uc-topbar">
+        <button class="uc-topbar__toggle" onclick="ucToggleSidebar()"><i class="fas fa-bars"></i></button>
+        <div class="uc-topbar__title-wrap">
+            <div class="uc-topbar__title">Gerenciar Disciplinas</div>
+            <div class="uc-topbar__subtitle">Cadastre, edite ou exclua disciplinas da instituição</div>
+        </div>
+        <div class="uc-topbar__right">
+            <a href="{% url 'dashboard:index' %}" class="uc-topbar__btn" title="Voltar ao Início">
+                <i class="fas fa-arrow-left"></i>
+            </a>
+            <a href="#" class="uc-topbar__btn" title="Notificações">
+                <i class="fas fa-bell"></i>
+                {% if notificacoes_nao_lidas %}<span class="uc-topbar__notif-dot"></span>{% endif %}
+            </a>
+        </div>
+    </header>
+
+    <div class="uc-content">
+
+        {% if messages %}
+            {% for message in messages %}
+                <div class="uc-alert uc-alert--{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %}">
+                    <i class="fas fa-{% if message.tags == 'success' %}check-circle{% elif message.tags == 'error' %}exclamation-circle{% else %}info-circle{% endif %}"></i>
+                    <span>{{ message }}</span>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <!-- Cabeçalho + botão -->
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+            <div>
+                <h4 style="margin:0; color:var(--uc-text);">
+                    <i class="fas fa-book me-2" style="color:var(--uc-orange)"></i>
+                    Disciplinas Cadastradas
+                </h4>
+                <small style="color:var(--uc-text-muted);">{{ disciplinas|length }} disciplina{{ disciplinas|length|pluralize }}</small>
+            </div>
+            <button type="button" class="uc-btn uc-btn--orange" data-bs-toggle="modal" data-bs-target="#modalCadastrarDisciplina">
+                <i class="fas fa-plus me-1"></i> Nova Disciplina
+            </button>
+        </div>
+
+        <!-- Tabela -->
+        <div class="uc-card">
+            <div class="uc-card__body" style="padding:0;">
+                {% if disciplinas %}
+                <div style="overflow-x:auto;">
+                <table style="width:100%; border-collapse:collapse; font-size:14px;">
+                    <thead>
+                        <tr style="background:#f8f9fa; border-bottom:2px solid #eee;">
+                            <th style="padding:12px 16px; text-align:left; color:#555; font-weight:600;">#</th>
+                            <th style="padding:12px 16px; text-align:left; color:#555; font-weight:600;">Código</th>
+                            <th style="padding:12px 16px; text-align:left; color:#555; font-weight:600;">Nome</th>
+                            <th style="padding:12px 16px; text-align:left; color:#555; font-weight:600;">Professor</th>
+                            <th style="padding:12px 16px; text-align:left; color:#555; font-weight:600;">Curso</th>
+                            <th style="padding:12px 16px; text-align:center; color:#555; font-weight:600;">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for disc in disciplinas %}
+                        <tr style="border-bottom:1px solid #f0f0f0; transition:background .15s;"
+                            onmouseover="this.style.background='#fff8f4'" onmouseout="this.style.background=''">
+                            <td style="padding:10px 16px; color:#aaa;">{{ forloop.counter }}</td>
+                            <td style="padding:10px 16px;">
+                                <code style="background:#f0f0f0; padding:2px 8px; border-radius:4px; font-size:12px;">{{ disc.codigo_disciplina }}</code>
+                            </td>
+                            <td style="padding:10px 16px;">
+                                <i class="fas fa-book me-1" style="color:var(--uc-orange)"></i>
+                                <strong>{{ disc.nome_disciplina }}</strong>
+                            </td>
+                            <td style="padding:10px 16px; color:#666;">{{ disc.id_professorfk.nome_completo }}</td>
+                            <td style="padding:10px 16px;">
+                                <span class="uc-badge uc-badge--pending">{{ disc.curso_fk.nome_curso }}</span>
+                            </td>
+                            <td style="padding:10px 16px; text-align:center; white-space:nowrap;">
+                                <button type="button" class="uc-btn uc-btn--outline uc-btn--sm"
+                                        data-bs-toggle="modal" data-bs-target="#modalEditarDisc{{ disc.pk }}">
+                                    <i class="fas fa-edit"></i> Editar
+                                </button>
+                                <button type="button" class="uc-btn uc-btn--sm"
+                                        style="background:#dc3545; color:#fff; border:none; margin-left:4px;"
+                                        data-bs-toggle="modal" data-bs-target="#modalExcluirDisc{{ disc.pk }}">
+                                    <i class="fas fa-trash-alt"></i> Excluir
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                </div>
+                {% else %}
+                <div class="uc-empty">
+                    <i class="fas fa-book"></i>
+                    <p>Nenhuma disciplina cadastrada.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+    </div><!-- /uc-content -->
+</div><!-- /uc-main -->
+
+<!-- ═══════════════════════════════════════════════════════════
+     MODAL — Cadastrar Disciplina
+══════════════════════════════════════════════════════════════ -->
+<div class="modal fade" id="modalCadastrarDisciplina" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content" style="border-radius:12px; overflow:hidden;">
+            <div class="modal-header" style="background:linear-gradient(135deg,#1C1C2E,#0F2952); color:#fff; border:none;">
+                <h5 class="modal-title">
+                    <i class="fas fa-plus me-2" style="color:#FF6B00;"></i> Nova Disciplina
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" action="{% url 'dashboard:cadastrar_disciplina' %}">
+                {% csrf_token %}
+                <div class="modal-body p-4">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold" style="font-size:13px;">Código <span style="color:#FF6B00">*</span></label>
+                            <input type="text" name="codigo_disciplina" class="form-control" required
+                                   placeholder="Ex: SI301" maxlength="25" style="border-radius:8px; border:2px solid #e0e0e0;">
+                        </div>
+                        <div class="col-md-8">
+                            <label class="form-label fw-semibold" style="font-size:13px;">Nome <span style="color:#FF6B00">*</span></label>
+                            <input type="text" name="nome_disciplina" class="form-control" required
+                                   placeholder="Ex: Banco de Dados" maxlength="50" style="border-radius:8px; border:2px solid #e0e0e0;">
+                        </div>
+                        <div class="col-md-12">
+                            <label class="form-label fw-semibold" style="font-size:13px;">Curso <span style="color:#FF6B00">*</span></label>
+                            <select name="curso_fk" class="form-select" required style="border-radius:8px; border:2px solid #e0e0e0;">
+                                <option value="">— Selecione um curso —</option>
+                                {% for curso in cursos %}
+                                <option value="{{ curso.pk }}">{{ curso.nome_curso }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer" style="border:none; padding-top:0;">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-sm text-white fw-semibold"
+                            style="background:linear-gradient(135deg,#FF6B00,#D45400); border:none; border-radius:8px; padding:8px 24px;">
+                        <i class="fas fa-save me-1"></i> Cadastrar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     MODAIS — Editar / Excluir (um por disciplina)
+══════════════════════════════════════════════════════════════ -->
+{% for disc in disciplinas %}
+
+<!-- Modal Editar -->
+<div class="modal fade" id="modalEditarDisc{{ disc.pk }}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content" style="border-radius:12px; overflow:hidden;">
+            <div class="modal-header" style="background:linear-gradient(135deg,#1C1C2E,#0F2952); color:#fff; border:none;">
+                <h5 class="modal-title">
+                    <i class="fas fa-edit me-2" style="color:#FF6B00;"></i> Editar Disciplina
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" action="{% url 'dashboard:editar_disciplina' disc.pk %}">
+                {% csrf_token %}
+                <div class="modal-body p-4">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold" style="font-size:13px;">Código</label>
+                            <input type="text" class="form-control" value="{{ disc.codigo_disciplina }}" disabled
+                                   style="border-radius:8px; background:#f0f0f0; border:2px solid #e0e0e0;">
+                        </div>
+                        <div class="col-md-8">
+                            <label class="form-label fw-semibold" style="font-size:13px;">Nome</label>
+                            <input type="text" name="nome_disciplina" class="form-control" required
+                                   value="{{ disc.nome_disciplina }}" style="border-radius:8px; border:2px solid #e0e0e0;">
+                        </div>
+                        <div class="col-md-12">
+                            <label class="form-label fw-semibold" style="font-size:13px;">Curso</label>
+                            <select name="curso_fk" class="form-select" required style="border-radius:8px; border:2px solid #e0e0e0;">
+                                {% for curso in cursos %}
+                                <option value="{{ curso.pk }}" {% if curso.pk == disc.curso_fk.pk %}selected{% endif %}>
+                                    {{ curso.nome_curso }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer" style="border:none; padding-top:0;">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-sm text-white fw-semibold"
+                            style="background:linear-gradient(135deg,#FF6B00,#D45400); border:none; border-radius:8px; padding:8px 24px;">
+                        <i class="fas fa-save me-1"></i> Salvar Alterações
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Excluir -->
+<div class="modal fade" id="modalExcluirDisc{{ disc.pk }}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content" style="border-radius:12px; overflow:hidden;">
+            <div class="modal-header" style="background:#dc3545; color:#fff; border:none;">
+                <h5 class="modal-title">
+                    <i class="fas fa-exclamation-triangle me-2"></i> Excluir Disciplina
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" action="{% url 'dashboard:excluir_disciplina' disc.pk %}">
+                {% csrf_token %}
+                <div class="modal-body p-4">
+                    <p style="font-size:14px;">Excluir disciplina:</p>
+                    <div style="background:#f8f9fa; padding:12px 16px; border-radius:8px; margin:8px 0;">
+                        <code style="font-size:12px;">{{ disc.codigo_disciplina }}</code>
+                        <strong style="margin-left:6px;">{{ disc.nome_disciplina }}</strong>
+                    </div>
+                    <p class="text-danger mt-3 mb-0" style="font-size:13px;">
+                        <i class="fas fa-exclamation-circle me-1"></i>
+                        Ação irreversível.
+                    </p>
+                </div>
+                <div class="modal-footer" style="border:none; padding-top:0;">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-danger btn-sm fw-semibold" style="border-radius:8px; padding:8px 20px;">
+                        <i class="fas fa-trash-alt me-1"></i> Excluir
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endfor %}
+
+</body>
+{% endblock %}
+
+{% block footer %}{% endblock %}
+
+{% block extra_js %}
+<script>
+    function ucToggleSidebar() {
+        document.getElementById('ucSidebar').classList.toggle('collapsed');
+        document.getElementById('ucMain').classList.toggle('expanded');
+        localStorage.setItem('uc_sb', document.getElementById('ucSidebar').classList.contains('collapsed'));
+    }
+    document.addEventListener('DOMContentLoaded', function () {
+        if (localStorage.getItem('uc_sb') === 'true') {
+            document.getElementById('ucSidebar').classList.add('collapsed');
+            document.getElementById('ucMain').classList.add('expanded');
+        }
+    });
+</script>
+{% endblock %}

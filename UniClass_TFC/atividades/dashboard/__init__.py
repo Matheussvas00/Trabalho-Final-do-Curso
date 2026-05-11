@@ -1,0 +1,3 @@
+"""
+Módulo dashboard do UniClass
+"""

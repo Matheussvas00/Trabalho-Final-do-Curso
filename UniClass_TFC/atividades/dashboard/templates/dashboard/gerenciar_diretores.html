@@ -1,0 +1,313 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Gerenciar Diretores — Admin | UniClass{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+{% endblock %}
+
+{% block body %}
+<body class="dashboard-body">
+
+{% include 'dashboard/partials/_sidebar.html' with active_page='diretores' %}
+
+<div class="uc-main" id="ucMain">
+
+    <!-- Topbar -->
+    <header class="uc-topbar">
+        <button class="uc-topbar__toggle" onclick="ucToggleSidebar()"><i class="fas fa-bars"></i></button>
+        <div class="uc-topbar__title-wrap">
+            <div class="uc-topbar__title">Gerenciar Diretores</div>
+            <div class="uc-topbar__subtitle">Cadastre, edite ou exclua diretores do sistema</div>
+        </div>
+        <div class="uc-topbar__right">
+            <a href="{% url 'dashboard:index' %}" class="uc-topbar__btn" title="Voltar ao Início">
+                <i class="fas fa-arrow-left"></i>
+            </a>
+            <a href="#" class="uc-topbar__btn" title="Notificações">
+                <i class="fas fa-bell"></i>
+                {% if notificacoes_nao_lidas %}<span class="uc-topbar__notif-dot"></span>{% endif %}
+            </a>
+        </div>
+    </header>
+
+    <div class="uc-content">
+
+        {% if messages %}
+            {% for message in messages %}
+                <div class="uc-alert uc-alert--{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %}">
+                    <i class="fas fa-{% if message.tags == 'success' %}check-circle{% elif message.tags == 'error' %}exclamation-circle{% else %}info-circle{% endif %}"></i>
+                    <span>{{ message }}</span>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <!-- Cabeçalho + botão -->
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+            <div>
+                <h4 style="margin:0; color:var(--uc-text);">
+                    <i class="fas fa-user-tie me-2" style="color:var(--uc-orange)"></i>
+                    Diretores Cadastrados
+                </h4>
+                <small style="color:var(--uc-text-muted);">{{ diretores|length }} diretor{{ diretores|length|pluralize:"es" }}</small>
+            </div>
+            <button type="button" class="uc-btn uc-btn--orange" data-bs-toggle="modal" data-bs-target="#modalCadastrarDiretor">
+                <i class="fas fa-user-plus me-1"></i> Novo Diretor
+            </button>
+        </div>
+
+        <!-- Tabela -->
+        <div class="uc-card">
+            <div class="uc-card__body" style="padding:0;">
+                {% if diretores %}
+                <div style="overflow-x:auto;">
+                <table style="width:100%; border-collapse:collapse; font-size:14px;">
+                    <thead>
+                        <tr style="background:#f8f9fa; border-bottom:2px solid #eee;">
+                            <th style="padding:12px 16px; text-align:left; color:#555; font-weight:600;">#</th>
+                            <th style="padding:12px 16px; text-align:left; color:#555; font-weight:600;">Nome</th>
+                            <th style="padding:12px 16px; text-align:left; color:#555; font-weight:600;">E-mail</th>
+                            <th style="padding:12px 16px; text-align:left; color:#555; font-weight:600;">Curso Vinculado</th>
+                            <th style="padding:12px 16px; text-align:center; color:#555; font-weight:600;">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for d in diretores %}
+                        <tr style="border-bottom:1px solid #f0f0f0; transition:background .15s;"
+                            onmouseover="this.style.background='#fff8f4'" onmouseout="this.style.background=''">
+                            <td style="padding:10px 16px; color:#aaa;">{{ forloop.counter }}</td>
+                            <td style="padding:10px 16px;">
+                                <i class="fas fa-user-tie me-1" style="color:var(--uc-orange)"></i>
+                                <strong>{{ d.nome_completo }}</strong>
+                            </td>
+                            <td style="padding:10px 16px; color:#666;">{{ d.id_diretor.email }}</td>
+                            <td style="padding:10px 16px;">
+                                {% if d.curso_fk %}
+                                    <span class="uc-badge uc-badge--pending">{{ d.curso_fk.nome_curso }}</span>
+                                {% elif d.curso_diretor %}
+                                    <span style="color:#aaa; font-size:13px;">{{ d.curso_diretor }}</span>
+                                {% else %}
+                                    <span style="color:#aaa;">—</span>
+                                {% endif %}
+                            </td>
+                            <td style="padding:10px 16px; text-align:center; white-space:nowrap;">
+                                <button type="button" class="uc-btn uc-btn--outline uc-btn--sm"
+                                        data-bs-toggle="modal" data-bs-target="#modalEditarDiretor{{ d.pk }}">
+                                    <i class="fas fa-edit"></i> Editar
+                                </button>
+                                <button type="button" class="uc-btn uc-btn--sm"
+                                        style="background:#dc3545; color:#fff; border:none; margin-left:4px;"
+                                        data-bs-toggle="modal" data-bs-target="#modalExcluirDiretor{{ d.pk }}">
+                                    <i class="fas fa-trash-alt"></i> Excluir
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                </div>
+                {% else %}
+                <div class="uc-empty">
+                    <i class="fas fa-user-tie"></i>
+                    <p>Nenhum diretor cadastrado.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+    </div><!-- /uc-content -->
+</div><!-- /uc-main -->
+
+<!-- ═══════════════════════════════════════════════════════════
+     MODAL — Cadastrar Diretor
+══════════════════════════════════════════════════════════════ -->
+<div class="modal fade" id="modalCadastrarDiretor" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content" style="border-radius:12px; overflow:hidden;">
+            <div class="modal-header" style="background:linear-gradient(135deg,#1C1C2E,#0F2952); color:#fff; border:none;">
+                <h5 class="modal-title">
+                    <i class="fas fa-user-plus me-2" style="color:#FF6B00;"></i> Cadastrar Novo Diretor
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" action="{% url 'dashboard:cadastrar_diretor' %}">
+                {% csrf_token %}
+                <div class="modal-body p-4">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold" style="font-size:13px;">Nome <span style="color:#FF6B00">*</span></label>
+                            <input type="text" name="nome_diretor" class="form-control" required
+                                   placeholder="Nome do diretor" style="border-radius:8px; border:2px solid #e0e0e0;">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold" style="font-size:13px;">Sobrenome <span style="color:#FF6B00">*</span></label>
+                            <input type="text" name="sobrenome_diretor" class="form-control" required
+                                   placeholder="Sobrenome" style="border-radius:8px; border:2px solid #e0e0e0;">
+                        </div>
+                        <div class="col-md-12">
+                            <label class="form-label fw-semibold" style="font-size:13px;">Curso <span style="color:#FF6B00">*</span></label>
+                            <select name="curso_fk" class="form-select" required style="border-radius:8px; border:2px solid #e0e0e0;">
+                                <option value="">Selecione um curso</option>
+                                {% for curso in cursos %}
+                                <option value="{{ curso.pk }}">{{ curso.nome_curso }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-12"><hr style="border-color:#eee;"></div>
+                        <div class="col-12">
+                            <small class="text-muted"><i class="fas fa-info-circle me-1"></i> Credenciais de acesso ao sistema</small>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold" style="font-size:13px;">E-mail <span style="color:#FF6B00">*</span></label>
+                            <input type="email" name="email" class="form-control" required
+                                   placeholder="diretor@universidade.edu.br" style="border-radius:8px; border:2px solid #e0e0e0;">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold" style="font-size:13px;">Senha <span style="color:#FF6B00">*</span></label>
+                            <input type="password" name="senha" class="form-control" required minlength="8"
+                                   placeholder="Mínimo 8 caracteres" style="border-radius:8px; border:2px solid #e0e0e0;">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer" style="border:none; padding-top:0;">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-sm text-white fw-semibold"
+                            style="background:linear-gradient(135deg,#FF6B00,#D45400); border:none; border-radius:8px; padding:8px 24px;">
+                        <i class="fas fa-save me-1"></i> Cadastrar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     MODAIS — Editar / Excluir (um por diretor)
+══════════════════════════════════════════════════════════════ -->
+{% for d in diretores %}
+
+<!-- Modal Editar -->
+<div class="modal fade" id="modalEditarDiretor{{ d.pk }}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content" style="border-radius:12px; overflow:hidden;">
+            <div class="modal-header" style="background:linear-gradient(135deg,#1C1C2E,#0F2952); color:#fff; border:none;">
+                <h5 class="modal-title">
+                    <i class="fas fa-edit me-2" style="color:#FF6B00;"></i> Editar Diretor
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" action="{% url 'dashboard:editar_diretor' d.pk %}">
+                {% csrf_token %}
+                <div class="modal-body p-4">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold" style="font-size:13px;">Nome</label>
+                            <input type="text" name="nome_diretor" class="form-control" required
+                                   value="{{ d.nome_diretor }}" style="border-radius:8px; border:2px solid #e0e0e0;">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold" style="font-size:13px;">Sobrenome</label>
+                            <input type="text" name="sobrenome_diretor" class="form-control" required
+                                   value="{{ d.sobrenome_diretor }}" style="border-radius:8px; border:2px solid #e0e0e0;">
+                        </div>
+                        <div class="col-md-12">
+                            <label class="form-label fw-semibold" style="font-size:13px;">Curso <span style="color:#FF6B00">*</span></label>
+                            <select name="curso_fk" class="form-select" required style="border-radius:8px; border:2px solid #e0e0e0;">
+                                <option value="">Selecione um curso</option>
+                                {% for curso in cursos %}
+                                <option value="{{ curso.pk }}" {% if d.curso_fk and d.curso_fk.pk == curso.pk %}selected{% endif %}>
+                                    {{ curso.nome_curso }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <small class="text-muted">
+                                <i class="fas fa-envelope me-1"></i> E-mail: <strong>{{ d.id_diretor.email }}</strong>
+                            </small>
+                        </div>
+                        <div class="col-12"><hr style="border-color:#eee;"></div>
+                        <div class="col-12">
+                            <small class="text-muted"><i class="fas fa-key me-1"></i> Alterar senha (deixe em branco para manter a atual)</small>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold" style="font-size:13px;">Nova Senha</label>
+                            <input type="password" name="nova_senha" class="form-control"
+                                   placeholder="Mínimo 8 caracteres" style="border-radius:8px; border:2px solid #e0e0e0;">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold" style="font-size:13px;">Confirmar Nova Senha</label>
+                            <input type="password" name="confirmar_senha" class="form-control"
+                                   placeholder="Repita a nova senha" style="border-radius:8px; border:2px solid #e0e0e0;">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer" style="border:none; padding-top:0;">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-sm text-white fw-semibold"
+                            style="background:linear-gradient(135deg,#FF6B00,#D45400); border:none; border-radius:8px; padding:8px 24px;">
+                        <i class="fas fa-save me-1"></i> Salvar Alterações
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Excluir -->
+<div class="modal fade" id="modalExcluirDiretor{{ d.pk }}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius:12px; overflow:hidden;">
+            <div class="modal-header" style="background:#dc3545; color:#fff; border:none;">
+                <h5 class="modal-title">
+                    <i class="fas fa-exclamation-triangle me-2"></i> Confirmar Exclusão
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" action="{% url 'dashboard:excluir_diretor' d.pk %}">
+                {% csrf_token %}
+                <div class="modal-body p-4">
+                    <p>Tem certeza que deseja excluir o diretor:</p>
+                    <div style="background:#f8f9fa; padding:12px 16px; border-radius:8px; margin:8px 0;">
+                        <strong><i class="fas fa-user-tie me-1" style="color:var(--uc-orange)"></i> {{ d.nome_completo }}</strong><br>
+                        <small class="text-muted">{{ d.id_diretor.email }}</small>
+                    </div>
+                    <p class="text-danger mt-3 mb-0" style="font-size:13px;">
+                        <i class="fas fa-exclamation-circle me-1"></i>
+                        Esta ação é irreversível. O usuário e todos os dados vinculados serão removidos.
+                    </p>
+                </div>
+                <div class="modal-footer" style="border:none; padding-top:0;">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-danger btn-sm fw-semibold" style="border-radius:8px; padding:8px 24px;">
+                        <i class="fas fa-trash-alt me-1"></i> Excluir
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endfor %}
+
+</body>
+{% endblock %}
+
+{% block footer %}{% endblock %}
+
+{% block extra_js %}
+<script>
+    function ucToggleSidebar() {
+        document.getElementById('ucSidebar').classList.toggle('collapsed');
+        document.getElementById('ucMain').classList.toggle('expanded');
+        localStorage.setItem('uc_sb', document.getElementById('ucSidebar').classList.contains('collapsed'));
+    }
+    document.addEventListener('DOMContentLoaded', function () {
+        if (localStorage.getItem('uc_sb') === 'true') {
+            document.getElementById('ucSidebar').classList.add('collapsed');
+            document.getElementById('ucMain').classList.add('expanded');
+        }
+    });
+</script>
+{% endblock %}

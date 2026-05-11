@@ -1,0 +1,110 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Minhas Disciplinas | UniClass{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+{% endblock %}
+
+{% block body %}
+<body class="dashboard-body">
+
+{% include 'dashboard/partials/_sidebar.html' with active_page='disciplinas' %}
+
+<div class="uc-main" id="ucMain">
+
+    <header class="uc-topbar">
+        <button class="uc-topbar__toggle" onclick="ucToggleSidebar()"><i class="fas fa-bars"></i></button>
+        <div class="uc-topbar__title-wrap">
+            <div class="uc-topbar__title">Minhas Disciplinas</div>
+            <div class="uc-topbar__subtitle">{{ greeting }}, {{ display_name }}!</div>
+        </div>
+    </header>
+
+    <div class="uc-content">
+
+        {% if messages %}
+            {% for message in messages %}
+                <div class="uc-alert uc-alert--{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %}">
+                    <i class="fas fa-{% if message.tags == 'success' %}check-circle{% elif message.tags == 'error' %}exclamation-circle{% else %}info-circle{% endif %}"></i>
+                    <span>{{ message }}</span>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <div class="uc-card">
+            <div class="uc-card__head">
+                <span class="uc-card__head-title">
+                    <i class="fas fa-book-open" style="color:var(--uc-orange)"></i>
+                    Disciplinas Matriculadas
+                    <small style="color:#999; font-weight:400; margin-left:6px;">{{ disciplinas|length }}</small>
+                </span>
+            </div>
+            <div class="uc-card__body" style="padding:0;">
+                {% if disciplinas %}
+                <div style="overflow-x:auto;">
+                <table style="width:100%; border-collapse:collapse; font-size:13px;">
+                    <thead>
+                        <tr style="background:#f8f9fa; border-bottom:2px solid #eee;">
+                            <th style="padding:10px 14px;">Código</th>
+                            <th style="padding:10px 14px;">Disciplina</th>
+                            <th style="padding:10px 14px;">Curso</th>
+                            <th style="padding:10px 14px;">Professores</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for d in disciplinas %}
+                        <tr style="border-bottom:1px solid #f0f0f0;" onmouseover="this.style.background='#fafafa'" onmouseout="this.style.background=''">
+                            <td style="padding:8px 14px;">
+                                <code style="background:#f0f0f0; padding:2px 8px; border-radius:4px;">{{ d.codigo_disciplina }}</code>
+                            </td>
+                            <td style="padding:8px 14px;"><strong>{{ d.nome_disciplina }}</strong></td>
+                            <td style="padding:8px 14px;">{{ d.curso_fk.nome_curso }}</td>
+                            <td style="padding:8px 14px; font-size:12px;">
+                                {% for pd in d.professores_disciplina.all %}
+                                    <span style="display:inline-block; background:#e9ecef; padding:2px 8px; border-radius:4px; margin-right:4px; margin-bottom:2px;">
+                                        {{ pd.id_professorfk.nome_completo }}
+                                    </span>
+                                {% empty %}
+                                    <span style="color:#999;">Sem professor atribuído</span>
+                                {% endfor %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                </div>
+                {% else %}
+                <div class="uc-empty">
+                    <i class="fas fa-book-open"></i>
+                    <p>Você não está matriculado em nenhuma disciplina.</p>
+                    <small class="text-muted">Entre em contato com o diretor do seu curso para realizar a matrícula.</small>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+    </div>
+</div>
+
+</body>
+{% endblock %}
+
+{% block footer %}{% endblock %}
+
+{% block extra_js %}
+<script>
+    function ucToggleSidebar() {
+        document.getElementById('ucSidebar').classList.toggle('collapsed');
+        document.getElementById('ucMain').classList.toggle('expanded');
+        localStorage.setItem('uc_sb', document.getElementById('ucSidebar').classList.contains('collapsed'));
+    }
+    document.addEventListener('DOMContentLoaded', function () {
+        if (localStorage.getItem('uc_sb') === 'true') {
+            document.getElementById('ucSidebar').classList.add('collapsed');
+            document.getElementById('ucMain').classList.add('expanded');
+        }
+    });
+</script>
+{% endblock %}

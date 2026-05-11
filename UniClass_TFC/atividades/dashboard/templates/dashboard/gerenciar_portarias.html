@@ -1,0 +1,537 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Gerenciar Portarias — Diretor | UniClass{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.bootstrap5.min.css">
+<style>
+    .ts-wrapper.single .ts-control { border-radius: 8px !important; border: 2px solid #e0e0e0 !important; }
+    .ts-wrapper.single.focus .ts-control { border-color: #FF6B00 !important; box-shadow: 0 0 0 3px rgba(255,107,0,.15) !important; }
+</style>
+{% endblock %}
+
+{% block body %}
+<body class="dashboard-body">
+
+{% include 'dashboard/partials/_sidebar.html' with active_page='portarias' %}
+
+<div class="uc-main" id="ucMain">
+
+    <!-- Topbar -->
+    <header class="uc-topbar">
+        <button class="uc-topbar__toggle" onclick="ucToggleSidebar()"><i class="fas fa-bars"></i></button>
+        <div class="uc-topbar__title-wrap">
+            <div class="uc-topbar__title">Gerenciar Portarias</div>
+            <div class="uc-topbar__subtitle">Cadastre, edite ou exclua portarias dos alunos</div>
+        </div>
+        <div class="uc-topbar__right">
+            <a href="{% url 'dashboard:index' %}" class="uc-topbar__btn" title="Voltar ao Início">
+                <i class="fas fa-arrow-left"></i>
+            </a>
+            <a href="#" class="uc-topbar__btn" title="Notificações">
+                <i class="fas fa-bell"></i>
+                {% if notificacoes_nao_lidas %}<span class="uc-topbar__notif-dot"></span>{% endif %}
+            </a>
+        </div>
+    </header>
+
+    <div class="uc-content">
+
+        {% if messages %}
+            {% for message in messages %}
+                <div class="uc-alert uc-alert--{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %}">
+                    <i class="fas fa-{% if message.tags == 'success' %}check-circle{% elif message.tags == 'error' %}exclamation-circle{% else %}info-circle{% endif %}"></i>
+                    <span>{{ message }}</span>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <!-- Cabeçalho + botão -->
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+            <div>
+                <h4 style="margin:0; color:var(--uc-text);">
+                    <i class="fas fa-file-medical me-2" style="color:var(--uc-orange)"></i>
+                    Portarias Cadastradas
+                </h4>
+                <small style="color:var(--uc-text-muted);">{{ portarias|length }} portaria{{ portarias|length|pluralize }}</small>
+            </div>
+            <button type="button" class="uc-btn uc-btn--orange" id="btnNovaPortaria">
+                <i class="fas fa-plus me-1"></i> Nova Portaria
+            </button>
+        </div>
+
+        <!-- Tabela -->
+        <div class="uc-card">
+            <div class="uc-card__body" style="padding:0;">
+                {% if portarias %}
+                <div style="overflow-x:auto;">
+                <table style="width:100%; border-collapse:collapse; font-size:14px;">
+                    <thead>
+                        <tr style="background:#f8f9fa; border-bottom:2px solid #eee;">
+                            <th style="padding:12px 16px; text-align:left; color:#555; font-weight:600;">Nº Portaria</th>
+                            <th style="padding:12px 16px; text-align:left; color:#555; font-weight:600;">Aluno</th>
+                            <th style="padding:12px 16px; text-align:left; color:#555; font-weight:600;">Motivo</th>
+                            <th style="padding:12px 16px; text-align:left; color:#555; font-weight:600;">Prazo Atividades</th>
+                            <th style="padding:12px 16px; text-align:left; color:#555; font-weight:600;">Prazo Respostas</th>
+                            <th style="padding:12px 16px; text-align:left; color:#555; font-weight:600;">Prazo Validação</th>
+                            <th style="padding:12px 16px; text-align:left; color:#555; font-weight:600;">Status</th>
+                            <th style="padding:12px 16px; text-align:left; color:#555; font-weight:600;">Disciplinas</th>
+                            <th style="padding:12px 16px; text-align:left; color:#555; font-weight:600;">Atestado</th>
+                            <th style="padding:12px 16px; text-align:center; color:#555; font-weight:600;">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for portaria in portarias %}
+                        <tr style="border-bottom:1px solid #f0f0f0; transition:background .15s;"
+                            onmouseover="this.style.background='#fff8f4'" onmouseout="this.style.background=''">
+                            <td style="padding:10px 16px;">
+                                <code style="background:#f0f0f0; padding:2px 8px; border-radius:4px;">{{ portaria.numero_portaria }}</code>
+                            </td>
+                            <td style="padding:10px 16px;">
+                                <i class="fas fa-user-graduate me-1" style="color:var(--uc-orange)"></i>
+                                <strong>{{ portaria.id_alunofk.nome_completo }}</strong>
+                            </td>
+                            <td style="padding:10px 16px; max-width:200px;">
+                                <span title="{{ portaria.motivo_portaria }}" style="display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:180px;">
+                                    {{ portaria.motivo_portaria }}
+                                </span>
+                            </td>
+                            <td style="padding:10px 16px; white-space:nowrap;">{{ portaria.prazo_professor_criar_atividades|date:"d/m/Y" }}</td>
+                            <td style="padding:10px 16px; white-space:nowrap;">{{ portaria.prazo_aluno_responder|date:"d/m/Y" }}</td>
+                            <td style="padding:10px 16px; white-space:nowrap;">{{ portaria.prazo_validacao_final|date:"d/m/Y" }}</td>
+                            <td style="padding:10px 16px;">
+                                {% if portaria.status == 'aguardando_atividades' %}
+                                    <span class="uc-badge uc-badge--pending">Aguard. Atividades</span>
+                                {% elif portaria.status == 'aguardando_respostas' %}
+                                    <span class="uc-badge" style="background:#e3f2fd; color:#1565c0;">Aguard. Respostas</span>
+                                {% elif portaria.status == 'em_validacao_professor' %}
+                                    <span class="uc-badge" style="background:#e8eaf6; color:#3949ab;">Val. Professor</span>
+                                {% elif portaria.status == 'em_validacao_diretor' %}
+                                    <span class="uc-badge" style="background:#f3e5f5; color:#7b1fa2;">Val. Diretor</span>
+                                {% elif portaria.status == 'concluida' %}
+                                    <span class="uc-badge uc-badge--success">Concluída</span>
+                                {% elif portaria.status == 'cancelada' %}
+                                    <span class="uc-badge uc-badge--danger">Cancelada</span>
+                                {% else %}
+                                    <span class="uc-badge uc-badge--pending">{{ portaria.status }}</span>
+                                {% endif %}
+                            </td>
+                            <td style="padding:10px 16px; font-size:13px;">
+                                {% for dp in portaria.disciplinas_portaria.all %}
+                                    <span style="background:#f0f4ff; color:#333; padding:2px 6px; border-radius:4px; margin:1px; display:inline-block;">
+                                        {{ dp.codigo_disciplinafk.nome_disciplina }}
+                                    </span>
+                                {% empty %}
+                                    <span style="color:#aaa;">—</span>
+                                {% endfor %}
+                            </td>
+                            <td style="padding:10px 16px;">
+                                {% if portaria.atestado %}
+                                    <a href="{{ portaria.atestado.url }}" target="_blank" class="uc-btn uc-btn--outline uc-btn--sm" title="Ver atestado">
+                                        <i class="fas fa-file-alt"></i>
+                                    </a>
+                                {% else %}
+                                    <span style="color:#aaa;">—</span>
+                                {% endif %}
+                            </td>
+                            <td style="padding:10px 16px; text-align:center; white-space:nowrap;">
+                                <button type="button" class="uc-btn uc-btn--outline uc-btn--sm"
+                                        data-bs-toggle="modal" data-bs-target="#modalEditarPortaria{{ portaria.pk }}">
+                                    <i class="fas fa-edit"></i> Editar
+                                </button>
+                                <button type="button" class="uc-btn uc-btn--sm"
+                                        style="background:#dc3545; color:#fff; border:none; margin-left:4px;"
+                                        data-bs-toggle="modal" data-bs-target="#modalExcluirPortaria{{ portaria.pk }}">
+                                    <i class="fas fa-trash-alt"></i> Excluir
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                </div>
+                {% else %}
+                <div class="uc-empty">
+                    <i class="fas fa-file-medical"></i>
+                    <p>Nenhuma portaria cadastrada.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+    </div><!-- /uc-content -->
+</div><!-- /uc-main -->
+
+<!-- ═══════════════════════════════════════════════════════════
+     MODAL — Cadastrar Portaria
+══════════════════════════════════════════════════════════════ -->
+<div class="modal fade" id="modalCadastrarPortaria" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content" style="border-radius:12px; overflow:hidden;">
+            <div class="modal-header" style="background:linear-gradient(135deg,#1C1C2E,#0F2952); color:#fff; border:none;">
+                <h5 class="modal-title">
+                    <i class="fas fa-file-medical me-2" style="color:#FF6B00;"></i> Nova Portaria
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="formCadastrarPortaria" method="post" action="{% url 'dashboard:cadastrar_portaria' %}" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="modal-body p-4">
+                    <div id="cad_portaria_error" style="display:none; background:#fff3f3; border:1px solid #f5c6cb; border-radius:8px; padding:10px 14px; margin-bottom:12px; color:#842029; font-size:13px;">
+                        <i class="fas fa-exclamation-circle me-1"></i>
+                        <span id="cad_portaria_error_msg"></span>
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-md-8">
+                            <label class="form-label fw-semibold" style="font-size:13px;">Aluno <span style="color:#FF6B00">*</span></label>
+                            <select name="id_alunofk" id="cad_aluno_select" class="form-select" required style="border-radius:8px; border:2px solid #e0e0e0;">
+                                <option value=""></option>
+                                {% for aluno in alunos %}
+                                <option value="{{ aluno.pk }}">{{ aluno.nome_completo }} — {{ aluno.matricula_aluno }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold" style="font-size:13px;">Número da Portaria <span style="color:#FF6B00">*</span></label>
+                            <input type="text" name="numero_portaria" class="form-control" required
+                                   placeholder="Ex: 001/2026" style="border-radius:8px; border:2px solid #e0e0e0;">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-semibold" style="font-size:13px;">Motivo da Portaria <span style="color:#FF6B00">*</span></label>
+                            <textarea name="motivo_portaria" class="form-control" rows="3" required
+                                      placeholder="Descreva o motivo do afastamento..." style="border-radius:8px; border:2px solid #e0e0e0; resize:vertical;"></textarea>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold" style="font-size:13px;">Prazo — Criar Atividades <span style="color:#FF6B00">*</span></label>
+                            <input type="date" name="prazo_professor_criar_atividades" class="form-control" required
+                                   style="border-radius:8px; border:2px solid #e0e0e0;">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold" style="font-size:13px;">Prazo — Respostas do Aluno <span style="color:#FF6B00">*</span></label>
+                            <input type="date" name="prazo_aluno_responder" class="form-control" required
+                                   style="border-radius:8px; border:2px solid #e0e0e0;">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold" style="font-size:13px;">Prazo — Validação Final <span style="color:#FF6B00">*</span></label>
+                            <input type="date" name="prazo_validacao_final" class="form-control" required
+                                   style="border-radius:8px; border:2px solid #e0e0e0;">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-semibold" style="font-size:13px;">Observações <span style="color:#aaa; font-weight:400;">(opcional)</span></label>
+                            <textarea name="observacoes" class="form-control" rows="2"
+                                      placeholder="Observações adicionais..." style="border-radius:8px; border:2px solid #e0e0e0; resize:vertical;"></textarea>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-semibold" style="font-size:13px;">Atestado / Comprovante <span style="color:#aaa; font-weight:400;">(opcional)</span></label>
+                            <input type="file" name="atestado" class="form-control" accept=".pdf,.jpg,.jpeg,.png"
+                                   style="border-radius:8px; border:2px solid #e0e0e0;">
+                            <small class="text-muted">Formatos aceitos: PDF, JPG, PNG</small>
+                        </div>
+                        <div class="col-12" id="cad_disciplinas_section">
+                            <hr style="border-color:#eee;">
+                            <label class="form-label fw-semibold" style="font-size:13px;">Disciplinas <span style="color:#FF6B00">*</span></label>
+                            <div id="cad_disciplinas_list" style="display:flex; flex-wrap:wrap; gap:8px; min-height:40px; align-items:center;">
+                                <small class="text-muted" id="cad_disciplinas_placeholder">
+                                    <i class="fas fa-info-circle me-1"></i> Selecione um aluno para ver suas disciplinas.
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer" style="border:none; padding-top:0;">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" id="btn_cad_portaria_submit" class="btn btn-sm text-white fw-semibold"
+                            style="background:linear-gradient(135deg,#FF6B00,#D45400); border:none; border-radius:8px; padding:8px 24px;">
+                        <i class="fas fa-save me-1"></i> Cadastrar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     MODAIS — Editar / Excluir (um por portaria)
+══════════════════════════════════════════════════════════════ -->
+{% for portaria in portarias %}
+
+<!-- Modal Editar -->
+<div class="modal fade" id="modalEditarPortaria{{ portaria.pk }}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content" style="border-radius:12px; overflow:hidden;">
+            <div class="modal-header" style="background:linear-gradient(135deg,#1C1C2E,#0F2952); color:#fff; border:none;">
+                <h5 class="modal-title">
+                    <i class="fas fa-edit me-2" style="color:#FF6B00;"></i> Editar Portaria <span style="color:#FF6B00;">#{{ portaria.numero_portaria }}</span>
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" action="{% url 'dashboard:editar_portaria' portaria.pk %}" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="modal-body p-4">
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="form-label fw-semibold" style="font-size:13px;">Aluno</label>
+                            <input type="text" class="form-control" disabled
+                                   value="{{ portaria.id_alunofk.nome_completo }} — {{ portaria.id_alunofk.matricula_aluno }}"
+                                   style="border-radius:8px; border:2px solid #e0e0e0; background:#f8f9fa;">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-semibold" style="font-size:13px;">Motivo da Portaria <span style="color:#FF6B00">*</span></label>
+                            <textarea name="motivo_portaria" class="form-control" rows="3" required
+                                      style="border-radius:8px; border:2px solid #e0e0e0; resize:vertical;">{{ portaria.motivo_portaria }}</textarea>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold" style="font-size:13px;">Prazo — Criar Atividades <span style="color:#FF6B00">*</span></label>
+                            <input type="date" name="prazo_professor_criar_atividades" class="form-control" required
+                                   value="{{ portaria.prazo_professor_criar_atividades|date:'Y-m-d' }}"
+                                   style="border-radius:8px; border:2px solid #e0e0e0;">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold" style="font-size:13px;">Prazo — Respostas do Aluno <span style="color:#FF6B00">*</span></label>
+                            <input type="date" name="prazo_aluno_responder" class="form-control" required
+                                   value="{{ portaria.prazo_aluno_responder|date:'Y-m-d' }}"
+                                   style="border-radius:8px; border:2px solid #e0e0e0;">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold" style="font-size:13px;">Prazo — Validação Final <span style="color:#FF6B00">*</span></label>
+                            <input type="date" name="prazo_validacao_final" class="form-control" required
+                                   value="{{ portaria.prazo_validacao_final|date:'Y-m-d' }}"
+                                   style="border-radius:8px; border:2px solid #e0e0e0;">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold" style="font-size:13px;">Status</label>
+                            <select name="status" class="form-select" style="border-radius:8px; border:2px solid #e0e0e0;">
+                                <option value="aguardando_atividades" {% if portaria.status == 'aguardando_atividades' %}selected{% endif %}>Aguardando Criação de Atividades</option>
+                                <option value="aguardando_respostas" {% if portaria.status == 'aguardando_respostas' %}selected{% endif %}>Aguardando Respostas dos Alunos</option>
+                                <option value="em_validacao_professor" {% if portaria.status == 'em_validacao_professor' %}selected{% endif %}>Em Validação pelo Professor</option>
+                                <option value="em_validacao_diretor" {% if portaria.status == 'em_validacao_diretor' %}selected{% endif %}>Em Validação pelo Diretor</option>
+                                <option value="concluida" {% if portaria.status == 'concluida' %}selected{% endif %}>Concluída</option>
+                                <option value="cancelada" {% if portaria.status == 'cancelada' %}selected{% endif %}>Cancelada</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold" style="font-size:13px;">Novo Atestado <span style="color:#aaa; font-weight:400;">(deixe vazio para manter)</span></label>
+                            <input type="file" name="atestado" class="form-control" accept=".pdf,.jpg,.jpeg,.png"
+                                   style="border-radius:8px; border:2px solid #e0e0e0;">
+                            {% if portaria.atestado %}
+                            <small class="text-muted">
+                                <i class="fas fa-paperclip me-1"></i>
+                                Atestado atual: <a href="{{ portaria.atestado.url }}" target="_blank">ver arquivo</a>
+                            </small>
+                            {% endif %}
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-semibold" style="font-size:13px;">Observações</label>
+                            <textarea name="observacoes" class="form-control" rows="2"
+                                      style="border-radius:8px; border:2px solid #e0e0e0; resize:vertical;">{{ portaria.observacoes|default:'' }}</textarea>
+                        </div>
+                        <div class="col-12">
+                            <hr style="border-color:#eee;">
+                            <label class="form-label fw-semibold" style="font-size:13px;">Disciplinas <span style="color:#FF6B00">*</span></label>
+                            <div style="display:flex; flex-wrap:wrap; gap:8px;">
+                                {% for matricula in portaria.id_alunofk.matriculas.all %}
+                                {% with disc=matricula.codigo_disciplinafk %}
+                                <div class="form-check" style="background:#f8f9fa; padding:6px 12px; border-radius:8px; border:1px solid #dee2e6;">
+                                    <input class="form-check-input" type="checkbox" name="disciplinas"
+                                           value="{{ disc.codigo_disciplina }}"
+                                           id="ed_port_disc_{{ portaria.pk }}_{{ disc.codigo_disciplina }}"
+                                           {% for dp in portaria.disciplinas_portaria.all %}{% if dp.codigo_disciplinafk == disc %}checked{% endif %}{% endfor %}>
+                                    <label class="form-check-label" for="ed_port_disc_{{ portaria.pk }}_{{ disc.codigo_disciplina }}" style="font-size:13px;">
+                                        {{ disc.nome_disciplina }}
+                                    </label>
+                                </div>
+                                {% endwith %}
+                                {% empty %}
+                                <small class="text-muted">Aluno sem disciplinas matriculadas.</small>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer" style="border:none; padding-top:0;">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-sm text-white fw-semibold"
+                            style="background:linear-gradient(135deg,#FF6B00,#D45400); border:none; border-radius:8px; padding:8px 24px;">
+                        <i class="fas fa-save me-1"></i> Salvar Alterações
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Excluir -->
+<div class="modal fade" id="modalExcluirPortaria{{ portaria.pk }}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius:12px; overflow:hidden;">
+            <div class="modal-header" style="background:#dc3545; color:#fff; border:none;">
+                <h5 class="modal-title">
+                    <i class="fas fa-exclamation-triangle me-2"></i> Confirmar Exclusão
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" action="{% url 'dashboard:excluir_portaria' portaria.pk %}">
+                {% csrf_token %}
+                <div class="modal-body p-4">
+                    <p>Tem certeza que deseja excluir a portaria:</p>
+                    <div style="background:#f8f9fa; padding:12px 16px; border-radius:8px; margin:8px 0;">
+                        <strong><i class="fas fa-file-medical me-1" style="color:var(--uc-orange)"></i> Portaria #{{ portaria.numero_portaria }}</strong><br>
+                        <small class="text-muted">{{ portaria.id_alunofk.nome_completo }} · Criada em {{ portaria.data_criacao|date:"d/m/Y" }}</small>
+                    </div>
+                    <p class="text-danger mt-3 mb-0" style="font-size:13px;">
+                        <i class="fas fa-exclamation-circle me-1"></i>
+                        Esta ação é irreversível. Todas as atividades vinculadas serão removidas.
+                    </p>
+                </div>
+                <div class="modal-footer" style="border:none; padding-top:0;">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-danger btn-sm fw-semibold" style="border-radius:8px; padding:8px 24px;">
+                        <i class="fas fa-trash-alt me-1"></i> Excluir
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endfor %}
+
+</body>
+{% endblock %}
+
+{% block footer %}{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
+<script>
+    function ucToggleSidebar() {
+        document.getElementById('ucSidebar').classList.toggle('collapsed');
+        document.getElementById('ucMain').classList.toggle('expanded');
+        localStorage.setItem('uc_sb', document.getElementById('ucSidebar').classList.contains('collapsed'));
+    }
+
+    function loadAlunoDisciplinas(alunoId) {
+        const listDiv = document.getElementById('cad_disciplinas_list');
+        if (!alunoId) {
+            listDiv.innerHTML = '<small class="text-muted"><i class="fas fa-info-circle me-1"></i> Selecione um aluno para ver suas disciplinas.</small>';
+            return;
+        }
+        listDiv.innerHTML = '<small class="text-muted"><i class="fas fa-spinner fa-spin me-1"></i> Carregando disciplinas...</small>';
+        fetch(`/dashboard/api/aluno/${alunoId}/disciplinas/`)
+            .then(r => r.json())
+            .then(data => {
+                listDiv.innerHTML = '';
+                if (data.disciplinas.length === 0) {
+                    listDiv.innerHTML = '<small class="text-muted">Este aluno não possui disciplinas matriculadas neste curso.</small>';
+                } else {
+                    data.disciplinas.forEach(d => {
+                        const wrapper = document.createElement('div');
+                        wrapper.className = 'form-check';
+                        wrapper.style.cssText = 'background:#f8f9fa; padding:6px 12px; border-radius:8px; border:1px solid #dee2e6;';
+                        wrapper.innerHTML = `
+                            <input class="form-check-input" type="checkbox" name="disciplinas"
+                                   value="${d.codigo_disciplina}" id="cad_disc_${d.codigo_disciplina}" checked>
+                            <label class="form-check-label" for="cad_disc_${d.codigo_disciplina}" style="font-size:13px;">
+                                ${d.nome_disciplina}
+                            </label>`;
+                        listDiv.appendChild(wrapper);
+                    });
+                }
+            })
+            .catch(() => {
+                listDiv.innerHTML = '<small class="text-danger"><i class="fas fa-exclamation-circle me-1"></i> Erro ao carregar disciplinas.</small>';
+            });
+    }
+
+    function showCadError(msg) {
+        const box = document.getElementById('cad_portaria_error');
+        document.getElementById('cad_portaria_error_msg').textContent = msg;
+        box.style.display = 'block';
+        box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    function hideCadError() {
+        const box = document.getElementById('cad_portaria_error');
+        if (box) box.style.display = 'none';
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        if (localStorage.getItem('uc_sb') === 'true') {
+            document.getElementById('ucSidebar').classList.add('collapsed');
+            document.getElementById('ucMain').classList.add('expanded');
+        }
+
+        const cadModalEl = document.getElementById('modalCadastrarPortaria');
+
+        // Botao Nova Portaria: abre via JS para garantir funcionamento
+        const btnNovaPortaria = document.getElementById('btnNovaPortaria');
+        if (btnNovaPortaria && cadModalEl) {
+            btnNovaPortaria.addEventListener('click', function () {
+                bootstrap.Modal.getOrCreateInstance(cadModalEl).show();
+            });
+        }
+
+        // TomSelect: inicializa apenas na primeira abertura do modal
+        let tomSelectInstance = null;
+        if (cadModalEl) {
+            cadModalEl.addEventListener('show.bs.modal', function () {
+                if (!tomSelectInstance) {
+                    const sel = document.getElementById('cad_aluno_select');
+                    if (sel) {
+                        tomSelectInstance = new TomSelect(sel, {
+                            placeholder: 'Pesquisar aluno...',
+                            searchField: ['text'],
+                            allowEmptyOption: true,
+                            onChange: function (value) {
+                                hideCadError();
+                                loadAlunoDisciplinas(value);
+                            }
+                        });
+                    }
+                }
+            });
+
+            // Limpa erro ao fechar o modal
+            cadModalEl.addEventListener('hidden.bs.modal', hideCadError);
+        }
+
+        // AJAX submit - manter modal aberto em caso de erro
+        const btnSubmit = document.getElementById('btn_cad_portaria_submit');
+        if (btnSubmit) {
+            btnSubmit.addEventListener('click', function () {
+                hideCadError();
+                const form = document.getElementById('formCadastrarPortaria');
+                if (!form.checkValidity()) {
+                    form.reportValidity();
+                    return;
+                }
+                const formData = new FormData(form);
+                btnSubmit.disabled = true;
+                btnSubmit.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Salvando...';
+                fetch(form.action, {
+                    method: 'POST',
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                    body: formData
+                })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) {
+                        window.location.reload();
+                    } else {
+                        showCadError(data.error || 'Erro desconhecido.');
+                        btnSubmit.disabled = false;
+                        btnSubmit.innerHTML = '<i class="fas fa-save me-1"></i> Cadastrar';
+                    }
+                })
+                .catch(() => {
+                    showCadError('Erro de conexao. Tente novamente.');
+                    btnSubmit.disabled = false;
+                    btnSubmit.innerHTML = '<i class="fas fa-save me-1"></i> Cadastrar';
+                });
+            });
+        }
+    });
+</script>
+{% endblock %}

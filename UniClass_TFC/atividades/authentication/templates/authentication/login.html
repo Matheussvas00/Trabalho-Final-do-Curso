@@ -1,0 +1,297 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Login - UniClass{% endblock %}
+
+{% block extra_css %}
+<style>
+  
+    body {
+        background: linear-gradient(to bottom, #ffffff 0%, #828282 100%);
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .logo-top {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 120px;
+        z-index: 10;
+        overflow: hidden;
+    }
+    
+    .logo-top img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+    }
+    
+    .login-container {
+        max-width: 450px;
+        width: 100%;
+        padding: 20px;
+        margin-top: 100px;
+    }
+    
+    .login-card {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        padding: 40px;
+    }
+    
+    .login-header {
+        text-align: center;
+        margin-bottom: 30px;
+    }
+    
+    .login-header h1 {
+        color: #333;
+        font-size: 28px;
+        font-weight: 700;
+        margin-bottom: 10px;
+    }
+    
+    .login-header p {
+        color: #666;
+        font-size: 14px;
+    }
+    
+    .logo-container {
+        text-align: center;
+        margin-bottom: 20px;
+    }
+    
+    .logo-container i {
+        font-size: 60px;
+        color: #FF6B00;
+    }
+    
+    .form-label {
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 8px;
+    }
+    
+    .form-control {
+        border-radius: 8px;
+        border: 2px solid #e0e0e0;
+        padding: 12px 15px;
+        font-size: 14px;
+        transition: all 0.3s;
+    }
+    
+    .form-control:focus {
+        border-color: #FF6B00;
+        box-shadow: 0 0 0 0.2rem rgba(255, 107, 0, 0.25);
+    }
+    
+    .btn-login {
+        width: 100%;
+        padding: 12px;
+        font-size: 16px;
+        font-weight: 600;
+        border-radius: 8px;
+        background: linear-gradient(135deg, #FF6B00 0%, #D45400 100%);
+        border: none;
+        color: white;
+        transition: transform 0.2s;
+    }
+    
+    .btn-login:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(255, 107, 0, 0.4);
+    }
+    
+    .form-check-label {
+        font-size: 14px;
+        color: #666;
+    }
+    
+    .domain-hint {
+        font-size: 12px;
+        color: #999;
+        margin-top: 5px;
+    }
+    
+    .alert {
+        border-radius: 8px;
+        font-size: 14px;
+    }
+    
+    .messages-container {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 9999;
+        max-width: 400px;
+    }
+
+    .divider {
+        display: flex;
+        align-items: center;
+        margin: 20px 0;
+        color: #999;
+        font-size: 13px;
+    }
+
+    .divider::before,
+    .divider::after {
+        content: '';
+        flex: 1;
+        border-top: 1px solid #e0e0e0;
+        margin: 0 10px;
+    }
+
+    .btn-cadastro-link {
+        width: 100%;
+        padding: 11px;
+        font-size: 15px;
+        font-weight: 500;
+        border-radius: 8px;
+        border: 2px solid #FF6B00;
+        color: #FF6B00;
+        background: transparent;
+        transition: all 0.2s;
+        text-decoration: none;
+        display: block;
+        text-align: center;
+    }
+
+    .btn-cadastro-link:hover {
+        background: #FF6B00;
+        color: white;
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<!-- Logo no topo -->
+<div class="logo-top">
+    <img src="{% static 'img/logo_uniclass_tfc.png' %}" alt="UniClass Logo">
+</div>
+
+<div class="login-container">
+    <div class="login-card">
+        <!-- Logo -->
+        <div class="logo-container">
+            <i class="fas fa-graduation-cap"></i>
+        </div>
+        
+        <!-- Header -->
+        <div class="login-header">
+            <h1>UniClass</h1>
+            <p>Sistema de Atividades Domiciliares</p>
+        </div>
+        
+        <!-- Messages -->
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+        
+        <!-- Form de Login -->
+        <form method="post" novalidate>
+            {% csrf_token %}
+            
+            <!-- Email -->
+            <div class="mb-3">
+                <label for="{{ form.email.id_for_label }}" class="form-label">
+                    {{ form.email.label }}
+                </label>
+                {{ form.email }}
+                <div class="domain-hint">
+                    <i class="fas fa-info-circle"></i>
+                    Alunos: @academico.unirv.edu.br | Staff: @unirv.edu.br
+                </div>
+                {% if form.email.errors %}
+                    <div class="text-danger small mt-1">
+                        {{ form.email.errors.0 }}
+                    </div>
+                {% endif %}
+            </div>
+            
+            <!-- Senha -->
+            <div class="mb-3">
+                <label for="{{ form.senha.id_for_label }}" class="form-label">
+                    {{ form.senha.label }}
+                </label>
+                {{ form.senha }}
+                {% if form.senha.errors %}
+                    <div class="text-danger small mt-1">
+                        {{ form.senha.errors.0 }}
+                    </div>
+                {% endif %}
+            </div>
+            
+            <!-- Lembrar-me -->
+            <div class="mb-3 form-check">
+                {{ form.lembrar_me }}
+                <label class="form-check-label" for="{{ form.lembrar_me.id_for_label }}">
+                    {{ form.lembrar_me.label }}
+                </label>
+            </div>
+            
+            <!-- Botão de Submit -->
+            <button type="submit" class="btn btn-login">
+                <i class="fas fa-sign-in-alt me-2"></i>
+                Entrar
+            </button>
+        </form>
+        
+        <!-- Links Adicionais -->
+        <div class="text-center mt-3">
+            <small class="text-muted">
+                Esqueceu sua senha?
+                <a href="#" class="text-decoration-none" style="color:#FF6B00; font-weight:500;"
+                   data-bs-toggle="modal" data-bs-target="#modalEsqueceuSenha">Clique aqui</a>
+            </small>
+        </div>
+
+        <!-- Modal: instrução para contatar diretor -->
+        <div class="modal fade" id="modalEsqueceuSenha" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered modal-sm">
+                <div class="modal-content" style="border-radius:12px; overflow:hidden; text-align:center;">
+                    <div class="modal-header" style="background:linear-gradient(135deg,#1C1C2E,#0F2952); border:none; justify-content:center;">
+                        <i class="fas fa-key fa-2x" style="color:#FF6B00;"></i>
+                    </div>
+                    <div class="modal-body py-4 px-4">
+                        <h6 class="fw-bold mb-2">Redefinição de Senha</h6>
+                        <p style="font-size:14px; color:#555; margin:0;">
+                            Para redefinir sua senha, entre em contato com a
+                            <strong>Direção da faculdade</strong>.
+                            O diretor poderá gerar uma nova senha para sua conta pelo painel administrativo.
+                        </p>
+                    </div>
+                    <div class="modal-footer border-0 justify-content-center pt-0 pb-3">
+                        <button type="button" class="btn btn-sm text-white fw-semibold px-4"
+                                style="background:linear-gradient(135deg,#FF6B00,#D45400); border:none; border-radius:8px;"
+                                data-bs-dismiss="modal">Entendido</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="divider">ou</div>
+
+        <!-- Botão de Cadastro -->
+        <a href="{% url 'authentication:cadastro' %}" class="btn-cadastro-link">
+            <i class="fas fa-user-plus me-2"></i>
+            Criar nova conta
+        </a>
+
+    </div>
+</div>
+{% endblock %}
+
+{% block footer %}{% endblock %}

@@ -1,0 +1,314 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Criar Atividade | UniClass{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+{% endblock %}
+
+{% block body %}
+<body class="dashboard-body">
+
+{% include 'dashboard/partials/_sidebar.html' with active_page='atividades' %}
+
+<div class="uc-main" id="ucMain">
+
+    <header class="uc-topbar">
+        <button class="uc-topbar__toggle" onclick="ucToggleSidebar()"><i class="fas fa-bars"></i></button>
+        <div class="uc-topbar__title-wrap">
+            <div class="uc-topbar__title">Criar Nova Atividade</div>
+            <div class="uc-topbar__subtitle">{{ greeting }}, {{ display_name }}!</div>
+        </div>
+    </header>
+
+    <div class="uc-content">
+
+        {% if messages %}
+            {% for message in messages %}
+                <div class="uc-alert uc-alert--{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %}">
+                    <i class="fas fa-{% if message.tags == 'success' %}check-circle{% elif message.tags == 'error' %}exclamation-circle{% else %}info-circle{% endif %}"></i>
+                    <span>{{ message }}</span>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <div style="margin-bottom:16px;">
+            <a href="{% url 'dashboard:gerenciar_atividades' %}" style="color:#555; font-size:13px; text-decoration:none;">
+                <i class="fas fa-arrow-left me-1"></i> Voltar para atividades
+            </a>
+        </div>
+
+        {% if not portarias %}
+        <div class="uc-alert uc-alert--warning">
+            <i class="fas fa-exclamation-triangle"></i>
+            <span>Não há portarias ativas para suas disciplinas no prazo atual. Aguarde o diretor emitir uma portaria ou verifique se os prazos ainda estão vigentes.</span>
+        </div>
+        {% else %}
+
+        <div class="uc-card" style="max-width:760px;">
+            <div class="uc-card__head">
+                <span class="uc-card__head-title">
+                    <i class="fas fa-plus-circle" style="color:var(--uc-orange)"></i>
+                    Nova Atividade Domiciliar
+                </span>
+            </div>
+            <div class="uc-card__body">
+                <form method="post" action="{% url 'dashboard:cadastrar_atividade' %}" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="row g-3">
+
+                        <!-- STEP 1: Portaria -->
+                        <div class="col-12">
+                            <label class="form-label fw-semibold" style="font-size:13px;">
+                                <span style="display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;background:#FF6B00;color:#fff;border-radius:50%;font-size:11px;font-weight:700;margin-right:6px;">1</span>
+                                Portaria do Aluno <span style="color:#FF6B00">*</span>
+                            </label>
+                            <select name="id_portaria" id="selectPortaria" class="form-select" required style="border-radius:8px;">
+                                <option value="">Selecione a portaria...</option>
+                                {% for p in portarias %}
+                                <option value="{{ p.pk }}"
+                                    data-prazo="{{ p.prazo_aluno_responder|date:'Y-m-d' }}"
+                                    data-prazo-display="{{ p.prazo_aluno_responder|date:'d/m/Y' }}"
+                                    data-aluno="{{ p.id_alunofk.nome_completo }}">
+                                    #{{ p.numero_portaria }} — {{ p.id_alunofk.nome_completo }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <!-- Prazo bloqueado (informativo) -->
+                        <div class="col-12" id="divPrazoInfo" style="display:none;">
+                            <div style="background:linear-gradient(135deg,#fff8f0,#fff3e0); border:1px solid #ffe0b2; border-radius:10px; padding:14px 18px; display:flex; align-items:center; gap:14px;">
+                                <div style="width:38px;height:38px;background:#FF6B00;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                                    <i class="fas fa-calendar-lock" style="color:#fff; font-size:16px;"></i>
+                                </div>
+                                <div>
+                                    <div style="font-size:11px;color:#e65100;text-transform:uppercase;font-weight:700;letter-spacing:.4px;">Prazo de Entrega do Aluno</div>
+                                    <div style="font-size:18px;font-weight:700;color:#1C1C2E;" id="prazoDisplay">—</div>
+                                    <div style="font-size:11px;color:#888; margin-top:1px;">Definido na portaria — não pode ser alterado</div>
+                                </div>
+                                <div style="margin-left:auto;">
+                                    <span style="background:#fff3e0;color:#e65100;font-size:11px;padding:4px 10px;border-radius:20px;border:1px solid #ffe0b2;">
+                                        <i class="fas fa-lock me-1"></i> Bloqueado
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- STEP 2: Disciplina -->
+                        <div class="col-12" id="divDisciplina" style="display:none;">
+                            <label class="form-label fw-semibold" style="font-size:13px;">
+                                <span style="display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;background:#FF6B00;color:#fff;border-radius:50%;font-size:11px;font-weight:700;margin-right:6px;">2</span>
+                                Disciplina <span style="color:#FF6B00">*</span>
+                            </label>
+                            <div id="disciplinaLoading" style="display:none; color:#888; font-size:13px; padding:8px 0;">
+                                <i class="fas fa-spinner fa-spin me-1"></i> Carregando disciplinas...
+                            </div>
+                            <div id="disciplinaCards" class="row g-2" style="margin-top:2px;"></div>
+                            <!-- select oculto para envio no form -->
+                            <select name="codigo_disciplina" id="selectDisciplina" style="display:none;"></select>
+                            <div id="disciplinaVazia" style="display:none; padding:10px 14px; background:#fff3cd; border-radius:8px; font-size:13px; color:#856404; border:1px solid #ffc107;">
+                                <i class="fas fa-exclamation-triangle me-1"></i>
+                                Você não leciona nenhuma disciplina vinculada a esta portaria.
+                            </div>
+                        </div>
+
+                        <!-- STEP 3: Título -->
+                        <div class="col-12" id="divTitulo" style="display:none;">
+                            <label class="form-label fw-semibold" style="font-size:13px;">
+                                <span style="display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;background:#FF6B00;color:#fff;border-radius:50%;font-size:11px;font-weight:700;margin-right:6px;">3</span>
+                                Título da Atividade <span style="color:#FF6B00">*</span>
+                            </label>
+                            <input type="text" name="titulo" class="form-control" id="inputTitulo"
+                                placeholder="Ex.: Resumo — Capítulo 3" maxlength="150" style="border-radius:8px;">
+                        </div>
+
+                        <div class="col-12" id="divDescricao" style="display:none;">
+                            <label class="form-label fw-semibold" style="font-size:13px;">
+                                <span style="display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;background:#FF6B00;color:#fff;border-radius:50%;font-size:11px;font-weight:700;margin-right:6px;">4</span>
+                                Descrição / Enunciado <span style="color:#FF6B00">*</span>
+                            </label>
+                            <textarea name="descricao" class="form-control" rows="6"
+                                placeholder="Descreva detalhadamente o que o aluno deve fazer..." style="border-radius:8px;"></textarea>
+                        </div>
+
+                        <div class="col-12" id="divAnexo" style="display:none;">
+                            <label class="form-label fw-semibold" style="font-size:13px;">
+                                <span style="display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;background:#aaa;color:#fff;border-radius:50%;font-size:11px;font-weight:700;margin-right:6px;">5</span>
+                                Arquivo de Apoio <small class="text-muted fw-normal">(opcional)</small>
+                            </label>
+                            <input type="file" name="anexo" class="form-control" style="border-radius:8px;"
+                                accept=".pdf,.doc,.docx,.jpg,.jpeg,.png">
+                            <small class="text-muted">PDF, DOC, DOCX, imagens. Máx. 10MB.</small>
+                        </div>
+
+                    </div>
+
+                    <div id="divSubmit" style="margin-top:24px; display:none; gap:10px; justify-content:flex-end;">
+                        <a href="{% url 'dashboard:gerenciar_atividades' %}" class="btn btn-outline-secondary btn-sm">Cancelar</a>
+                        <button type="submit" class="btn btn-sm text-white fw-semibold"
+                            style="background:linear-gradient(135deg,#FF6B00,#D45400); border:none; border-radius:8px; padding:8px 28px;">
+                            <i class="fas fa-save me-1"></i> Criar Atividade
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Info das portarias disponíveis -->
+        <div class="uc-card" style="max-width:760px; margin-top:20px;">
+            <div class="uc-card__head">
+                <span class="uc-card__head-title">
+                    <i class="fas fa-file-alt" style="color:var(--uc-orange)"></i>
+                    Portarias Disponíveis para Criar Atividades
+                </span>
+            </div>
+            <div class="uc-card__body" style="padding:0;">
+                <div style="overflow-x:auto;">
+                <table style="width:100%; border-collapse:collapse; font-size:13px;">
+                    <thead>
+                        <tr style="background:#f8f9fa; border-bottom:2px solid #eee;">
+                            <th style="padding:10px 14px;">#</th>
+                            <th style="padding:10px 14px;">Aluno</th>
+                            <th style="padding:10px 14px;">Disciplinas</th>
+                            <th style="padding:10px 14px; text-align:center;">Prazo p/ Criar</th>
+                            <th style="padding:10px 14px; text-align:center;">Prazo Aluno</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for p in portarias %}
+                        <tr style="border-bottom:1px solid #f0f0f0;">
+                            <td style="padding:8px 14px;"><code style="background:#f0f0f0; padding:2px 6px; border-radius:4px;">{{ p.numero_portaria }}</code></td>
+                            <td style="padding:8px 14px;">{{ p.id_alunofk.nome_completo }}</td>
+                            <td style="padding:8px 14px; font-size:12px;">
+                                {% for pd in p.disciplinas_portaria.all %}
+                                    <span style="background:#e9ecef; padding:1px 6px; border-radius:4px; margin-right:3px;">{{ pd.codigo_disciplinafk.nome_disciplina }}</span>
+                                {% endfor %}
+                            </td>
+                            <td style="padding:8px 14px; text-align:center;">{{ p.prazo_professor_criar_atividades|date:"d/m/Y" }}</td>
+                            <td style="padding:8px 14px; text-align:center;">{{ p.prazo_aluno_responder|date:"d/m/Y" }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                </div>
+            </div>
+        </div>
+
+        {% endif %}
+
+    </div>
+</div>
+
+</body>
+{% endblock %}
+
+{% block footer %}{% endblock %}
+
+{% block extra_js %}
+<script>
+    function ucToggleSidebar() {
+        document.getElementById('ucSidebar').classList.toggle('collapsed');
+        document.getElementById('ucMain').classList.toggle('expanded');
+        localStorage.setItem('uc_sb', document.getElementById('ucSidebar').classList.contains('collapsed'));
+    }
+    document.addEventListener('DOMContentLoaded', function () {
+        if (localStorage.getItem('uc_sb') === 'true') {
+            document.getElementById('ucSidebar').classList.add('collapsed');
+            document.getElementById('ucMain').classList.add('expanded');
+        }
+    });
+
+    let disciplinaSelecionada = null;
+
+    function mostrarCamposDepois() {
+        // Só exibe campos após a disciplina ser selecionada
+        const show = disciplinaSelecionada !== null;
+        ['divTitulo','divDescricao','divAnexo'].forEach(id => {
+            document.getElementById(id).style.display = show ? '' : 'none';
+        });
+        document.getElementById('divSubmit').style.display = show ? 'flex' : 'none';
+    }
+
+    function selecionarDisciplina(codigo, nome) {
+        disciplinaSelecionada = codigo;
+        // Atualiza hidden select
+        const sel = document.getElementById('selectDisciplina');
+        sel.innerHTML = `<option value="${codigo}" selected>${nome}</option>`;
+        // Atualiza aparência dos cards
+        document.querySelectorAll('.disc-card').forEach(c => {
+            c.style.borderColor = c.dataset.codigo === codigo ? '#FF6B00' : '#e9ecef';
+            c.style.background = c.dataset.codigo === codigo ? '#fff8f0' : '#fff';
+        });
+        mostrarCamposDepois();
+    }
+
+    function carregarDisciplinas(portariaId) {
+        const divDisc = document.getElementById('divDisciplina');
+        const loading = document.getElementById('disciplinaLoading');
+        const cards   = document.getElementById('disciplinaCards');
+        const vazia   = document.getElementById('disciplinaVazia');
+
+        disciplinaSelecionada = null;
+        cards.innerHTML = '';
+        loading.style.display = '';
+        vazia.style.display = 'none';
+        divDisc.style.display = '';
+        mostrarCamposDepois();
+
+        fetch(`/dashboard/api/professor/portaria/${portariaId}/disciplinas/`, {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(r => r.json())
+        .then(data => {
+            loading.style.display = 'none';
+            if (data.disciplinas && data.disciplinas.length > 0) {
+                data.disciplinas.forEach(d => {
+                    cards.innerHTML += `
+                        <div class="col-auto">
+                            <div class="disc-card" data-codigo="${d.codigo_disciplina}"
+                                onclick="selecionarDisciplina('${d.codigo_disciplina}', '${d.nome_disciplina.replace(/'/g,"\\'")}' )"
+                                style="border:2px solid #e9ecef; border-radius:10px; padding:12px 18px; cursor:pointer;
+                                       background:#fff; transition:.15s; user-select:none; min-width:140px;">
+                                <div style="font-weight:700; font-size:14px; color:#1C1C2E;">${d.nome_disciplina}</div>
+                                <div style="font-size:11px; color:#aaa; margin-top:2px;">${d.codigo_disciplina}</div>
+                            </div>
+                        </div>`;
+                });
+            } else {
+                vazia.style.display = '';
+            }
+        })
+        .catch(() => {
+            loading.style.display = 'none';
+            vazia.style.display = '';
+        });
+    }
+
+    document.getElementById('selectPortaria').addEventListener('change', function () {
+        const portariaId = this.value;
+        const opt = this.options[this.selectedIndex];
+        const prazoDisplay = opt ? opt.getAttribute('data-prazo-display') : null;
+
+        // Mostra prazo bloqueado
+        if (portariaId && prazoDisplay) {
+            document.getElementById('prazoDisplay').textContent = prazoDisplay;
+            document.getElementById('divPrazoInfo').style.display = '';
+        } else {
+            document.getElementById('divPrazoInfo').style.display = 'none';
+        }
+
+        // Reseta disciplina e campos subsequentes
+        document.getElementById('divDisciplina').style.display = 'none';
+        document.getElementById('disciplinaCards').innerHTML = '';
+        document.getElementById('selectDisciplina').innerHTML = '';
+        disciplinaSelecionada = null;
+        mostrarCamposDepois();
+
+        if (portariaId) {
+            carregarDisciplinas(portariaId);
+        }
+    });
+</script>
+{% endblock %}

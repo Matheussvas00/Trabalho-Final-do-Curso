@@ -1,0 +1,113 @@
+{% load static %}
+<aside class="uc-sidebar" id="ucSidebar">
+
+    <!-- Logo -->
+    <div class="uc-sidebar__logo">
+        <img src="{% static 'img/logo_uniclass_tfc.png' %}" alt="UniClass" class="uc-sidebar__logo-img">
+        <span class="uc-sidebar__logo-text">UniClass</span>
+    </div>
+
+    <!-- Usuário -->
+    <div class="uc-sidebar__user">
+        <div class="uc-sidebar__avatar">{{ user.email|first|upper }}</div>
+        <div class="uc-sidebar__user-info">
+            <div class="uc-sidebar__user-name">{{ display_name }}</div>
+            <div class="uc-sidebar__user-role">{{ user.get_tipo_usuario_display }}</div>
+        </div>
+    </div>
+
+    <!-- Navegação -->
+    <nav class="uc-sidebar__nav">
+
+        <span class="uc-sidebar__section-label">Principal</span>
+        <a href="{% url 'dashboard:index' %}" class="uc-sidebar__link {% if active_page == 'inicio' %}uc-sidebar__link--active{% endif %}" data-tip="Início">
+            <i class="fas fa-home"></i><span>Início</span>
+        </a>
+
+        {% if user.tipo_usuario == 'aluno' %}
+
+            <span class="uc-sidebar__section-label">Minha Área</span>
+            <a href="{% url 'dashboard:atividades_disponiveis' %}" class="uc-sidebar__link {% if active_page == 'atividades' %}uc-sidebar__link--active{% endif %}" data-tip="Minhas Atividades">
+                <i class="fas fa-tasks"></i><span>Minhas Atividades</span>
+                {% if total_atividades %}<em class="uc-sidebar__badge">{{ total_atividades }}</em>{% endif %}
+            </a>
+            <a href="{% url 'dashboard:minhas_portarias' %}" class="uc-sidebar__link {% if active_page == 'portarias' %}uc-sidebar__link--active{% endif %}" data-tip="Minhas Portarias">
+                <i class="fas fa-file-alt"></i><span>Minhas Portarias</span>
+            </a>
+            <a href="{% url 'dashboard:minhas_disciplinas' %}" class="uc-sidebar__link {% if active_page == 'disciplinas' %}uc-sidebar__link--active{% endif %}" data-tip="Disciplinas">
+                <i class="fas fa-book-open"></i><span>Disciplinas</span>
+            </a>
+            <a href="{% url 'dashboard:minhas_respostas' %}" class="uc-sidebar__link {% if active_page == 'respostas' %}uc-sidebar__link--active{% endif %}" data-tip="Histórico">
+                <i class="fas fa-history"></i><span>Histórico</span>
+            </a>
+
+        {% elif user.tipo_usuario == 'professor' %}
+
+            <span class="uc-sidebar__section-label">Gestão de Aulas</span>
+            <a href="{% url 'dashboard:gerenciar_atividades' %}" class="uc-sidebar__link {% if active_page == 'atividades' %}uc-sidebar__link--active{% endif %}" data-tip="Minhas Atividades">
+                <i class="fas fa-tasks"></i><span>Minhas Atividades</span>
+            </a>
+            <a href="{% url 'dashboard:cadastrar_atividade' %}" class="uc-sidebar__link {% if active_page == 'criar_atividade' %}uc-sidebar__link--active{% endif %}" data-tip="Criar Atividade">
+                <i class="fas fa-plus-circle"></i><span>Criar Atividade</span>
+            </a>
+            <a href="{% url 'dashboard:validar_respostas' %}" class="uc-sidebar__link {% if active_page == 'respostas' %}uc-sidebar__link--active{% endif %}" data-tip="Avaliar Respostas">
+                <i class="fas fa-clipboard-check"></i><span>Avaliar Respostas</span>
+                {% if respostas_pendentes %}<em class="uc-sidebar__badge">{{ respostas_pendentes }}</em>{% endif %}
+            </a>
+            <a href="{% url 'dashboard:portarias_professor' %}" class="uc-sidebar__link {% if active_page == 'portarias' %}uc-sidebar__link--active{% endif %}" data-tip="Portarias Recebidas">
+                <i class="fas fa-file-alt"></i><span>Portarias Recebidas</span>
+            </a>
+            <a href="{% url 'dashboard:disciplinas_professor' %}" class="uc-sidebar__link {% if active_page == 'disciplinas' %}uc-sidebar__link--active{% endif %}" data-tip="Minhas Disciplinas">
+                <i class="fas fa-chalkboard-teacher"></i><span>Minhas Disciplinas</span>
+            </a>
+
+        {% elif user.tipo_usuario == 'admin' %}
+
+            <span class="uc-sidebar__section-label">Administração</span>
+            <a href="{% url 'dashboard:gerenciar_diretores' %}" class="uc-sidebar__link {% if active_page == 'diretores' %}uc-sidebar__link--active{% endif %}" data-tip="Diretores">
+                <i class="fas fa-user-tie"></i><span>Diretores</span>
+            </a>
+            <a href="{% url 'dashboard:gerenciar_cursos' %}" class="uc-sidebar__link {% if active_page == 'cursos' %}uc-sidebar__link--active{% endif %}" data-tip="Cursos">
+                <i class="fas fa-graduation-cap"></i><span>Cursos</span>
+            </a>
+            <a href="{% url 'dashboard:gerenciar_disciplinas' %}" class="uc-sidebar__link {% if active_page == 'disciplinas' %}uc-sidebar__link--active{% endif %}" data-tip="Disciplinas">
+                <i class="fas fa-book"></i><span>Disciplinas</span>
+            </a>
+
+        {% elif user.tipo_usuario == 'diretor' %}
+
+            <span class="uc-sidebar__section-label">Gestão</span>
+            <a href="{% url 'dashboard:gerenciar_alunos_diretor' %}" class="uc-sidebar__link {% if active_page == 'alunos' %}uc-sidebar__link--active{% endif %}" data-tip="Gerenciar Alunos">
+                <i class="fas fa-user-graduate"></i><span>Alunos</span>
+            </a>
+            <a href="{% url 'dashboard:gerenciar_professores_diretor' %}" class="uc-sidebar__link {% if active_page == 'professores' %}uc-sidebar__link--active{% endif %}" data-tip="Gerenciar Professores">
+                <i class="fas fa-chalkboard-teacher"></i><span>Professores</span>
+            </a>
+            <a href="{% url 'dashboard:gerenciar_portarias' %}" class="uc-sidebar__link {% if active_page == 'portarias' %}uc-sidebar__link--active{% endif %}" data-tip="Gerenciar Portarias">
+                <i class="fas fa-file-medical"></i><span>Portarias</span>
+            </a>
+            <a href="{% url 'dashboard:gerenciar_validacoes' %}" class="uc-sidebar__link {% if active_page == 'validar' %}uc-sidebar__link--active{% endif %}" data-tip="Validar Atividades">
+                <i class="fas fa-check-double"></i><span>Validar Atividades</span>
+                {% if total_validar %}<em class="uc-sidebar__badge">{{ total_validar }}</em>{% endif %}
+            </a>
+
+        {% endif %}
+
+        <span class="uc-sidebar__section-label">Geral</span>
+        <a href="#" class="uc-sidebar__link {% if active_page == 'notificacoes' %}uc-sidebar__link--active{% endif %}" data-tip="Notificações">
+            <i class="fas fa-bell"></i><span>Notificações</span>
+            {% if notificacoes_nao_lidas %}<em class="uc-sidebar__badge">{{ notificacoes_nao_lidas }}</em>{% endif %}
+        </a>
+        <a href="#" class="uc-sidebar__link {% if active_page == 'perfil' %}uc-sidebar__link--active{% endif %}" data-tip="Meu Perfil">
+            <i class="fas fa-user-circle"></i><span>Meu Perfil</span>
+        </a>
+
+    </nav>
+
+    <div class="uc-sidebar__footer">
+        <a href="{% url 'authentication:logout' %}" class="uc-sidebar__logout" data-tip="Sair">
+            <i class="fas fa-sign-out-alt"></i><span>Sair</span>
+        </a>
+    </div>
+
+</aside>

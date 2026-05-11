@@ -1,0 +1,141 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Editar Resposta — {{ resposta.id_atividade.titulo }} | UniClass{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+{% endblock %}
+
+{% block body %}
+<body class="dashboard-body">
+
+{% include 'dashboard/partials/_sidebar.html' with active_page='respostas' %}
+
+<div class="uc-main" id="ucMain">
+
+    <header class="uc-topbar">
+        <button class="uc-topbar__toggle" onclick="ucToggleSidebar()"><i class="fas fa-bars"></i></button>
+        <div class="uc-topbar__title-wrap">
+            <div class="uc-topbar__title">Editar Resposta</div>
+            <div class="uc-topbar__subtitle">{{ greeting }}, {{ display_name }}!</div>
+        </div>
+    </header>
+
+    <div class="uc-content">
+
+        {% if messages %}
+            {% for message in messages %}
+                <div class="uc-alert uc-alert--{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %}">
+                    <i class="fas fa-{% if message.tags == 'success' %}check-circle{% elif message.tags == 'error' %}exclamation-circle{% else %}info-circle{% endif %}"></i>
+                    <span>{{ message }}</span>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <div style="margin-bottom:16px;">
+            <a href="{% url 'dashboard:visualizar_resposta' resposta.id_resposta %}" style="color:#555; font-size:13px; text-decoration:none;">
+                <i class="fas fa-arrow-left me-1"></i> Voltar para a resposta
+            </a>
+        </div>
+
+        <!-- Resumo da atividade -->
+        <div class="uc-card" style="margin-bottom:20px;">
+            <div class="uc-card__head">
+                <span class="uc-card__head-title">
+                    <i class="fas fa-tasks" style="color:var(--uc-orange)"></i>
+                    Atividade: {{ resposta.id_atividade.titulo }}
+                </span>
+                <span class="uc-badge uc-badge--pending">Pendente de Avaliação</span>
+            </div>
+            <div class="uc-card__body">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <div style="font-size:11px;color:#999;text-transform:uppercase;font-weight:600;margin-bottom:2px;">Disciplina</div>
+                        <div style="font-size:14px;">{{ resposta.id_atividade.codigo_disciplinafk.nome_disciplina }}</div>
+                    </div>
+                    <div class="col-md-4">
+                        <div style="font-size:11px;color:#999;text-transform:uppercase;font-weight:600;margin-bottom:2px;">Professor</div>
+                        <div style="font-size:14px;">{{ resposta.id_atividade.id_professorfk.nome_completo }}</div>
+                    </div>
+                    <div class="col-md-4">
+                        <div style="font-size:11px;color:#999;text-transform:uppercase;font-weight:600;margin-bottom:2px;">Portaria</div>
+                        <div style="font-size:14px;"><code>{{ resposta.id_atividade.id_portariafk.numero_portaria }}</code></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Formulário de edição -->
+        <div class="uc-card">
+            <div class="uc-card__head">
+                <span class="uc-card__head-title">
+                    <i class="fas fa-edit" style="color:var(--uc-orange)"></i>
+                    Editar sua Resposta
+                </span>
+                <small style="color:#999;">Enviada originalmente em {{ resposta.data_envio|date:"d/m/Y H:i" }}</small>
+            </div>
+            <div class="uc-card__body">
+                <form method="post" action="{% url 'dashboard:editar_resposta' resposta.id_resposta %}" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="form-label fw-semibold" style="font-size:13px;">
+                                Descrição da Resposta
+                                <small class="text-muted fw-normal">(deixe em branco para manter a atual)</small>
+                            </label>
+                            <textarea name="descricao_resposta" class="form-control" rows="7"
+                                placeholder="Atualize sua resposta..." style="border-radius:8px; border:2px solid #e0e0e0; font-size:14px;">{{ resposta.descricao_resposta|default:'' }}</textarea>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-semibold" style="font-size:13px;">
+                                Novo Arquivo
+                                <small class="text-muted fw-normal">(deixe vazio para manter o arquivo atual)</small>
+                            </label>
+                            {% if resposta.arquivo %}
+                            <div style="margin-bottom:8px; padding:10px 14px; background:#e8f4fd; border:1px solid #bee5eb; border-radius:8px; font-size:13px;">
+                                <i class="fas fa-paperclip me-1" style="color:#0c5460;"></i>
+                                <strong style="color:#0c5460;">Arquivo atual:</strong>
+                                <a href="/media/{{ resposta.arquivo }}" target="_blank" class="ms-1">{{ resposta.arquivo }}</a>
+                            </div>
+                            {% endif %}
+                            <input type="file" name="arquivo" class="form-control" style="border-radius:8px; border:2px solid #e0e0e0;">
+                            <small class="text-muted">Formatos aceitos: PDF, DOC, DOCX, JPG, PNG. Máx. 10MB.</small>
+                        </div>
+                    </div>
+                    <div style="margin-top:24px; display:flex; justify-content:flex-end; gap:10px;">
+                        <a href="{% url 'dashboard:visualizar_resposta' resposta.id_resposta %}" class="btn btn-outline-secondary btn-sm" style="border-radius:8px; padding:8px 20px;">
+                            Cancelar
+                        </a>
+                        <button type="submit" class="btn btn-sm text-white fw-semibold"
+                            style="background:linear-gradient(135deg,#FF6B00,#D45400); border:none; border-radius:8px; padding:8px 28px;">
+                            <i class="fas fa-save me-1"></i> Salvar Alterações
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+</body>
+{% endblock %}
+
+{% block footer %}{% endblock %}
+
+{% block extra_js %}
+<script>
+    function ucToggleSidebar() {
+        document.getElementById('ucSidebar').classList.toggle('collapsed');
+        document.getElementById('ucMain').classList.toggle('expanded');
+        localStorage.setItem('uc_sb', document.getElementById('ucSidebar').classList.contains('collapsed'));
+    }
+    document.addEventListener('DOMContentLoaded', function () {
+        if (localStorage.getItem('uc_sb') === 'true') {
+            document.getElementById('ucSidebar').classList.add('collapsed');
+            document.getElementById('ucMain').classList.add('expanded');
+        }
+    });
+</script>
+{% endblock %}

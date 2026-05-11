@@ -1,0 +1,335 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Cadastro - UniClass{% endblock %}
+
+{% block extra_css %}
+<style>
+    body {
+        background: linear-gradient(to bottom, #ffffff 0%, #828282 100%);
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .logo-top {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 120px;
+        z-index: 10;
+        overflow: hidden;
+    }
+
+    .logo-top img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+    }
+
+    .cadastro-container {
+        max-width: 500px;
+        width: 100%;
+        padding: 20px;
+        margin-top: 130px;
+        margin-bottom: 40px;
+    }
+
+    .cadastro-card {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        padding: 40px;
+    }
+
+    .cadastro-header {
+        text-align: center;
+        margin-bottom: 30px;
+    }
+
+    .cadastro-header h1 {
+        color: #333;
+        font-size: 26px;
+        font-weight: 700;
+        margin-bottom: 8px;
+    }
+
+    .cadastro-header p {
+        color: #666;
+        font-size: 14px;
+    }
+
+    .logo-container {
+        text-align: center;
+        margin-bottom: 20px;
+    }
+
+    .logo-container i {
+        font-size: 54px;
+        color: #FF6B00;
+    }
+
+    .form-label {
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 8px;
+    }
+
+    .form-control, .form-select {
+        border-radius: 8px;
+        border: 2px solid #e0e0e0;
+        padding: 12px 15px;
+        font-size: 14px;
+        transition: all 0.3s;
+    }
+
+    .form-control:focus, .form-select:focus {
+        border-color: #FF6B00;
+        box-shadow: 0 0 0 0.2rem rgba(255, 107, 0, 0.25);
+    }
+
+    .btn-cadastro {
+        width: 100%;
+        padding: 12px;
+        font-size: 16px;
+        font-weight: 600;
+        border-radius: 8px;
+        background: linear-gradient(135deg, #FF6B00 0%, #D45400 100%);
+        border: none;
+        color: white;
+        transition: transform 0.2s;
+    }
+
+    .btn-cadastro:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(255, 107, 0, 0.4);
+        color: white;
+    }
+
+    .alert {
+        border-radius: 8px;
+        font-size: 14px;
+    }
+
+    .domain-hint {
+        font-size: 12px;
+        color: #999;
+        margin-top: 5px;
+    }
+
+    .divider {
+        display: flex;
+        align-items: center;
+        margin: 20px 0;
+        color: #999;
+        font-size: 13px;
+    }
+
+    .divider::before,
+    .divider::after {
+        content: '';
+        flex: 1;
+        border-top: 1px solid #e0e0e0;
+        margin: 0 10px;
+    }
+
+    .btn-voltar {
+        width: 100%;
+        padding: 11px;
+        font-size: 15px;
+        font-weight: 500;
+        border-radius: 8px;
+        border: 2px solid #FF6B00;
+        color: #FF6B00;
+        background: transparent;
+        transition: all 0.2s;
+        text-decoration: none;
+        display: block;
+        text-align: center;
+    }
+
+    .btn-voltar:hover {
+        background: #FF6B00;
+        color: white;
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<!-- Logo no topo -->
+<div class="logo-top">
+    <img src="{% static 'img/logo_uniclass_tfc.png' %}" alt="UniClass Logo">
+</div>
+
+<div class="cadastro-container">
+    <div class="cadastro-card">
+
+        <!-- Logo -->
+        <div class="logo-container">
+            <i class="fas fa-user-plus"></i>
+        </div>
+
+        <!-- Header -->
+        <div class="cadastro-header">
+            <h1>Criar Conta</h1>
+            <p>Preencha os dados para acessar o UniClass</p>
+        </div>
+
+        <!-- Messages -->
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <!-- Form de Cadastro -->
+        <form method="post" novalidate>
+            {% csrf_token %}
+
+            <!-- Email -->
+            <div class="mb-3">
+                <label for="{{ form.email.id_for_label }}" class="form-label">
+                    {{ form.email.label }}
+                </label>
+                {{ form.email }}
+                <div class="domain-hint">
+                    <i class="fas fa-info-circle"></i>
+                    Alunos: @academico.unirv.edu.br | Staff: @unirv.edu.br
+                </div>
+                {% if form.email.errors %}
+                    <div class="text-danger small mt-1">{{ form.email.errors.0 }}</div>
+                {% endif %}
+            </div>
+
+            <!-- Tipo de Usuário -->
+            <div class="mb-3">
+                <label for="{{ form.tipo_usuario.id_for_label }}" class="form-label">
+                    {{ form.tipo_usuario.label }}
+                </label>
+                {{ form.tipo_usuario }}
+                {% if form.tipo_usuario.errors %}
+                    <div class="text-danger small mt-1">{{ form.tipo_usuario.errors.0 }}</div>
+                {% endif %}
+            </div>
+
+            <!-- Campos do Perfil (aparecem conforme o tipo) -->
+            <div id="campos-perfil" style="display:none;">
+                <hr style="border-color:#eee; margin:16px 0;">
+                <p style="font-size:13px; color:#888; margin-bottom:12px;">
+                    <i class="fas fa-id-card me-1"></i> Dados do perfil
+                </p>
+
+                <div class="row">
+                    <div class="col-6 mb-3">
+                        <label for="{{ form.nome.id_for_label }}" class="form-label">{{ form.nome.label }}</label>
+                        {{ form.nome }}
+                        {% if form.nome.errors %}<div class="text-danger small mt-1">{{ form.nome.errors.0 }}</div>{% endif %}
+                    </div>
+                    <div class="col-6 mb-3">
+                        <label for="{{ form.sobrenome.id_for_label }}" class="form-label">{{ form.sobrenome.label }}</label>
+                        {{ form.sobrenome }}
+                        {% if form.sobrenome.errors %}<div class="text-danger small mt-1">{{ form.sobrenome.errors.0 }}</div>{% endif %}
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="{{ form.curso.id_for_label }}" class="form-label">{{ form.curso.label }}</label>
+                    {{ form.curso }}
+                    {% if form.curso.errors %}<div class="text-danger small mt-1">{{ form.curso.errors.0 }}</div>{% endif %}
+                </div>
+
+                <div id="campos-aluno" style="display:none;">
+                    <div class="row">
+                        <div class="col-6 mb-3">
+                            <label for="{{ form.periodo.id_for_label }}" class="form-label">{{ form.periodo.label }}</label>
+                            {{ form.periodo }}
+                            {% if form.periodo.errors %}<div class="text-danger small mt-1">{{ form.periodo.errors.0 }}</div>{% endif %}
+                        </div>
+                        <div class="col-6 mb-3">
+                            <label for="{{ form.matricula.id_for_label }}" class="form-label">{{ form.matricula.label }}</label>
+                            {{ form.matricula }}
+                            {% if form.matricula.errors %}<div class="text-danger small mt-1">{{ form.matricula.errors.0 }}</div>{% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Senha -->
+            <div class="mb-3">
+                <label for="{{ form.senha.id_for_label }}" class="form-label">
+                    {{ form.senha.label }}
+                </label>
+                {{ form.senha }}
+                <div class="domain-hint">
+                    <i class="fas fa-lock"></i>
+                    Mínimo 8 caracteres
+                </div>
+                {% if form.senha.errors %}
+                    <div class="text-danger small mt-1">{{ form.senha.errors.0 }}</div>
+                {% endif %}
+            </div>
+
+            <!-- Confirmar Senha -->
+            <div class="mb-4">
+                <label for="{{ form.confirmar_senha.id_for_label }}" class="form-label">
+                    {{ form.confirmar_senha.label }}
+                </label>
+                {{ form.confirmar_senha }}
+                {% if form.confirmar_senha.errors %}
+                    <div class="text-danger small mt-1">{{ form.confirmar_senha.errors.0 }}</div>
+                {% endif %}
+                {% if form.non_field_errors %}
+                    <div class="text-danger small mt-1">{{ form.non_field_errors.0 }}</div>
+                {% endif %}
+            </div>
+
+            <!-- Botão de Cadastro -->
+            <button type="submit" class="btn btn-cadastro mb-3">
+                <i class="fas fa-user-plus me-2"></i>
+                Criar Conta
+            </button>
+        </form>
+
+        <div class="divider">ou</div>
+
+        <!-- Voltar para login -->
+        <a href="{% url 'authentication:login' %}" class="btn-voltar">
+            <i class="fas fa-arrow-left me-2"></i>
+            Já tenho conta — Fazer Login
+        </a>
+
+    </div>
+</div>
+{% endblock %}
+
+{% block footer %}{% endblock %}
+
+{% block extra_js %}
+<script>
+(function() {
+    const tipoSelect = document.getElementById('id_tipo_usuario');
+    const camposPerfil = document.getElementById('campos-perfil');
+    const camposAluno = document.getElementById('campos-aluno');
+
+    function toggleCampos() {
+        const tipo = tipoSelect.value;
+        if (tipo === 'aluno' || tipo === 'professor') {
+            camposPerfil.style.display = '';
+            camposAluno.style.display = tipo === 'aluno' ? '' : 'none';
+        } else {
+            camposPerfil.style.display = 'none';
+        }
+    }
+
+    tipoSelect.addEventListener('change', toggleCampos);
+    toggleCampos(); // executa ao carregar caso haja valor pré-selecionado
+})();
+</script>
+{% endblock %}

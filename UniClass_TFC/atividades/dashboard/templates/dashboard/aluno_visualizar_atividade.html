@@ -1,0 +1,225 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ atividade.titulo }} | UniClass{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+{% endblock %}
+
+{% block body %}
+<body class="dashboard-body">
+
+{% include 'dashboard/partials/_sidebar.html' with active_page='atividades' %}
+
+<div class="uc-main" id="ucMain">
+
+    <header class="uc-topbar">
+        <button class="uc-topbar__toggle" onclick="ucToggleSidebar()"><i class="fas fa-bars"></i></button>
+        <div class="uc-topbar__title-wrap">
+            <div class="uc-topbar__title">Visualizar Atividade</div>
+            <div class="uc-topbar__subtitle">{{ greeting }}, {{ display_name }}!</div>
+        </div>
+    </header>
+
+    <div class="uc-content">
+
+        {% if messages %}
+            {% for message in messages %}
+                <div class="uc-alert uc-alert--{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %}">
+                    <i class="fas fa-{% if message.tags == 'success' %}check-circle{% elif message.tags == 'error' %}exclamation-circle{% else %}info-circle{% endif %}"></i>
+                    <span>{{ message }}</span>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <div style="margin-bottom:16px;">
+            <a href="{% url 'dashboard:atividades_disponiveis' %}" style="color:#555; font-size:13px; text-decoration:none;">
+                <i class="fas fa-arrow-left me-1"></i> Voltar para atividades
+            </a>
+        </div>
+
+        <!-- Detalhes da atividade -->
+        <div class="uc-card" style="margin-bottom:20px;">
+            <div class="uc-card__head">
+                <span class="uc-card__head-title">
+                    <i class="fas fa-tasks" style="color:var(--uc-orange)"></i>
+                    {{ atividade.titulo }}
+                </span>
+                {% if atividade.prazo_vencido %}
+                    <span class="uc-badge uc-badge--rejected">Prazo Vencido</span>
+                {% else %}
+                    <span class="uc-badge uc-badge--pending">Aberta</span>
+                {% endif %}
+            </div>
+            <div class="uc-card__body">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <div style="background:#f8f9fa; border-radius:8px; padding:14px;">
+                            <div style="font-size:11px; color:#999; text-transform:uppercase; font-weight:600; margin-bottom:4px;">Disciplina</div>
+                            <div style="font-size:14px; font-weight:600;">{{ atividade.codigo_disciplinafk.nome_disciplina }}</div>
+                            <div style="font-size:12px; color:#777;">{{ atividade.codigo_disciplinafk.codigo_disciplina }}</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div style="background:#f8f9fa; border-radius:8px; padding:14px;">
+                            <div style="font-size:11px; color:#999; text-transform:uppercase; font-weight:600; margin-bottom:4px;">Professor</div>
+                            <div style="font-size:14px; font-weight:600;">{{ atividade.id_professorfk.nome_completo }}</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div style="background:{% if atividade.prazo_vencido %}#f8d7da{% else %}#fff3cd{% endif %}; border-radius:8px; padding:14px;">
+                            <div style="font-size:11px; color:#999; text-transform:uppercase; font-weight:600; margin-bottom:4px;">Prazo de Entrega</div>
+                            <div style="font-size:14px; font-weight:600; color:{% if atividade.prazo_vencido %}#dc3545{% else %}#856404{% endif %};">
+                                {{ atividade.data_limite_resposta|date:"d/m/Y" }}
+                            </div>
+                            {% if atividade.prazo_vencido %}
+                                <div style="font-size:12px; color:#dc3545;">Prazo encerrado</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                {% if atividade.descricao %}
+                <div style="margin-top:20px;">
+                    <div style="font-size:12px; color:#999; text-transform:uppercase; font-weight:600; margin-bottom:8px;">Descrição da Atividade</div>
+                    <div style="background:#fff; border:1px solid #e9ecef; border-radius:8px; padding:16px; font-size:14px; line-height:1.7;">
+                        {{ atividade.descricao|linebreaksbr }}
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if atividade.anexo %}
+                <div style="margin-top:16px; padding:12px 16px; background:#e8f4fd; border:1px solid #bee5eb; border-radius:8px;">
+                    <i class="fas fa-paperclip me-2" style="color:#0c5460;"></i>
+                    <strong style="color:#0c5460;">Arquivo anexado:</strong>
+                    <a href="/media/{{ atividade.anexo }}" target="_blank" class="ms-2">{{ atividade.anexo }}</a>
+                </div>
+                {% endif %}
+
+                <div style="margin-top:12px; font-size:12px; color:#999;">
+                    Portaria: <code>{{ atividade.id_portariafk.numero_portaria }}</code>
+                    &nbsp;·&nbsp; Criada em {{ atividade.data_criacao|date:"d/m/Y" }}
+                </div>
+            </div>
+        </div>
+
+        <!-- Resposta -->
+        {% if resposta_existente %}
+        <div class="uc-card" style="margin-bottom:20px;">
+            <div class="uc-card__head">
+                <span class="uc-card__head-title">
+                    <i class="fas fa-paper-plane" style="color:var(--uc-orange)"></i>
+                    Sua Resposta
+                </span>
+                {% if resposta_existente.status == 'aprovada_diretor' %}
+                    <span class="uc-badge uc-badge--approved">Aprovada</span>
+                {% elif resposta_existente.status == 'aprovada_professor' %}
+                    <span class="uc-badge" style="background:#d4edda;color:#155724;padding:3px 10px;border-radius:20px;font-size:11px;">Aprovada pelo Professor</span>
+                {% elif resposta_existente.status == 'rejeitada_professor' or resposta_existente.status == 'rejeitada_diretor' %}
+                    <span class="uc-badge uc-badge--rejected">Rejeitada</span>
+                {% else %}
+                    <span class="uc-badge uc-badge--pending">Aguardando Avaliação</span>
+                {% endif %}
+            </div>
+            <div class="uc-card__body">
+                {% if resposta_existente.descricao_resposta %}
+                <div style="background:#f8f9fa; border-radius:8px; padding:14px; font-size:14px; margin-bottom:12px;">
+                    {{ resposta_existente.descricao_resposta|linebreaksbr }}
+                </div>
+                {% endif %}
+                {% if resposta_existente.arquivo %}
+                <div style="padding:10px 14px; background:#e8f4fd; border-radius:8px; margin-bottom:12px; font-size:13px;">
+                    <i class="fas fa-paperclip me-1"></i>
+                    <a href="/media/{{ resposta_existente.arquivo }}" target="_blank">{{ resposta_existente.arquivo }}</a>
+                </div>
+                {% endif %}
+                <div style="font-size:12px; color:#999;">
+                    Enviada em {{ resposta_existente.data_envio|date:"d/m/Y H:i" }}
+                </div>
+
+                {% if resposta_existente.observacao_professor %}
+                <div style="margin-top:12px; padding:12px 16px; background:#fff3cd; border-radius:8px; border-left:4px solid #ffc107;">
+                    <strong style="font-size:12px; color:#856404;">Feedback do Professor:</strong>
+                    <p style="margin:4px 0 0; font-size:13px;">{{ resposta_existente.observacao_professor }}</p>
+                </div>
+                {% endif %}
+
+                {% if resposta_existente.status_professor == 'pendente' %}
+                <div style="margin-top:16px; display:flex; gap:8px;">
+                    <a href="{% url 'dashboard:visualizar_resposta' resposta_existente.id_resposta %}" class="uc-btn uc-btn--sm" style="background:#f0f0f0;color:#333;">
+                        <i class="fas fa-eye me-1"></i> Ver detalhes
+                    </a>
+                    <a href="{% url 'dashboard:editar_resposta' resposta_existente.id_resposta %}" class="uc-btn uc-btn--orange uc-btn--sm">
+                        <i class="fas fa-edit me-1"></i> Editar resposta
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        {% elif not atividade.prazo_vencido %}
+
+        <!-- Formulário de resposta -->
+        <div class="uc-card">
+            <div class="uc-card__head">
+                <span class="uc-card__head-title">
+                    <i class="fas fa-reply" style="color:var(--uc-orange)"></i>
+                    Enviar Resposta
+                </span>
+            </div>
+            <div class="uc-card__body">
+                <form method="post" action="{% url 'dashboard:responder_atividade' atividade.id_atividade %}" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="form-label fw-semibold" style="font-size:13px;">Descrição da Resposta</label>
+                            <textarea name="descricao_resposta" class="form-control" rows="6"
+                                placeholder="Descreva sua resposta à atividade..." style="border-radius:8px;"></textarea>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-semibold" style="font-size:13px;">Arquivo <small class="text-muted">(opcional)</small></label>
+                            <input type="file" name="arquivo" class="form-control" style="border-radius:8px;">
+                            <small class="text-muted">Formatos aceitos: PDF, DOC, DOCX, JPG, PNG. Máx. 10MB.</small>
+                        </div>
+                    </div>
+                    <div style="margin-top:20px; text-align:right;">
+                        <a href="{% url 'dashboard:atividades_disponiveis' %}" class="btn btn-outline-secondary btn-sm me-2">Cancelar</a>
+                        <button type="submit" class="btn btn-sm text-white fw-semibold" style="background:linear-gradient(135deg,#FF6B00,#D45400); border:none; border-radius:8px; padding:8px 24px;">
+                            <i class="fas fa-paper-plane me-1"></i> Enviar Resposta
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        {% else %}
+        <div class="uc-alert uc-alert--danger">
+            <i class="fas fa-exclamation-circle"></i>
+            <span>O prazo para esta atividade encerrou em {{ atividade.data_limite_resposta|date:"d/m/Y" }}. Não é mais possível enviar resposta.</span>
+        </div>
+        {% endif %}
+
+    </div>
+</div>
+
+</body>
+{% endblock %}
+
+{% block footer %}{% endblock %}
+
+{% block extra_js %}
+<script>
+    function ucToggleSidebar() {
+        document.getElementById('ucSidebar').classList.toggle('collapsed');
+        document.getElementById('ucMain').classList.toggle('expanded');
+        localStorage.setItem('uc_sb', document.getElementById('ucSidebar').classList.contains('collapsed'));
+    }
+    document.addEventListener('DOMContentLoaded', function () {
+        if (localStorage.getItem('uc_sb') === 'true') {
+            document.getElementById('ucSidebar').classList.add('collapsed');
+            document.getElementById('ucMain').classList.add('expanded');
+        }
+    });
+</script>
+{% endblock %}

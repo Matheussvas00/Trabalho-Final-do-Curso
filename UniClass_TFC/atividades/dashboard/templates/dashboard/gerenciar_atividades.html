@@ -1,0 +1,156 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Gerenciar Atividades | UniClass{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+{% endblock %}
+
+{% block body %}
+<body class="dashboard-body">
+
+{% include 'dashboard/partials/_sidebar.html' with active_page='atividades' %}
+
+<div class="uc-main" id="ucMain">
+
+    <header class="uc-topbar">
+        <button class="uc-topbar__toggle" onclick="ucToggleSidebar()"><i class="fas fa-bars"></i></button>
+        <div class="uc-topbar__title-wrap">
+            <div class="uc-topbar__title">Gerenciar Atividades</div>
+            <div class="uc-topbar__subtitle">{{ greeting }}, {{ display_name }}!</div>
+        </div>
+    </header>
+
+    <div class="uc-content">
+
+        {% if messages %}
+            {% for message in messages %}
+                <div class="uc-alert uc-alert--{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %}">
+                    <i class="fas fa-{% if message.tags == 'success' %}check-circle{% elif message.tags == 'error' %}exclamation-circle{% else %}info-circle{% endif %}"></i>
+                    <span>{{ message }}</span>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <div class="uc-card">
+            <div class="uc-card__head">
+                <span class="uc-card__head-title">
+                    <i class="fas fa-tasks" style="color:var(--uc-orange)"></i>
+                    Minhas Atividades
+                    <small style="color:#999; font-weight:400; margin-left:6px;">{{ atividades|length }}</small>
+                </span>
+                <a href="{% url 'dashboard:cadastrar_atividade' %}" class="uc-btn uc-btn--orange uc-btn--sm">
+                    <i class="fas fa-plus me-1"></i> Nova Atividade
+                </a>
+            </div>
+            <div class="uc-card__body" style="padding:0;">
+                {% if atividades %}
+                <div style="overflow-x:auto;">
+                <table style="width:100%; border-collapse:collapse; font-size:13px;">
+                    <thead>
+                        <tr style="background:#f8f9fa; border-bottom:2px solid #eee;">
+                            <th style="padding:10px 14px;">Título</th>
+                            <th style="padding:10px 14px;">Disciplina</th>
+                            <th style="padding:10px 14px;">Aluno</th>
+                            <th style="padding:10px 14px;">Portaria</th>
+                            <th style="padding:10px 14px; text-align:center;">Prazo</th>
+                            <th style="padding:10px 14px; text-align:center;">Status</th>
+                            <th style="padding:10px 14px; text-align:center;">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for a in atividades %}
+                        <tr style="border-bottom:1px solid #f0f0f0;" onmouseover="this.style.background='#fafafa'" onmouseout="this.style.background=''">
+                            <td style="padding:8px 14px;">
+                                <strong>{{ a.titulo }}</strong>
+                                {% if a.descricao %}<br><small class="text-muted">{{ a.descricao|truncatewords:10 }}</small>{% endif %}
+                            </td>
+                            <td style="padding:8px 14px;">{{ a.codigo_disciplinafk.nome_disciplina }}</td>
+                            <td style="padding:8px 14px;">{{ a.id_portariafk.id_alunofk.nome_completo }}</td>
+                            <td style="padding:8px 14px;"><code style="background:#f0f0f0; padding:2px 6px; border-radius:4px; font-size:11px;">{{ a.id_portariafk.numero_portaria }}</code></td>
+                            <td style="padding:8px 14px; text-align:center;">
+                                <span {% if a.prazo_vencido %}style="color:#dc3545;font-weight:600;"{% endif %}>
+                                    {{ a.data_limite_resposta|date:"d/m/Y" }}
+                                </span>
+                            </td>
+                            <td style="padding:8px 14px; text-align:center;">
+                                {% if a.status == 'validada_diretor' %}
+                                    <span class="uc-badge uc-badge--approved">Validada</span>
+                                {% elif a.status == 'validada_professor' %}
+                                    <span class="uc-badge" style="background:#d4edda;color:#155724;padding:3px 10px;border-radius:20px;font-size:11px;">Aprovada</span>
+                                {% elif a.status == 'rejeitada_professor' or a.status == 'rejeitada_diretor' %}
+                                    <span class="uc-badge uc-badge--rejected">Rejeitada</span>
+                                {% elif a.status == 'respondida' %}
+                                    <span class="uc-badge uc-badge--warning">Respondida</span>
+                                {% else %}
+                                    <span class="uc-badge uc-badge--pending">Aguardando</span>
+                                {% endif %}
+                            </td>
+                            <td style="padding:8px 14px; text-align:center;">
+                                {% if a.status == 'aguardando_resposta' %}
+                                <a href="{% url 'dashboard:editar_atividade' a.id_atividade %}" class="uc-btn uc-btn--orange uc-btn--sm" style="margin-right:4px;">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <button type="button" class="uc-btn uc-btn--sm" style="background:#dc3545;color:#fff;"
+                                    onclick="confirmarExclusao({{ a.id_atividade }}, '{{ a.titulo|escapejs }}')">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                                {% else %}
+                                <span style="color:#aaa; font-size:12px;">—</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                </div>
+                {% else %}
+                <div class="uc-empty">
+                    <i class="fas fa-tasks"></i>
+                    <p>Nenhuma atividade criada ainda.</p>
+                    <a href="{% url 'dashboard:cadastrar_atividade' %}" class="uc-btn uc-btn--orange uc-btn--sm" style="margin-top:8px;">
+                        <i class="fas fa-plus me-1"></i> Criar primeira atividade
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+    </div>
+</div>
+
+{% for a in atividades %}
+{% if a.status == 'aguardando_resposta' %}
+<form id="formExcluir{{ a.id_atividade }}" method="post" action="{% url 'dashboard:excluir_atividade' a.id_atividade %}" style="display:none;">
+    {% csrf_token %}
+</form>
+{% endif %}
+{% endfor %}
+
+</body>
+{% endblock %}
+
+{% block footer %}{% endblock %}
+
+{% block extra_js %}
+<script>
+    function ucToggleSidebar() {
+        document.getElementById('ucSidebar').classList.toggle('collapsed');
+        document.getElementById('ucMain').classList.toggle('expanded');
+        localStorage.setItem('uc_sb', document.getElementById('ucSidebar').classList.contains('collapsed'));
+    }
+    document.addEventListener('DOMContentLoaded', function () {
+        if (localStorage.getItem('uc_sb') === 'true') {
+            document.getElementById('ucSidebar').classList.add('collapsed');
+            document.getElementById('ucMain').classList.add('expanded');
+        }
+    });
+
+    function confirmarExclusao(id, titulo) {
+        if (confirm('Excluir a atividade "' + titulo + '"? Esta ação não pode ser desfeita.')) {
+            document.getElementById('formExcluir' + id).submit();
+        }
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,202 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Minhas Respostas | UniClass{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+{% endblock %}
+
+{% block body %}
+<body class="dashboard-body">
+
+{% include 'dashboard/partials/_sidebar.html' with active_page='respostas' %}
+
+<div class="uc-main" id="ucMain">
+
+    <header class="uc-topbar">
+        <button class="uc-topbar__toggle" onclick="ucToggleSidebar()"><i class="fas fa-bars"></i></button>
+        <div class="uc-topbar__title-wrap">
+            <div class="uc-topbar__title">Minhas Respostas</div>
+            <div class="uc-topbar__subtitle">{{ greeting }}, {{ display_name }}!</div>
+        </div>
+    </header>
+
+    <div class="uc-content">
+
+        {% if messages %}
+            {% for message in messages %}
+                <div class="uc-alert uc-alert--{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %}">
+                    <i class="fas fa-{% if message.tags == 'success' %}check-circle{% elif message.tags == 'error' %}exclamation-circle{% else %}info-circle{% endif %}"></i>
+                    <span>{{ message }}</span>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <!-- Stats -->
+        <div class="uc-stats" style="margin-bottom:20px;">
+            <div class="uc-stat uc-stat--blue">
+                <div class="uc-stat__icon"><i class="fas fa-paper-plane"></i></div>
+                <div>
+                    <div class="uc-stat__num">{{ total_respostas }}</div>
+                    <div class="uc-stat__label">Total Enviadas</div>
+                </div>
+            </div>
+            <div class="uc-stat uc-stat--orange">
+                <div class="uc-stat__icon"><i class="fas fa-clock"></i></div>
+                <div>
+                    <div class="uc-stat__num">{{ pendentes }}</div>
+                    <div class="uc-stat__label">Aguardando Avaliação</div>
+                </div>
+            </div>
+            <div class="uc-stat uc-stat--green">
+                <div class="uc-stat__icon"><i class="fas fa-check-double"></i></div>
+                <div>
+                    <div class="uc-stat__num">{{ aprovadas_final }}</div>
+                    <div class="uc-stat__label">Aprovadas</div>
+                </div>
+            </div>
+            <div class="uc-stat uc-stat--red">
+                <div class="uc-stat__icon"><i class="fas fa-times-circle"></i></div>
+                <div>
+                    <div class="uc-stat__num">{{ rejeitadas }}</div>
+                    <div class="uc-stat__label">Rejeitadas</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="uc-card">
+            <div class="uc-card__head">
+                <span class="uc-card__head-title">
+                    <i class="fas fa-paper-plane" style="color:var(--uc-orange)"></i>
+                    Histórico de Respostas
+                    <small style="color:#999; font-weight:400; margin-left:6px;">{{ total_respostas }}</small>
+                </span>
+            </div>
+            <div class="uc-card__body" style="padding:0;">
+                {% if respostas %}
+                <div style="overflow-x:auto;">
+                <table style="width:100%; border-collapse:collapse; font-size:13px;">
+                    <thead>
+                        <tr style="background:#f8f9fa; border-bottom:2px solid #eee;">
+                            <th style="padding:10px 14px;">Atividade</th>
+                            <th style="padding:10px 14px;">Disciplina</th>
+                            <th style="padding:10px 14px;">Professor</th>
+                            <th style="padding:10px 14px; text-align:center;">Enviada em</th>
+                            <th style="padding:10px 14px; text-align:center;">Status Professor</th>
+                            <th style="padding:10px 14px; text-align:center;">Status Diretor</th>
+                            <th style="padding:10px 14px; text-align:center;">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for r in respostas %}
+                        <tr style="border-bottom:1px solid #f0f0f0;" onmouseover="this.style.background='#fafafa'" onmouseout="this.style.background=''">
+                            <td style="padding:8px 14px;"><strong>{{ r.id_atividade.titulo }}</strong></td>
+                            <td style="padding:8px 14px;">{{ r.id_atividade.codigo_disciplinafk.nome_disciplina }}</td>
+                            <td style="padding:8px 14px;">{{ r.id_atividade.id_professorfk.nome_completo }}</td>
+                            <td style="padding:8px 14px; text-align:center;">{{ r.data_envio|date:"d/m/Y H:i" }}</td>
+                            <td style="padding:8px 14px; text-align:center;">
+                                {% if r.status_professor == 'aprovada' %}
+                                    <span class="uc-badge uc-badge--approved">Aprovada</span>
+                                {% elif r.status_professor == 'rejeitada' %}
+                                    <span class="uc-badge uc-badge--rejected">Rejeitada</span>
+                                {% else %}
+                                    <span class="uc-badge uc-badge--pending">Pendente</span>
+                                {% endif %}
+                            </td>
+                            <td style="padding:8px 14px; text-align:center;">
+                                {% if r.status_professor != 'aprovada' %}
+                                    <span style="color:#999; font-size:12px;">—</span>
+                                {% elif r.status_diretor == 'aprovada' %}
+                                    <span class="uc-badge uc-badge--approved">Aprovada</span>
+                                {% elif r.status_diretor == 'rejeitada' %}
+                                    <span class="uc-badge uc-badge--rejected">Rejeitada</span>
+                                {% else %}
+                                    <span class="uc-badge uc-badge--pending">Pendente</span>
+                                {% endif %}
+                            </td>
+                            <td style="padding:8px 14px; text-align:center;">
+                                <a href="{% url 'dashboard:visualizar_resposta' r.id_resposta %}" class="uc-btn uc-btn--sm" style="background:#f0f0f0;color:#333; margin-right:4px;">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                {% if r.status_professor == 'pendente' %}
+                                <a href="{% url 'dashboard:editar_resposta' r.id_resposta %}" class="uc-btn uc-btn--orange uc-btn--sm" style="margin-right:4px;">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <button type="button" class="uc-btn uc-btn--sm" style="background:#dc3545;color:#fff;"
+                                    onclick="confirmarExclusao({{ r.id_resposta }}, '{{ r.id_atividade.titulo|escapejs }}')">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% if r.observacao_professor %}
+                        <tr style="background:#fffef0; border-bottom:1px solid #f0f0f0;">
+                            <td colspan="7" style="padding:6px 14px; font-size:12px; color:#856404;">
+                                <i class="fas fa-comment me-1"></i>
+                                <strong>Feedback do Professor:</strong> {{ r.observacao_professor }}
+                            </td>
+                        </tr>
+                        {% endif %}
+                        {% if r.observacao_diretor %}
+                        <tr style="background:#f0f8ff; border-bottom:1px solid #f0f0f0;">
+                            <td colspan="7" style="padding:6px 14px; font-size:12px; color:#0c5460;">
+                                <i class="fas fa-comment me-1"></i>
+                                <strong>Feedback do Diretor:</strong> {{ r.observacao_diretor }}
+                            </td>
+                        </tr>
+                        {% endif %}
+                        {% endfor %}
+                    </tbody>
+                </table>
+                </div>
+                {% else %}
+                <div class="uc-empty">
+                    <i class="fas fa-paper-plane"></i>
+                    <p>Você ainda não enviou nenhuma resposta.</p>
+                    <a href="{% url 'dashboard:atividades_disponiveis' %}" class="uc-btn uc-btn--orange uc-btn--sm" style="margin-top:8px;">
+                        Ver atividades disponíveis
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- Formulários de exclusão ocultos -->
+{% for r in respostas %}
+{% if r.status_professor == 'pendente' %}
+<form id="formExcluir{{ r.id_resposta }}" method="post" action="{% url 'dashboard:excluir_resposta' r.id_resposta %}" style="display:none;">
+    {% csrf_token %}
+</form>
+{% endif %}
+{% endfor %}
+
+</body>
+{% endblock %}
+
+{% block footer %}{% endblock %}
+
+{% block extra_js %}
+<script>
+    function ucToggleSidebar() {
+        document.getElementById('ucSidebar').classList.toggle('collapsed');
+        document.getElementById('ucMain').classList.toggle('expanded');
+        localStorage.setItem('uc_sb', document.getElementById('ucSidebar').classList.contains('collapsed'));
+    }
+    document.addEventListener('DOMContentLoaded', function () {
+        if (localStorage.getItem('uc_sb') === 'true') {
+            document.getElementById('ucSidebar').classList.add('collapsed');
+            document.getElementById('ucMain').classList.add('expanded');
+        }
+    });
+
+    function confirmarExclusao(id, titulo) {
+        if (confirm('Tem certeza que deseja excluir a resposta da atividade "' + titulo + '"?')) {
+            document.getElementById('formExcluir' + id).submit();
+        }
+    }
+</script>
+{% endblock %}

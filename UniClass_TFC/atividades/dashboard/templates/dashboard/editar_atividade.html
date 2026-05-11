@@ -1,0 +1,148 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Editar Atividade | UniClass{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+{% endblock %}
+
+{% block body %}
+<body class="dashboard-body">
+
+{% include 'dashboard/partials/_sidebar.html' with active_page='atividades' %}
+
+<div class="uc-main" id="ucMain">
+
+    <header class="uc-topbar">
+        <button class="uc-topbar__toggle" onclick="ucToggleSidebar()"><i class="fas fa-bars"></i></button>
+        <div class="uc-topbar__title-wrap">
+            <div class="uc-topbar__title">Editar Atividade</div>
+            <div class="uc-topbar__subtitle">{{ greeting }}, {{ display_name }}!</div>
+        </div>
+    </header>
+
+    <div class="uc-content">
+
+        {% if messages %}
+            {% for message in messages %}
+                <div class="uc-alert uc-alert--{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %}">
+                    <i class="fas fa-{% if message.tags == 'success' %}check-circle{% elif message.tags == 'error' %}exclamation-circle{% else %}info-circle{% endif %}"></i>
+                    <span>{{ message }}</span>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <div style="margin-bottom:16px;">
+            <a href="{% url 'dashboard:gerenciar_atividades' %}" style="color:#555; font-size:13px; text-decoration:none;">
+                <i class="fas fa-arrow-left me-1"></i> Voltar para atividades
+            </a>
+        </div>
+
+        <div class="uc-card" style="max-width:760px;">
+            <div class="uc-card__head">
+                <span class="uc-card__head-title">
+                    <i class="fas fa-edit" style="color:var(--uc-orange)"></i>
+                    Editar: {{ atividade.titulo }}
+                </span>
+            </div>
+            <div class="uc-card__body">
+
+                <!-- Info não editável -->
+                <div style="background:#f8f9fa; border-radius:8px; padding:12px 16px; margin-bottom:20px; font-size:13px;">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <strong style="color:#555;">Portaria:</strong>
+                            <code style="margin-left:4px;">{{ atividade.id_portariafk.numero_portaria }}</code>
+                        </div>
+                        <div class="col-md-4">
+                            <strong style="color:#555;">Disciplina:</strong> {{ atividade.codigo_disciplinafk.nome_disciplina }}
+                        </div>
+                        <div class="col-md-4">
+                            <strong style="color:#555;">Aluno:</strong> {{ atividade.id_portariafk.id_alunofk.nome_completo }}
+                        </div>
+                    </div>
+                    <div style="margin-top:8px; font-size:12px; color:#888;">
+                        Prazo máximo da portaria: {{ atividade.id_portariafk.prazo_aluno_responder|date:"d/m/Y" }}
+                    </div>
+                </div>
+
+                <form method="post" action="{% url 'dashboard:editar_atividade' atividade.id_atividade %}" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="row g-3">
+
+                        <div class="col-md-8">
+                            <label class="form-label fw-semibold" style="font-size:13px;">
+                                Título <span style="color:#FF6B00">*</span>
+                            </label>
+                            <input type="text" name="titulo" class="form-control" required
+                                value="{{ atividade.titulo }}" maxlength="150" style="border-radius:8px;">
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold" style="font-size:13px;">
+                                Prazo de entrega <span style="color:#FF6B00">*</span>
+                            </label>
+                            <input type="date" name="data_limite_resposta" class="form-control" required
+                                value="{{ atividade.data_limite_resposta|date:'Y-m-d' }}"
+                                max="{{ atividade.id_portariafk.prazo_aluno_responder|date:'Y-m-d' }}"
+                                style="border-radius:8px;">
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label fw-semibold" style="font-size:13px;">
+                                Descrição / Enunciado <span style="color:#FF6B00">*</span>
+                            </label>
+                            <textarea name="descricao" class="form-control" rows="6" required style="border-radius:8px;">{{ atividade.descricao }}</textarea>
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label fw-semibold" style="font-size:13px;">
+                                Arquivo de Apoio <small class="text-muted">(opcional — substitui o atual)</small>
+                            </label>
+                            {% if atividade.anexo %}
+                            <div style="padding:8px 14px; background:#e8f4fd; border-radius:8px; margin-bottom:8px; font-size:12px;">
+                                <i class="fas fa-paperclip me-1" style="color:#0c5460;"></i>
+                                Arquivo atual: <a href="/media/{{ atividade.anexo }}" target="_blank">{{ atividade.anexo }}</a>
+                            </div>
+                            {% endif %}
+                            <input type="file" name="anexo" class="form-control" style="border-radius:8px;">
+                            <small class="text-muted">PDF, DOC, DOCX, imagens. Máx. 10MB.</small>
+                        </div>
+
+                    </div>
+
+                    <div style="margin-top:24px; display:flex; gap:10px; justify-content:flex-end;">
+                        <a href="{% url 'dashboard:gerenciar_atividades' %}" class="btn btn-outline-secondary btn-sm">Cancelar</a>
+                        <button type="submit" class="btn btn-sm text-white fw-semibold"
+                            style="background:linear-gradient(135deg,#FF6B00,#D45400); border:none; border-radius:8px; padding:8px 28px;">
+                            <i class="fas fa-save me-1"></i> Salvar Alterações
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+</body>
+{% endblock %}
+
+{% block footer %}{% endblock %}
+
+{% block extra_js %}
+<script>
+    function ucToggleSidebar() {
+        document.getElementById('ucSidebar').classList.toggle('collapsed');
+        document.getElementById('ucMain').classList.toggle('expanded');
+        localStorage.setItem('uc_sb', document.getElementById('ucSidebar').classList.contains('collapsed'));
+    }
+    document.addEventListener('DOMContentLoaded', function () {
+        if (localStorage.getItem('uc_sb') === 'true') {
+            document.getElementById('ucSidebar').classList.add('collapsed');
+            document.getElementById('ucMain').classList.add('expanded');
+        }
+    });
+</script>
+{% endblock %}

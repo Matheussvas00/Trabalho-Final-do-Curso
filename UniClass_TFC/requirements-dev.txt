@@ -1,0 +1,15 @@
+# === Dependências de desenvolvimento e testes ===
+# Instale com: pip install -r requirements-dev.txt
+
+# Testes
+pytest==7.4.3
+pytest-django==4.7.0
+coverage==7.3.2
+pytest-cov==4.1.0
+
+# Análise estática
+flake8==6.1.0
+flake8-docstrings==1.7.0
+
+# Formatação
+autopep8==2.0.4

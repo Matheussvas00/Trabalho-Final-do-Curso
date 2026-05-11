@@ -1,0 +1,327 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Gerenciar Professores — Diretor | UniClass{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+{% endblock %}
+
+{% block body %}
+<body class="dashboard-body">
+
+{% include 'dashboard/partials/_sidebar.html' with active_page='professores' %}
+
+<div class="uc-main" id="ucMain">
+
+    <!-- Topbar -->
+    <header class="uc-topbar">
+        <button class="uc-topbar__toggle" onclick="ucToggleSidebar()"><i class="fas fa-bars"></i></button>
+        <div class="uc-topbar__title-wrap">
+            <div class="uc-topbar__title">Gerenciar Professores</div>
+            <div class="uc-topbar__subtitle">Cadastre, edite ou exclua professores do sistema</div>
+        </div>
+        <div class="uc-topbar__right">
+            <a href="{% url 'dashboard:index' %}" class="uc-topbar__btn" title="Voltar ao Início">
+                <i class="fas fa-arrow-left"></i>
+            </a>
+            <a href="#" class="uc-topbar__btn" title="Notificações">
+                <i class="fas fa-bell"></i>
+                {% if notificacoes_nao_lidas %}<span class="uc-topbar__notif-dot"></span>{% endif %}
+            </a>
+        </div>
+    </header>
+
+    <div class="uc-content">
+
+        {% if messages %}
+            {% for message in messages %}
+                <div class="uc-alert uc-alert--{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %}">
+                    <i class="fas fa-{% if message.tags == 'success' %}check-circle{% elif message.tags == 'error' %}exclamation-circle{% else %}info-circle{% endif %}"></i>
+                    <span>{{ message }}</span>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <!-- Cabeçalho + botão cadastrar -->
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+            <div>
+                <h4 style="margin:0; color:var(--uc-text);">
+                    <i class="fas fa-chalkboard-teacher me-2" style="color:var(--uc-orange)"></i>
+                    Professores Cadastrados
+                </h4>
+                <small style="color:var(--uc-text-muted);">{{ professores|length }} professor{{ professores|length|pluralize:"es" }}</small>
+            </div>
+            <button type="button" class="uc-btn uc-btn--orange" data-bs-toggle="modal" data-bs-target="#modalCadastrarProfessor">
+                <i class="fas fa-user-plus me-1"></i> Novo Professor
+            </button>
+        </div>
+
+        <!-- Tabela de Professores -->
+        <div class="uc-card">
+            <div class="uc-card__body" style="padding:0;">
+                {% if professores %}
+                <div style="overflow-x:auto;">
+                <table style="width:100%; border-collapse:collapse; font-size:14px;">
+                    <thead>
+                        <tr style="background:#f8f9fa; border-bottom:2px solid #eee;">
+                            <th style="padding:12px 16px; text-align:left; color:#555; font-weight:600;">#</th>
+                            <th style="padding:12px 16px; text-align:left; color:#555; font-weight:600;">Nome Completo</th>
+                            <th style="padding:12px 16px; text-align:left; color:#555; font-weight:600;">E-mail</th>
+                            <th style="padding:12px 16px; text-align:left; color:#555; font-weight:600;">Curso</th>
+                            <th style="padding:12px 16px; text-align:center; color:#555; font-weight:600;">Disciplinas</th>
+                            <th style="padding:12px 16px; text-align:center; color:#555; font-weight:600;">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for prof in professores %}
+                        <tr style="border-bottom:1px solid #f0f0f0; transition:background .15s;"
+                            onmouseover="this.style.background='#fff8f4'" onmouseout="this.style.background=''">
+                            <td style="padding:10px 16px; color:#aaa;">{{ forloop.counter }}</td>
+                            <td style="padding:10px 16px;">
+                                <i class="fas fa-user-tie me-1" style="color:var(--uc-orange)"></i>
+                                <strong>{{ prof.nome_professor }} {{ prof.sobrenome_professor }}</strong>
+                            </td>
+                            <td style="padding:10px 16px;">
+                                <small>{{ prof.id_professor.email }}</small>
+                            </td>
+                            <td style="padding:10px 16px;">{{ prof.curso_professor }}</td>
+                            <td style="padding:10px 16px; text-align:center;">
+                                <span class="uc-badge uc-badge--orange">{{ prof.disciplinas_lecionadas.count }}</span>
+                            </td>
+                            <td style="padding:10px 16px; text-align:center; white-space:nowrap;">
+                                <button type="button" class="uc-btn uc-btn--outline uc-btn--sm"
+                                        data-bs-toggle="modal" data-bs-target="#modalEditarProf{{ prof.pk }}">
+                                    <i class="fas fa-edit"></i> Editar
+                                </button>
+                                <button type="button" class="uc-btn uc-btn--sm"
+                                        style="background:#dc3545; color:#fff; border:none; margin-left:4px;"
+                                        data-bs-toggle="modal" data-bs-target="#modalExcluirProf{{ prof.pk }}">
+                                    <i class="fas fa-trash-alt"></i> Excluir
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                </div>
+                {% else %}
+                <div class="uc-empty">
+                    <i class="fas fa-chalkboard-teacher"></i>
+                    <p>Nenhum professor cadastrado.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+    </div><!-- /uc-content -->
+</div><!-- /uc-main -->
+
+<!-- ═══════════════════════════════════════════════════════════
+     MODAL — Cadastrar Professor
+══════════════════════════════════════════════════════════════ -->
+<div class="modal fade" id="modalCadastrarProfessor" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content" style="border-radius:12px; overflow:hidden;">
+            <div class="modal-header" style="background:linear-gradient(135deg,#1C1C2E,#0F2952); color:#fff; border:none;">
+                <h5 class="modal-title">
+                    <i class="fas fa-user-plus me-2" style="color:#FF6B00;"></i> Cadastrar Novo Professor
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" action="{% url 'dashboard:cadastrar_professor' %}">
+                {% csrf_token %}
+                <div class="modal-body p-4">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold" style="font-size:13px;">Nome <span style="color:#FF6B00">*</span></label>
+                            <input type="text" name="nome_professor" class="form-control" required
+                                   placeholder="Nome do professor" style="border-radius:8px; border:2px solid #e0e0e0;">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold" style="font-size:13px;">Sobrenome <span style="color:#FF6B00">*</span></label>
+                            <input type="text" name="sobrenome_professor" class="form-control" required
+                                   placeholder="Sobrenome" style="border-radius:8px; border:2px solid #e0e0e0;">
+                        </div>
+                        <div class="col-12"><hr style="border-color:#eee;"></div>
+                        <div class="col-12">
+                            <small class="text-muted"><i class="fas fa-info-circle me-1"></i> Credenciais de acesso do professor ao sistema</small>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold" style="font-size:13px;">E-mail <span style="color:#FF6B00">*</span></label>
+                            <input type="email" name="email" class="form-control" required
+                                   placeholder="professor@universidade.edu.br" style="border-radius:8px; border:2px solid #e0e0e0;">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold" style="font-size:13px;">Senha <span style="color:#FF6B00">*</span></label>
+                            <input type="password" name="senha" class="form-control" required minlength="8"
+                                   placeholder="Mínimo 8 caracteres" style="border-radius:8px; border:2px solid #e0e0e0;">
+                        </div>
+                        {% if disciplinas %}
+                        <div class="col-12"><hr style="border-color:#eee;"></div>
+                        <div class="col-12">
+                            <label class="form-label fw-semibold" style="font-size:13px;">Disciplinas <span style="color:#FF6B00">*</span></label>
+                            <div style="display:flex; flex-wrap:wrap; gap:8px;">
+                                {% for disc in disciplinas %}
+                                <div class="form-check" style="background:#f8f9fa; padding:6px 12px; border-radius:8px; border:1px solid #dee2e6;">
+                                    <input class="form-check-input" type="checkbox" name="disciplinas"
+                                           value="{{ disc.codigo_disciplina }}" id="cad_prof_disc_{{ disc.codigo_disciplina }}">
+                                    <label class="form-check-label" for="cad_prof_disc_{{ disc.codigo_disciplina }}" style="font-size:13px;">{{ disc.nome_disciplina }}</label>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            <small class="text-muted mt-1 d-block"><i class="fas fa-info-circle me-1"></i>Selecione pelo menos uma disciplina.</small>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="modal-footer" style="border:none; padding-top:0;">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-sm text-white fw-semibold"
+                            style="background:linear-gradient(135deg,#FF6B00,#D45400); border:none; border-radius:8px; padding:8px 24px;">
+                        <i class="fas fa-save me-1"></i> Cadastrar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     MODAIS — Editar / Excluir (um por professor)
+══════════════════════════════════════════════════════════════ -->
+{% for prof in professores %}
+
+<!-- Modal Editar -->
+<div class="modal fade" id="modalEditarProf{{ prof.pk }}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content" style="border-radius:12px; overflow:hidden;">
+            <div class="modal-header" style="background:linear-gradient(135deg,#1C1C2E,#0F2952); color:#fff; border:none;">
+                <h5 class="modal-title">
+                    <i class="fas fa-edit me-2" style="color:#FF6B00;"></i> Editar Professor
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" action="{% url 'dashboard:editar_professor' prof.pk %}">
+                {% csrf_token %}
+                <div class="modal-body p-4">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold" style="font-size:13px;">Nome</label>
+                            <input type="text" name="nome_professor" class="form-control" required
+                                   value="{{ prof.nome_professor }}" style="border-radius:8px; border:2px solid #e0e0e0;">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold" style="font-size:13px;">Sobrenome</label>
+                            <input type="text" name="sobrenome_professor" class="form-control" required
+                                   value="{{ prof.sobrenome_professor }}" style="border-radius:8px; border:2px solid #e0e0e0;">
+                        </div>
+                        <div class="col-12"><hr style="border-color:#eee;"></div>
+                        <div class="col-12">
+                            <small class="text-muted"><i class="fas fa-lock me-1"></i> Credenciais de acesso</small>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold" style="font-size:13px;">E-mail</label>
+                            <input type="email" name="email" class="form-control"
+                                   value="{{ prof.id_professor.email }}" style="border-radius:8px; border:2px solid #e0e0e0;">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold" style="font-size:13px;">Nova Senha <span style="color:#aaa; font-weight:400;">(deixe em branco para não alterar)</span></label>
+                            <input type="password" name="nova_senha" class="form-control" minlength="8"
+                                   placeholder="Mínimo 8 caracteres" style="border-radius:8px; border:2px solid #e0e0e0;">
+                        </div>
+                        {% if disciplinas %}
+                        <div class="col-12"><hr style="border-color:#eee;"></div>
+                        <div class="col-12">
+                            <label class="form-label fw-semibold" style="font-size:13px;">Disciplinas</label>
+                            <div style="display:flex; flex-wrap:wrap; gap:8px;">
+                                {% with prof_discs=prof.disciplinas_lecionadas.all %}
+                                {% for disc in disciplinas %}
+                                <div class="form-check" style="background:#f8f9fa; padding:6px 12px; border-radius:8px; border:1px solid #dee2e6;">
+                                    <input class="form-check-input" type="checkbox" name="disciplinas"
+                                           value="{{ disc.codigo_disciplina }}" id="ed_prof_disc_{{ prof.pk }}_{{ disc.codigo_disciplina }}"
+                                           {% if disc in prof_discs %}checked{% endif %}>
+                                    <label class="form-check-label" for="ed_prof_disc_{{ prof.pk }}_{{ disc.codigo_disciplina }}" style="font-size:13px;">{{ disc.nome_disciplina }}</label>
+                                </div>
+                                {% endfor %}
+                                {% endwith %}
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                </div>
+                <div class="modal-footer" style="border:none; padding-top:0;">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-sm text-white fw-semibold"
+                            style="background:linear-gradient(135deg,#FF6B00,#D45400); border:none; border-radius:8px; padding:8px 24px;">
+                        <i class="fas fa-save me-1"></i> Salvar Alterações
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Excluir -->
+<div class="modal fade" id="modalExcluirProf{{ prof.pk }}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius:12px; overflow:hidden;">
+            <div class="modal-header" style="background:#dc3545; color:#fff; border:none;">
+                <h5 class="modal-title">
+                    <i class="fas fa-exclamation-triangle me-2"></i> Confirmar Exclusão
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" action="{% url 'dashboard:excluir_professor' prof.pk %}">
+                {% csrf_token %}
+                <div class="modal-body p-4">
+                    <p>Tem certeza que deseja excluir o professor:</p>
+                    <div style="background:#f8f9fa; padding:12px 16px; border-radius:8px; margin:8px 0;">
+                        <strong><i class="fas fa-user-tie me-1" style="color:var(--uc-orange)"></i> {{ prof.nome_completo }}</strong><br>
+                        <small class="text-muted">{{ prof.id_professor.email }} · {{ prof.curso_professor }}</small>
+                    </div>
+                    {% if prof.disciplinas_lecionadas.count %}
+                    <div class="uc-alert uc-alert--warning mt-3" style="margin-bottom:0;">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <span>Este professor possui <strong>{{ prof.disciplinas_lecionadas.count }} disciplina{{ prof.disciplinas_lecionadas.count|pluralize }}</strong> vinculada{{ prof.disciplinas_lecionadas.count|pluralize }}. Elas também serão removidas.</span>
+                    </div>
+                    {% endif %}
+                    <p class="text-danger mt-3 mb-0" style="font-size:13px;">
+                        <i class="fas fa-exclamation-circle me-1"></i>
+                        Esta ação é irreversível. O usuário e todos os dados vinculados serão removidos.
+                    </p>
+                </div>
+                <div class="modal-footer" style="border:none; padding-top:0;">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-danger btn-sm fw-semibold" style="border-radius:8px; padding:8px 24px;">
+                        <i class="fas fa-trash-alt me-1"></i> Excluir
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endfor %}
+
+</body>
+{% endblock %}
+
+{% block footer %}{% endblock %}
+
+{% block extra_js %}
+<script>
+    function ucToggleSidebar() {
+        document.getElementById('ucSidebar').classList.toggle('collapsed');
+        document.getElementById('ucMain').classList.toggle('expanded');
+        localStorage.setItem('uc_sb', document.getElementById('ucSidebar').classList.contains('collapsed'));
+    }
+    document.addEventListener('DOMContentLoaded', function () {
+        if (localStorage.getItem('uc_sb') === 'true') {
+            document.getElementById('ucSidebar').classList.add('collapsed');
+            document.getElementById('ucMain').classList.add('expanded');
+        }
+    });
+</script>
+{% endblock %}

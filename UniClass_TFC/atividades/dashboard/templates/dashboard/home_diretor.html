@@ -1,0 +1,882 @@
+﻿{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Painel — Direção | UniClass{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+{% endblock %}
+
+{% block body %}
+<body class="dashboard-body">
+
+{% include 'dashboard/partials/_sidebar.html' with active_page='inicio' %}
+
+<div class="uc-main" id="ucMain">
+
+    <!-- Topbar -->
+    <header class="uc-topbar">
+        <button class="uc-topbar__toggle" onclick="ucToggleSidebar()"><i class="fas fa-bars"></i></button>
+        <div class="uc-topbar__title-wrap">
+            <div class="uc-topbar__title">{{ greeting }}, {{ display_name }}!</div>
+            <div class="uc-topbar__subtitle">Painel da Direção</div>
+        </div>
+        <div class="uc-topbar__right">
+            <a href="#" class="uc-topbar__btn" title="Notificações">
+                <i class="fas fa-bell"></i>
+                {% if notificacoes_nao_lidas %}<span class="uc-topbar__notif-dot"></span>{% endif %}
+            </a>
+        </div>
+    </header>
+
+    <div class="uc-content">
+
+        <!-- Mensagens -->
+        {% if messages %}
+            {% for message in messages %}
+                <div class="uc-alert uc-alert--{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %}">
+                    <i class="fas fa-{% if message.tags == 'success' %}check-circle{% elif message.tags == 'error' %}exclamation-circle{% else %}info-circle{% endif %}"></i>
+                    <span>{{ message }}</span>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <!-- Stats resumidos -->
+        <div class="uc-stats">
+            <div class="uc-stat uc-stat--blue">
+                <div class="uc-stat__icon"><i class="fas fa-user-graduate"></i></div>
+                <div>
+                    <div class="uc-stat__num">{{ total_alunos|default:"0" }}</div>
+                    <div class="uc-stat__label">Alunos</div>
+                </div>
+            </div>
+            <div class="uc-stat uc-stat--green">
+                <div class="uc-stat__icon"><i class="fas fa-chalkboard-teacher"></i></div>
+                <div>
+                    <div class="uc-stat__num">{{ total_professores|default:"0" }}</div>
+                    <div class="uc-stat__label">Professores</div>
+                </div>
+            </div>
+            <div class="uc-stat" style="border-left:4px solid #17a2b8;">
+                <div class="uc-stat__icon"><i class="fas fa-file-alt" style="color:#17a2b8;"></i></div>
+                <div>
+                    <div class="uc-stat__num">{{ total_portarias|default:"0" }}</div>
+                    <div class="uc-stat__label">Portarias</div>
+                </div>
+            </div>
+            <div class="uc-stat" style="border-left:4px solid #e83e8c;">
+                <div class="uc-stat__icon"><i class="fas fa-check-double" style="color:#e83e8c;"></i></div>
+                <div>
+                    <div class="uc-stat__num">{{ total_validar|default:"0" }}</div>
+                    <div class="uc-stat__label">Aguardando Validação</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ══════════════════════════════════════════════════
+             ALUNOS CADASTRADOS
+        ═══════════════════════════════════════════════════ -->
+        <div class="uc-card" style="margin-bottom:20px;">
+            <div class="uc-card__head">
+                <span class="uc-card__head-title">
+                    <i class="fas fa-user-graduate" style="color:var(--uc-orange)"></i>
+                    Alunos Cadastrados
+                    <small style="color:#999; font-weight:400; margin-left:6px;">{{ alunos|length }}</small>
+                </span>
+                <button type="button" class="uc-btn uc-btn--orange uc-btn--sm" data-bs-toggle="modal" data-bs-target="#modalCadastrarAluno">
+                    <i class="fas fa-plus me-1"></i> Novo Aluno
+                </button>
+            </div>
+            <div class="uc-card__body" style="padding:0;">
+                {% if alunos %}
+                <div style="overflow-x:auto;">
+                <table style="width:100%; border-collapse:collapse; font-size:13px;">
+                    <thead>
+                        <tr style="background:#f8f9fa; border-bottom:2px solid #eee;">
+                            <th style="padding:10px 14px; text-align:left; color:#555; font-weight:600;">Nome</th>
+                            <th style="padding:10px 14px; text-align:left; color:#555; font-weight:600;">Email</th>
+                            <th style="padding:10px 14px; text-align:left; color:#555; font-weight:600;">Matrícula</th>
+                            <th style="padding:10px 14px; text-align:left; color:#555; font-weight:600;">Curso</th>
+                            <th style="padding:10px 14px; text-align:center; color:#555; font-weight:600;">Per.</th>
+                            <th style="padding:10px 14px; text-align:center; color:#555; font-weight:600;">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for aluno in alunos %}
+                        <tr style="border-bottom:1px solid #f0f0f0;" onmouseover="this.style.background='#fafafa'" onmouseout="this.style.background=''">
+                            <td style="padding:8px 14px;">{{ aluno.nome_aluno }} {{ aluno.sobrenome_aluno }}</td>
+                            <td style="padding:8px 14px; font-size:12px; color:#666;">{{ aluno.id_aluno.email }}</td>
+                            <td style="padding:8px 14px;"><code style="background:#f0f0f0; padding:2px 6px; border-radius:4px; font-size:12px;">{{ aluno.matricula_aluno|default:"-" }}</code></td>
+                            <td style="padding:8px 14px;">{{ aluno.curso_aluno }}</td>
+                            <td style="padding:8px 14px; text-align:center;">{{ aluno.periodo }}º</td>
+                            <td style="padding:8px 14px; text-align:center; white-space:nowrap;">
+                                <button type="button" class="uc-btn uc-btn--outline uc-btn--sm" data-bs-toggle="modal" data-bs-target="#modalEditarAluno{{ aluno.pk }}" title="Editar">
+                                    <i class="fas fa-pen"></i>
+                                </button>
+                                <button type="button" class="uc-btn uc-btn--sm" style="background:#dc3545; color:#fff; border:none; margin-left:2px;" data-bs-toggle="modal" data-bs-target="#modalExcluirAluno{{ aluno.pk }}" title="Excluir">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                </div>
+                {% else %}
+                <div class="uc-empty">
+                    <i class="fas fa-user-graduate"></i>
+                    <p>Nenhum aluno cadastrado.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- ══════════════════════════════════════════════════
+             PROFESSORES CADASTRADOS
+        ═══════════════════════════════════════════════════ -->
+        <div class="uc-card" style="margin-bottom:20px;">
+            <div class="uc-card__head">
+                <span class="uc-card__head-title">
+                    <i class="fas fa-chalkboard-teacher" style="color:var(--uc-orange)"></i>
+                    Professores Cadastrados
+                    <small style="color:#999; font-weight:400; margin-left:6px;">{{ professores|length }}</small>
+                </span>
+                <button type="button" class="uc-btn uc-btn--orange uc-btn--sm" data-bs-toggle="modal" data-bs-target="#modalCadastrarProfessor">
+                    <i class="fas fa-plus me-1"></i> Novo Professor
+                </button>
+            </div>
+            <div class="uc-card__body" style="padding:0;">
+                {% if professores %}
+                <div style="overflow-x:auto;">
+                <table style="width:100%; border-collapse:collapse; font-size:13px;">
+                    <thead>
+                        <tr style="background:#f8f9fa; border-bottom:2px solid #eee;">
+                            <th style="padding:10px 14px; text-align:left; color:#555; font-weight:600;">Nome</th>
+                            <th style="padding:10px 14px; text-align:left; color:#555; font-weight:600;">E-mail</th>
+                            <th style="padding:10px 14px; text-align:left; color:#555; font-weight:600;">Curso</th>
+                            <th style="padding:10px 14px; text-align:center; color:#555; font-weight:600;">Disciplinas</th>
+                            <th style="padding:10px 14px; text-align:center; color:#555; font-weight:600;">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for prof in professores %}
+                        <tr style="border-bottom:1px solid #f0f0f0;" onmouseover="this.style.background='#fafafa'" onmouseout="this.style.background=''">
+                            <td style="padding:8px 14px;">{{ prof.nome_professor }} {{ prof.sobrenome_professor }}</td>
+                            <td style="padding:8px 14px; font-size:12px; color:#666;">{{ prof.id_professor.email }}</td>
+                            <td style="padding:8px 14px;">{{ prof.curso_professor }}</td>
+                            <td style="padding:8px 14px; text-align:center;">
+                                <span class="uc-badge uc-badge--orange">{{ prof.disciplinas.count }}</span>
+                            </td>
+                            <td style="padding:8px 14px; text-align:center; white-space:nowrap;">
+                                <button type="button" class="uc-btn uc-btn--outline uc-btn--sm" data-bs-toggle="modal" data-bs-target="#modalEditarProf{{ prof.pk }}" title="Editar">
+                                    <i class="fas fa-pen"></i>
+                                </button>
+                                <button type="button" class="uc-btn uc-btn--sm" style="background:#dc3545; color:#fff; border:none; margin-left:2px;" data-bs-toggle="modal" data-bs-target="#modalExcluirProf{{ prof.pk }}" title="Excluir">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                </div>
+                {% else %}
+                <div class="uc-empty">
+                    <i class="fas fa-chalkboard-teacher"></i>
+                    <p>Nenhum professor cadastrado.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- ══════════════════════════════════════════════════
+             PORTARIAS CADASTRADAS
+        ═══════════════════════════════════════════════════ -->
+        <div id="secao-portarias" class="uc-card" style="margin-bottom:20px;">
+            <div class="uc-card__head">
+                <span class="uc-card__head-title">
+                    <i class="fas fa-file-alt" style="color:var(--uc-orange)"></i>
+                    Portarias
+                    <small style="color:#999; font-weight:400; margin-left:6px;">{{ portarias|length }}</small>
+                </span>
+                <a href="{% url 'dashboard:gerenciar_portarias' %}" class="uc-btn uc-btn--orange uc-btn--sm">
+                    <i class="fas fa-plus me-1"></i> Nova Portaria
+                </a>
+            </div>
+            <div class="uc-card__body" style="padding:0;">
+                {% if portarias %}
+                <div style="overflow-x:auto;">
+                <table style="width:100%; border-collapse:collapse; font-size:13px;">
+                    <thead>
+                        <tr style="background:#f8f9fa; border-bottom:2px solid #eee;">
+                            <th style="padding:10px 14px; text-align:left; color:#555; font-weight:600;">#</th>
+                            <th style="padding:10px 14px; text-align:left; color:#555; font-weight:600;">Aluno</th>
+                            <th style="padding:10px 14px; text-align:left; color:#555; font-weight:600;">Motivo</th>
+                            <th style="padding:10px 14px; text-align:left; color:#555; font-weight:600;">Prazo Atividades</th>
+                            <th style="padding:10px 14px; text-align:left; color:#555; font-weight:600;">Disciplinas</th>
+                            <th style="padding:10px 14px; text-align:center; color:#555; font-weight:600;">Status</th>
+                            <th style="padding:10px 14px; text-align:center; color:#555; font-weight:600;">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for p in portarias %}
+                        <tr style="border-bottom:1px solid #f0f0f0;" onmouseover="this.style.background='#fafafa'" onmouseout="this.style.background=''">
+                            <td style="padding:8px 14px;"><code style="background:#f0f0f0; padding:2px 6px; border-radius:4px; font-size:12px;">{{ p.numero_portaria }}</code></td>
+                            <td style="padding:8px 14px;">{{ p.id_alunofk.nome_completo }}</td>
+                            <td style="padding:8px 14px; max-width:180px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="{{ p.motivo_portaria }}">{{ p.motivo_portaria }}</td>
+                            <td style="padding:8px 14px; white-space:nowrap;">{{ p.prazo_professor_criar_atividades|date:"d/m/Y" }}</td>
+                            <td style="padding:8px 14px; font-size:12px;">
+                                {% for dp in p.disciplinas_portaria.all %}
+                                    <span style="background:#e9ecef; padding:1px 6px; border-radius:4px; margin-right:3px; white-space:nowrap;">{{ dp.codigo_disciplinafk.nome_disciplina }}</span>
+                                {% empty %}
+                                    <span style="color:#999;">—</span>
+                                {% endfor %}
+                            </td>
+                            <td style="padding:8px 14px; text-align:center;">
+                                {% if p.status == 'concluida' %}
+                                    <span class="uc-badge uc-badge--success">Concluída</span>
+                                {% elif p.status == 'cancelada' %}
+                                    <span class="uc-badge uc-badge--danger">Cancelada</span>
+                                {% elif p.status == 'aguardando_atividades' %}
+                                    <span class="uc-badge uc-badge--pending">Aguard. Atividades</span>
+                                {% elif p.status == 'aguardando_respostas' %}
+                                    <span class="uc-badge" style="background:#e3f2fd; color:#1565c0;">Aguard. Respostas</span>
+                                {% elif p.status == 'em_validacao_professor' %}
+                                    <span class="uc-badge" style="background:#e8eaf6; color:#3949ab;">Val. Professor</span>
+                                {% elif p.status == 'em_validacao_diretor' %}
+                                    <span class="uc-badge" style="background:#f3e5f5; color:#7b1fa2;">Val. Diretor</span>
+                                {% else %}
+                                    <span class="uc-badge uc-badge--pending">{{ p.status }}</span>
+                                {% endif %}
+                            </td>
+                            <td style="padding:8px 14px; text-align:center; white-space:nowrap;">
+                                <button type="button" class="uc-btn uc-btn--outline uc-btn--sm" data-bs-toggle="modal" data-bs-target="#modalHomeEditarPortaria{{ p.pk }}" title="Editar">
+                                    <i class="fas fa-pen"></i>
+                                </button>
+                                <button type="button" class="uc-btn uc-btn--sm" style="background:#dc3545; color:#fff; border:none; margin-left:2px;" data-bs-toggle="modal" data-bs-target="#modalHomeExcluirPortaria{{ p.pk }}" title="Excluir">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                </div>
+                {% else %}
+                <div class="uc-empty">
+                    <i class="fas fa-file-alt"></i>
+                    <p>Nenhuma portaria cadastrada. <a href="{% url 'dashboard:gerenciar_portarias' %}" style="color:var(--uc-orange);">Cadastrar uma portaria</a></p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- ══════════════════════════════════════════════════
+             VALIDAÇÃO FINAL — RESPOSTAS APROVADAS PELO PROFESSOR
+        ═══════════════════════════════════════════════════ -->
+        {% if respostas_para_validar %}
+        <div id="secao-validar" class="uc-card" style="margin-bottom:20px;">
+            <div class="uc-card__head">
+                <span class="uc-card__head-title">
+                    <i class="fas fa-check-double" style="color:var(--uc-orange)"></i>
+                    Validação Final
+                    <small style="color:#999; font-weight:400; margin-left:6px;">{{ total_validar }}</small>
+                </span>
+            </div>
+            <div class="uc-card__body" style="padding:0;">
+                <div style="overflow-x:auto;">
+                <table style="width:100%; border-collapse:collapse; font-size:13px;">
+                    <thead>
+                        <tr style="background:#f8f9fa; border-bottom:2px solid #eee;">
+                            <th style="padding:10px 14px; text-align:left; color:#555; font-weight:600;">Aluno</th>
+                            <th style="padding:10px 14px; text-align:left; color:#555; font-weight:600;">Atividade</th>
+                            <th style="padding:10px 14px; text-align:left; color:#555; font-weight:600;">Disciplina</th>
+                            <th style="padding:10px 14px; text-align:left; color:#555; font-weight:600;">Professor</th>
+                            <th style="padding:10px 14px; text-align:left; color:#555; font-weight:600;">Enviada em</th>
+                            <th style="padding:10px 14px; text-align:center; color:#555; font-weight:600;">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for r in respostas_para_validar %}
+                        <tr style="border-bottom:1px solid #f0f0f0;" onmouseover="this.style.background='#fafafa'" onmouseout="this.style.background=''">
+                            <td style="padding:8px 14px;">{{ r.id_alunofk.nome_completo }}</td>
+                            <td style="padding:8px 14px;">{{ r.id_atividade.titulo }}</td>
+                            <td style="padding:8px 14px;">{{ r.id_atividade.codigo_disciplinafk.nome_disciplina }}</td>
+                            <td style="padding:8px 14px;">{{ r.id_atividade.id_professorfk.nome_completo }}</td>
+                            <td style="padding:8px 14px;">{{ r.data_envio|date:"d/m/Y H:i" }}</td>
+                            <td style="padding:8px 14px; text-align:center; white-space:nowrap;">
+                                <button type="button" class="uc-btn uc-btn--sm" style="background:#17a2b8; color:#fff; border:none;" data-bs-toggle="modal" data-bs-target="#modalValidarResp{{ r.id_resposta }}" title="Analisar">
+                                    <i class="fas fa-search me-1"></i> Analisar
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+    </div><!-- /uc-content -->
+</div><!-- /uc-main -->
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     MODAL — Cadastrar Aluno
+══════════════════════════════════════════════════════════════ -->
+<div class="modal fade" id="modalCadastrarAluno" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content" style="border-radius:12px; overflow:hidden;">
+            <div class="modal-header" style="background:linear-gradient(135deg,#1C1C2E,#0F2952); color:#fff; border:none;">
+                <h5 class="modal-title"><i class="fas fa-user-plus me-2" style="color:#FF6B00;"></i> Novo Aluno</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" action="{% url 'dashboard:cadastrar_aluno' %}">
+                {% csrf_token %}
+                <div class="modal-body p-4">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold" style="font-size:13px;">Nome <span style="color:#FF6B00">*</span></label>
+                            <input type="text" name="nome_aluno" class="form-control" required placeholder="Nome" style="border-radius:8px;">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold" style="font-size:13px;">Sobrenome <span style="color:#FF6B00">*</span></label>
+                            <input type="text" name="sobrenome_aluno" class="form-control" required placeholder="Sobrenome" style="border-radius:8px;">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold" style="font-size:13px;">Matrícula <span style="color:#FF6B00">*</span></label>
+                            <input type="text" name="matricula_aluno" class="form-control" required placeholder="Ex: 2024001" style="border-radius:8px;">
+                        </div>
+                        <div class="col-md-5">
+                            <label class="form-label fw-semibold" style="font-size:13px;">Curso <span style="color:#999; font-weight:400;">(atribuído automaticamente)</span></label>
+                            <input type="text" name="curso_aluno" class="form-control" readonly value="{{ curso_diretor.nome_curso }}" style="border-radius:8px; background:#f8f9fa; cursor:not-allowed;">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold" style="font-size:13px;">Período <span style="color:#FF6B00">*</span></label>
+                            <input type="text" name="periodo" class="form-control" required placeholder="Ex: 5" style="border-radius:8px;">
+                        </div>
+                        <div class="col-md-12">
+                            <label class="form-label fw-semibold" style="font-size:13px;">Disciplinas <span style="color:#999; font-weight:400;">(pode selecionar múltiplas)</span></label>
+                            <select name="disciplinas" class="form-select" multiple size="5" style="border-radius:8px;">
+                                {% for disc in disciplinas %}
+                                    <option value="{{ disc.codigo_disciplina }}">{{ disc.nome_disciplina }}</option>
+                                {% endfor %}
+                            </select>
+                            <small style="color:#888; font-size:11px;"><i class="fas fa-info-circle me-1"></i>Segure Ctrl (Windows) ou Cmd (Mac) para selecionar múltiplas disciplinas</small>
+                        </div>
+                        <div class="col-12"><hr style="border-color:#eee; margin:4px 0;"></div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold" style="font-size:13px;">E-mail de acesso <span style="color:#FF6B00">*</span></label>
+                            <input type="email" name="email" class="form-control" required placeholder="aluno@universidade.edu.br" style="border-radius:8px;">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold" style="font-size:13px;">Senha <span style="color:#FF6B00">*</span></label>
+                            <input type="password" name="senha" class="form-control" required minlength="8" placeholder="Mínimo 8 caracteres" style="border-radius:8px;">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer" style="border:none; padding-top:0;">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-sm text-white fw-semibold" style="background:linear-gradient(135deg,#FF6B00,#D45400); border:none; border-radius:8px; padding:8px 24px;">
+                        <i class="fas fa-save me-1"></i> Cadastrar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     MODAL — Cadastrar Professor
+══════════════════════════════════════════════════════════════ -->
+<div class="modal fade" id="modalCadastrarProfessor" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius:12px; overflow:hidden;">
+            <div class="modal-header" style="background:linear-gradient(135deg,#1C1C2E,#0F2952); color:#fff; border:none;">
+                <h5 class="modal-title"><i class="fas fa-user-plus me-2" style="color:#FF6B00;"></i> Novo Professor</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" action="{% url 'dashboard:cadastrar_professor' %}">
+                {% csrf_token %}
+                <div class="modal-body p-4">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold" style="font-size:13px;">Nome <span style="color:#FF6B00">*</span></label>
+                            <input type="text" name="nome_professor" class="form-control" required placeholder="Nome" style="border-radius:8px;">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold" style="font-size:13px;">Sobrenome <span style="color:#FF6B00">*</span></label>
+                            <input type="text" name="sobrenome_professor" class="form-control" required placeholder="Sobrenome" style="border-radius:8px;">
+                        </div>
+                        <div class="col-md-12">
+                            <label class="form-label fw-semibold" style="font-size:13px;">Curso <span style="color:#999; font-weight:400;">(atribuído automaticamente)</span></label>
+                            <input type="text" name="curso_professor" class="form-control" readonly value="{{ curso_diretor.nome_curso }}" style="border-radius:8px; background:#f8f9fa; cursor:not-allowed;">
+                        </div>
+                        <div class="col-md-12">
+                            <label class="form-label fw-semibold" style="font-size:13px;">Disciplinas <span style="color:#FF6B00">*</span> <span style="color:#999; font-weight:400;">(pelo menos uma)</span></label>
+                            <select name="disciplinas" id="disciplinasProfessor" class="form-select" multiple size="5" style="border-radius:8px;" required>
+                                {% for disc in disciplinas %}
+                                    <option value="{{ disc.codigo_disciplina }}">{{ disc.nome_disciplina }}</option>
+                                {% endfor %}
+                            </select>
+                            <small style="color:#888; font-size:11px;"><i class="fas fa-info-circle me-1"></i>Segure Ctrl (Windows) ou Cmd (Mac) para selecionar múltiplas disciplinas</small>
+                        </div>
+                        <div class="col-12"><hr style="border-color:#eee; margin:4px 0;"></div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold" style="font-size:13px;">E-mail de acesso <span style="color:#FF6B00">*</span></label>
+                            <input type="email" name="email" class="form-control" required placeholder="professor@universidade.edu.br" style="border-radius:8px;">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold" style="font-size:13px;">Senha <span style="color:#FF6B00">*</span></label>
+                            <input type="password" name="senha" class="form-control" required minlength="8" placeholder="Mínimo 8 caracteres" style="border-radius:8px;">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer" style="border:none; padding-top:0;">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-sm text-white fw-semibold" style="background:linear-gradient(135deg,#FF6B00,#D45400); border:none; border-radius:8px; padding:8px 24px;">
+                        <i class="fas fa-save me-1"></i> Cadastrar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     MODAIS — Editar / Excluir ALUNOS
+══════════════════════════════════════════════════════════════ -->
+{% for aluno in alunos %}
+<div class="modal fade" id="modalEditarAluno{{ aluno.pk }}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content" style="border-radius:12px; overflow:hidden;">
+            <div class="modal-header" style="background:linear-gradient(135deg,#1C1C2E,#0F2952); color:#fff; border:none;">
+                <h5 class="modal-title"><i class="fas fa-pen me-2" style="color:#FF6B00;"></i> Editar Aluno</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" action="{% url 'dashboard:editar_aluno' aluno.pk %}">
+                {% csrf_token %}
+                <div class="modal-body p-4">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold" style="font-size:13px;">Nome</label>
+                            <input type="text" name="nome_aluno" class="form-control" required value="{{ aluno.nome_aluno }}" style="border-radius:8px;">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold" style="font-size:13px;">Sobrenome</label>
+                            <input type="text" name="sobrenome_aluno" class="form-control" required value="{{ aluno.sobrenome_aluno }}" style="border-radius:8px;">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold" style="font-size:13px;">Matrícula</label>
+                            <input type="text" name="matricula_aluno" class="form-control" required value="{{ aluno.matricula_aluno }}" style="border-radius:8px;">
+                        </div>
+                        <div class="col-md-5">
+                            <label class="form-label fw-semibold" style="font-size:13px;">Curso</label>
+                            <input type="text" name="curso_aluno" class="form-control" readonly value="{{ aluno.curso_aluno }}" style="border-radius:8px; background:#f8f9fa; cursor:not-allowed;">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold" style="font-size:13px;">Período</label>
+                            <input type="text" name="periodo" class="form-control" required value="{{ aluno.periodo }}" style="border-radius:8px;">
+                        </div>
+                        <div class="col-md-12">
+                            <label class="form-label fw-semibold" style="font-size:13px;">Disciplinas <span style="color:#999; font-weight:400;">(pode selecionar múltiplas)</span></label>
+                            <select name="disciplinas" class="form-select" multiple size="5" style="border-radius:8px;">
+                                {% for disc in disciplinas %}
+                                    <option value="{{ disc.codigo_disciplina }}" {% if disc in aluno.disciplinas.all %}selected{% endif %}>{{ disc.nome_disciplina }}</option>
+                                {% endfor %}
+                            </select>
+                            <small style="color:#888; font-size:11px;"><i class="fas fa-info-circle me-1"></i>Segure Ctrl (Windows) ou Cmd (Mac) para selecionar múltiplas disciplinas</small>
+                        </div>
+                        <div class="col-12"><hr style="border-color:#eee; margin:4px 0;"></div>
+                        <div class="col-md-12">
+                            <label class="form-label fw-semibold" style="font-size:13px;">Nova Senha <span style="color:#999; font-weight:400;">(deixe em branco para não alterar)</span></label>
+                            <input type="password" name="nova_senha" class="form-control" minlength="8" placeholder="Mínimo 8 caracteres" style="border-radius:8px;">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer" style="border:none; padding-top:0;">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-sm text-white fw-semibold" style="background:linear-gradient(135deg,#FF6B00,#D45400); border:none; border-radius:8px; padding:8px 24px;">
+                        <i class="fas fa-save me-1"></i> Salvar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalExcluirAluno{{ aluno.pk }}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content" style="border-radius:12px; overflow:hidden;">
+            <div class="modal-header" style="background:#dc3545; color:#fff; border:none;">
+                <h5 class="modal-title"><i class="fas fa-exclamation-triangle me-2"></i> Excluir Aluno</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" action="{% url 'dashboard:excluir_aluno' aluno.pk %}">
+                {% csrf_token %}
+                <div class="modal-body p-4">
+                    <p style="font-size:14px;">Excluir <strong>{{ aluno.nome_completo }}</strong>?</p>
+                    <small class="text-danger"><i class="fas fa-exclamation-circle me-1"></i>Ação irreversível.</small>
+                </div>
+                <div class="modal-footer" style="border:none; padding-top:0;">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-danger btn-sm fw-semibold" style="border-radius:8px; padding:8px 20px;">
+                        <i class="fas fa-trash-alt me-1"></i> Excluir
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+<!-- ═══════════════════════════════════════════════════════════
+     MODAIS — Editar / Excluir PROFESSORES
+══════════════════════════════════════════════════════════════ -->
+{% for prof in professores %}
+<div class="modal fade" id="modalEditarProf{{ prof.pk }}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius:12px; overflow:hidden;">
+            <div class="modal-header" style="background:linear-gradient(135deg,#1C1C2E,#0F2952); color:#fff; border:none;">
+                <h5 class="modal-title"><i class="fas fa-pen me-2" style="color:#FF6B00;"></i> Editar Professor</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" action="{% url 'dashboard:editar_professor' prof.pk %}">
+                {% csrf_token %}
+                <div class="modal-body p-4">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold" style="font-size:13px;">Nome</label>
+                            <input type="text" name="nome_professor" class="form-control" required value="{{ prof.nome_professor }}" style="border-radius:8px;">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold" style="font-size:13px;">Sobrenome</label>
+                            <input type="text" name="sobrenome_professor" class="form-control" required value="{{ prof.sobrenome_professor }}" style="border-radius:8px;">
+                        </div>
+                        <div class="col-md-12">
+                            <label class="form-label fw-semibold" style="font-size:13px;">Curso</label>
+                            <input type="text" name="curso_professor" class="form-control" readonly value="{{ prof.curso_professor }}" style="border-radius:8px; background:#f8f9fa; cursor:not-allowed;">
+                        </div>
+                        <div class="col-md-12">
+                            <label class="form-label fw-semibold" style="font-size:13px;">Disciplinas <span style="color:#999; font-weight:400;">(pode selecionar múltiplas)</span></label>
+                            <select name="disciplinas" class="form-select" multiple size="5" style="border-radius:8px;">
+                                {% for disc in disciplinas %}
+                                    <option value="{{ disc.codigo_disciplina }}" {% if disc in prof.disciplinas.all %}selected{% endif %}>{{ disc.nome_disciplina }}</option>
+                                {% endfor %}
+                            </select>
+                            <small style="color:#888; font-size:11px;"><i class="fas fa-info-circle me-1"></i>Segure Ctrl (Windows) ou Cmd (Mac) para selecionar múltiplas disciplinas</small>
+                        </div>
+                        <div class="col-12"><hr style="border-color:#eee; margin:4px 0;"></div>
+                        <div class="col-md-12">
+                            <label class="form-label fw-semibold" style="font-size:13px;">Nova Senha <span style="color:#999; font-weight:400;">(deixe em branco para não alterar)</span></label>
+                            <input type="password" name="nova_senha" class="form-control" minlength="8" placeholder="Mínimo 8 caracteres" style="border-radius:8px;">
+                        </div>
+                    </div>
+                    <div class="mt-3" style="background:#f8f9fa; padding:8px 12px; border-radius:8px; font-size:12px; color:#888;">
+                        <i class="fas fa-envelope me-1"></i> {{ prof.id_professor.email }}
+                        &nbsp;·&nbsp; <i class="fas fa-book me-1"></i> {{ prof.disciplinas.count }} disciplina{{ prof.disciplinas.count|pluralize }}
+                    </div>
+                </div>
+                <div class="modal-footer" style="border:none; padding-top:0;">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-sm text-white fw-semibold" style="background:linear-gradient(135deg,#FF6B00,#D45400); border:none; border-radius:8px; padding:8px 24px;">
+                        <i class="fas fa-save me-1"></i> Salvar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalExcluirProf{{ prof.pk }}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content" style="border-radius:12px; overflow:hidden;">
+            <div class="modal-header" style="background:#dc3545; color:#fff; border:none;">
+                <h5 class="modal-title"><i class="fas fa-exclamation-triangle me-2"></i> Excluir Professor</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" action="{% url 'dashboard:excluir_professor' prof.pk %}">
+                {% csrf_token %}
+                <div class="modal-body p-4">
+                    <p style="font-size:14px;">Excluir <strong>{{ prof.nome_completo }}</strong>?</p>
+                    {% if prof.disciplinas.count %}
+                    <small class="text-warning"><i class="fas fa-exclamation-triangle me-1"></i>{{ prof.disciplinas.count }} disciplina{{ prof.disciplinas.count|pluralize }} vinculada{{ prof.disciplinas.count|pluralize }} será{{ prof.disciplinas.count|pluralize:"á,ão" }} removida{{ prof.disciplinas.count|pluralize }}.</small><br>
+                    {% endif %}
+                    <small class="text-danger"><i class="fas fa-exclamation-circle me-1"></i>Ação irreversível.</small>
+                </div>
+                <div class="modal-footer" style="border:none; padding-top:0;">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-danger btn-sm fw-semibold" style="border-radius:8px; padding:8px 20px;">
+                        <i class="fas fa-trash-alt me-1"></i> Excluir
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+<!-- ═══════════════════════════════════════════════════════════
+     MODAIS — Editar / Excluir PORTARIAS
+══════════════════════════════════════════════════════════════ -->
+{% for p in portarias %}
+<div class="modal fade" id="modalHomeEditarPortaria{{ p.pk }}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content" style="border-radius:12px; overflow:hidden;">
+            <div class="modal-header" style="background:linear-gradient(135deg,#1C1C2E,#0F2952); color:#fff; border:none;">
+                <h5 class="modal-title">
+                    <i class="fas fa-edit me-2" style="color:#FF6B00;"></i> Editar Portaria <span style="color:#FF6B00;">#{{ p.numero_portaria }}</span>
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" action="{% url 'dashboard:editar_portaria' p.pk %}" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="modal-body p-4">
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="form-label fw-semibold" style="font-size:13px;">Aluno</label>
+                            <input type="text" class="form-control" disabled
+                                   value="{{ p.id_alunofk.nome_completo }} — {{ p.id_alunofk.matricula_aluno }}"
+                                   style="border-radius:8px; border:2px solid #e0e0e0; background:#f8f9fa;">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-semibold" style="font-size:13px;">Motivo da Portaria <span style="color:#FF6B00">*</span></label>
+                            <textarea name="motivo_portaria" class="form-control" rows="3" required
+                                      style="border-radius:8px; border:2px solid #e0e0e0; resize:vertical;">{{ p.motivo_portaria }}</textarea>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold" style="font-size:13px;">Prazo — Criar Atividades <span style="color:#FF6B00">*</span></label>
+                            <input type="date" name="prazo_professor_criar_atividades" class="form-control" required
+                                   value="{{ p.prazo_professor_criar_atividades|date:'Y-m-d' }}"
+                                   style="border-radius:8px; border:2px solid #e0e0e0;">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold" style="font-size:13px;">Prazo — Respostas do Aluno <span style="color:#FF6B00">*</span></label>
+                            <input type="date" name="prazo_aluno_responder" class="form-control" required
+                                   value="{{ p.prazo_aluno_responder|date:'Y-m-d' }}"
+                                   style="border-radius:8px; border:2px solid #e0e0e0;">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold" style="font-size:13px;">Prazo — Validação Final <span style="color:#FF6B00">*</span></label>
+                            <input type="date" name="prazo_validacao_final" class="form-control" required
+                                   value="{{ p.prazo_validacao_final|date:'Y-m-d' }}"
+                                   style="border-radius:8px; border:2px solid #e0e0e0;">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold" style="font-size:13px;">Status</label>
+                            <select name="status" class="form-select" style="border-radius:8px; border:2px solid #e0e0e0;">
+                                <option value="aguardando_atividades" {% if p.status == 'aguardando_atividades' %}selected{% endif %}>Aguardando Criação de Atividades</option>
+                                <option value="aguardando_respostas" {% if p.status == 'aguardando_respostas' %}selected{% endif %}>Aguardando Respostas dos Alunos</option>
+                                <option value="em_validacao_professor" {% if p.status == 'em_validacao_professor' %}selected{% endif %}>Em Validação pelo Professor</option>
+                                <option value="em_validacao_diretor" {% if p.status == 'em_validacao_diretor' %}selected{% endif %}>Em Validação pelo Diretor</option>
+                                <option value="concluida" {% if p.status == 'concluida' %}selected{% endif %}>Concluída</option>
+                                <option value="cancelada" {% if p.status == 'cancelada' %}selected{% endif %}>Cancelada</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold" style="font-size:13px;">Novo Atestado <span style="color:#aaa; font-weight:400;">(deixe vazio para manter)</span></label>
+                            <input type="file" name="atestado" class="form-control" accept=".pdf,.jpg,.jpeg,.png"
+                                   style="border-radius:8px; border:2px solid #e0e0e0;">
+                            {% if p.atestado %}
+                            <small class="text-muted"><i class="fas fa-paperclip me-1"></i>Atestado atual: <a href="{{ p.atestado.url }}" target="_blank">ver arquivo</a></small>
+                            {% endif %}
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-semibold" style="font-size:13px;">Observações</label>
+                            <textarea name="observacoes" class="form-control" rows="2"
+                                      style="border-radius:8px; border:2px solid #e0e0e0; resize:vertical;">{{ p.observacoes|default:'' }}</textarea>
+                        </div>
+                        <div class="col-12">
+                            <hr style="border-color:#eee;">
+                            <label class="form-label fw-semibold" style="font-size:13px;">Disciplinas <span style="color:#FF6B00">*</span></label>
+                            <div style="display:flex; flex-wrap:wrap; gap:8px;">
+                                {% for matricula in p.id_alunofk.matriculas.all %}
+                                {% with disc=matricula.codigo_disciplinafk %}
+                                <div class="form-check" style="background:#f8f9fa; padding:6px 12px; border-radius:8px; border:1px solid #dee2e6;">
+                                    <input class="form-check-input" type="checkbox" name="disciplinas"
+                                           value="{{ disc.codigo_disciplina }}"
+                                           id="home_ed_disc_{{ p.pk }}_{{ disc.codigo_disciplina }}"
+                                           {% for dp in p.disciplinas_portaria.all %}{% if dp.codigo_disciplinafk == disc %}checked{% endif %}{% endfor %}>
+                                    <label class="form-check-label" for="home_ed_disc_{{ p.pk }}_{{ disc.codigo_disciplina }}" style="font-size:13px;">
+                                        {{ disc.nome_disciplina }}
+                                    </label>
+                                </div>
+                                {% endwith %}
+                                {% empty %}
+                                <small class="text-muted">Aluno sem disciplinas matriculadas.</small>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer" style="border:none; padding-top:0;">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-sm text-white fw-semibold"
+                            style="background:linear-gradient(135deg,#FF6B00,#D45400); border:none; border-radius:8px; padding:8px 24px;">
+                        <i class="fas fa-save me-1"></i> Salvar Alterações
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalHomeExcluirPortaria{{ p.pk }}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius:12px; overflow:hidden;">
+            <div class="modal-header" style="background:#dc3545; color:#fff; border:none;">
+                <h5 class="modal-title">
+                    <i class="fas fa-exclamation-triangle me-2"></i> Confirmar Exclusão
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" action="{% url 'dashboard:excluir_portaria' p.pk %}">
+                {% csrf_token %}
+                <div class="modal-body p-4">
+                    <p>Tem certeza que deseja excluir a portaria:</p>
+                    <div style="background:#f8f9fa; padding:12px 16px; border-radius:8px; margin:8px 0;">
+                        <strong><i class="fas fa-file-medical me-1" style="color:var(--uc-orange)"></i> Portaria #{{ p.numero_portaria }}</strong><br>
+                        <small class="text-muted">{{ p.id_alunofk.nome_completo }} · Criada em {{ p.data_criacao|date:"d/m/Y" }}</small>
+                    </div>
+                    <p class="text-danger mt-3 mb-0" style="font-size:13px;">
+                        <i class="fas fa-exclamation-circle me-1"></i>
+                        Esta ação é irreversível. Todas as atividades vinculadas serão removidas.
+                    </p>
+                </div>
+                <div class="modal-footer" style="border:none; padding-top:0;">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-danger btn-sm fw-semibold" style="border-radius:8px; padding:8px 24px;">
+                        <i class="fas fa-trash-alt me-1"></i> Excluir
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+<!-- ═══════════════════════════════════════════════════════════
+     MODAIS — Analisar / Validar respostas (diretor)
+══════════════════════════════════════════════════════════════ -->
+{% for r in respostas_para_validar %}
+<div class="modal fade" id="modalValidarResp{{ r.id_resposta }}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content" style="border-radius:12px; overflow:hidden;">
+            <div class="modal-header" style="background:linear-gradient(135deg,#1C1C2E,#0F2952); color:#fff; border:none;">
+                <h5 class="modal-title">
+                    <i class="fas fa-check-double me-2" style="color:#FF6B00;"></i>
+                    Validar Resposta — {{ r.id_atividade.titulo }}
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div style="background:#f8f9fa; padding:12px 16px; border-radius:8px; margin-bottom:16px; font-size:13px;">
+                    <div class="row g-2">
+                        <div class="col-md-6">
+                            <strong style="color:#555;">Aluno:</strong> {{ r.id_alunofk.nome_completo }}<br>
+                            <strong style="color:#555;">Atividade:</strong> {{ r.id_atividade.titulo }}<br>
+                            <strong style="color:#555;">Disciplina:</strong> {{ r.id_atividade.codigo_disciplinafk.nome_disciplina }}
+                        </div>
+                        <div class="col-md-6">
+                            <strong style="color:#555;">Professor:</strong> {{ r.id_atividade.id_professorfk.nome_completo }}<br>
+                            <strong style="color:#555;">Portaria:</strong> #{{ r.id_atividade.id_portariafk.numero_portaria }}<br>
+                            <strong style="color:#555;">Enviada em:</strong> {{ r.data_envio|date:"d/m/Y H:i" }}
+                        </div>
+                    </div>
+                </div>
+
+                {% if r.descricao_resposta %}
+                <div style="background:#fff; border:1px solid #e9ecef; border-radius:8px; padding:14px; margin-bottom:12px;">
+                    <strong style="font-size:11px; color:#888; text-transform:uppercase; letter-spacing:.5px;">Resposta do aluno</strong>
+                    <p style="margin:8px 0 0; font-size:14px; white-space:pre-wrap;">{{ r.descricao_resposta }}</p>
+                </div>
+                {% endif %}
+
+                {% if r.arquivo %}
+                <div style="background:#fff3cd; border:1px solid #ffc107; border-radius:8px; padding:10px 14px; margin-bottom:12px; font-size:13px;">
+                    <i class="fas fa-paperclip me-1"></i>
+                    <strong>Arquivo:</strong>
+                    <a href="/media/{{ r.arquivo }}" target="_blank" class="ms-1">Visualizar / Baixar</a>
+                </div>
+                {% endif %}
+
+                {% if r.observacao_professor %}
+                <div style="background:#d4edda; border:1px solid #c3e6cb; border-radius:8px; padding:10px 14px; margin-bottom:16px; font-size:13px;">
+                    <i class="fas fa-comment-alt me-1" style="color:#155724;"></i>
+                    <strong style="color:#155724;">Obs. Professor:</strong>
+                    <span style="color:#155724;">{{ r.observacao_professor }}</span>
+                </div>
+                {% endif %}
+
+                <hr style="border-color:#eee; margin:16px 0;">
+                <p class="fw-semibold mb-2" style="font-size:13px; color:#555;">Decisão:</p>
+
+                <!-- APROVAR -->
+                <form method="post" action="{% url 'dashboard:validar_resposta_diretor' r.id_resposta %}" class="mb-3">
+                    {% csrf_token %}
+                    <input type="hidden" name="acao" value="aprovar">
+                    <div class="mb-2">
+                        <label class="form-label" style="font-size:13px;">Observação (opcional)</label>
+                        <textarea name="observacao_diretor" class="form-control" rows="2"
+                            placeholder="Comentário para o aluno..." style="border-radius:8px;"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-sm text-white fw-semibold w-100"
+                        style="background:linear-gradient(135deg,#28a745,#1e7e34); border:none; border-radius:8px; padding:8px;">
+                        <i class="fas fa-check-double me-1"></i> Aprovar e Concluir Validação
+                    </button>
+                </form>
+
+                <!-- REJEITAR -->
+                <form method="post" action="{% url 'dashboard:validar_resposta_diretor' r.id_resposta %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="acao" value="rejeitar">
+                    <div class="mb-2">
+                        <label class="form-label" style="font-size:13px;">Motivo da rejeição <span style="color:#FF6B00">*</span></label>
+                        <textarea name="observacao_diretor" class="form-control" rows="2" required
+                            placeholder="Explique o motivo para que o aluno possa corrigir..." style="border-radius:8px;"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-sm btn-danger fw-semibold w-100"
+                        style="border-radius:8px; padding:8px;">
+                        <i class="fas fa-times me-1"></i> Rejeitar (devolver ao professor)
+                    </button>
+                </form>
+            </div>
+            <div class="modal-footer" style="border:none; padding-top:0;">
+                <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Fechar</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+<script>
+    function ucToggleSidebar() {
+        document.getElementById('ucSidebar').classList.toggle('collapsed');
+        document.getElementById('ucMain').classList.toggle('expanded');
+        localStorage.setItem('uc_sb', document.getElementById('ucSidebar').classList.contains('collapsed'));
+    }
+    document.addEventListener('DOMContentLoaded', function () {
+        if (localStorage.getItem('uc_sb') === 'true') {
+            document.getElementById('ucSidebar').classList.add('collapsed');
+            document.getElementById('ucMain').classList.add('expanded');
+        }
+        
+        // Validação de disciplinas no cadastro de professor
+        const formCadastrarProfessor = document.querySelector('#modalCadastrarProfessor form');
+        if (formCadastrarProfessor) {
+            formCadastrarProfessor.addEventListener('submit', function(e) {
+                const selectDisciplinas = document.getElementById('disciplinasProfessor');
+                const selecionadas = Array.from(selectDisciplinas.selectedOptions);
+                
+                if (selecionadas.length === 0) {
+                    e.preventDefault();
+                    alert('Você deve selecionar pelo menos uma disciplina para o professor.');
+                    selectDisciplinas.focus();
+                    return false;
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

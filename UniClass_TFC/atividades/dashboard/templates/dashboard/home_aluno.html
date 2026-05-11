@@ -1,0 +1,271 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Início — Aluno | UniClass{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+{% endblock %}
+
+{% block body %}
+<body class="dashboard-body">
+
+{% include 'dashboard/partials/_sidebar.html' with active_page='inicio' %}
+
+<div class="uc-main" id="ucMain">
+
+    <!-- Topbar -->
+    <header class="uc-topbar">
+        <button class="uc-topbar__toggle" onclick="ucToggleSidebar()"><i class="fas fa-bars"></i></button>
+        <div class="uc-topbar__title-wrap">
+            <div class="uc-topbar__title">Painel do Aluno</div>
+            <div class="uc-topbar__subtitle">{{ greeting }}, {{ display_name }}!</div>
+        </div>
+        <div class="uc-topbar__right">
+            <a href="#" class="uc-topbar__btn" title="Notificações">
+                <i class="fas fa-bell"></i>
+                {% if notificacoes_nao_lidas %}<span class="uc-topbar__notif-dot"></span>{% endif %}
+            </a>
+        </div>
+    </header>
+
+    <div class="uc-content">
+
+        {% if messages %}
+            {% for message in messages %}
+                <div class="uc-alert uc-alert--{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %}">
+                    <i class="fas fa-{% if message.tags == 'success' %}check-circle{% elif message.tags == 'error' %}exclamation-circle{% else %}info-circle{% endif %}"></i>
+                    <span>{{ message }}</span>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <!-- Stats -->
+        <div class="uc-stats">
+            <div class="uc-stat uc-stat--orange">
+                <div class="uc-stat__icon"><i class="fas fa-tasks"></i></div>
+                <div>
+                    <div class="uc-stat__num">{{ total_atividades_pendentes|default:"0" }}</div>
+                    <div class="uc-stat__label">Atividades Pendentes</div>
+                </div>
+            </div>
+            <div class="uc-stat uc-stat--blue">
+                <div class="uc-stat__icon"><i class="fas fa-file-alt"></i></div>
+                <div>
+                    <div class="uc-stat__num">{{ total_portarias|default:"0" }}</div>
+                    <div class="uc-stat__label">Portarias</div>
+                </div>
+            </div>
+            <div class="uc-stat uc-stat--green">
+                <div class="uc-stat__icon"><i class="fas fa-paper-plane"></i></div>
+                <div>
+                    <div class="uc-stat__num">{{ total_respostas|default:"0" }}</div>
+                    <div class="uc-stat__label">Respostas Enviadas</div>
+                </div>
+            </div>
+            <div class="uc-stat uc-stat--purple">
+                <div class="uc-stat__icon"><i class="fas fa-bell"></i></div>
+                <div>
+                    <div class="uc-stat__num">{{ notificacoes_nao_lidas|default:"0" }}</div>
+                    <div class="uc-stat__label">Notificações</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="uc-alert uc-alert--info">
+            <i class="fas fa-info-circle"></i>
+            <span>As atividades domiciliares são criadas pelos professores após a emissão da portaria pelo diretor. Envie suas respostas dentro do prazo.</span>
+        </div>
+
+        <!-- ══════════════════════════════════════════════════
+             ATIVIDADES PENDENTES
+        ═══════════════════════════════════════════════════ -->
+        <div class="uc-card" style="margin-bottom:20px;">
+            <div class="uc-card__head">
+                <span class="uc-card__head-title">
+                    <i class="fas fa-tasks" style="color:var(--uc-orange)"></i>
+                    Atividades para Responder
+                    <small style="color:#999; font-weight:400; margin-left:6px;">{{ atividades_disponiveis|length }}</small>
+                </span>
+                <a href="{% url 'dashboard:atividades_disponiveis' %}" class="uc-btn uc-btn--sm" style="background:#f0f0f0;color:#333;">Ver todas</a>
+            </div>
+            <div class="uc-card__body" style="padding:0;">
+                {% if atividades_disponiveis %}
+                <div style="overflow-x:auto;">
+                <table style="width:100%; border-collapse:collapse; font-size:13px;">
+                    <thead>
+                        <tr style="background:#f8f9fa; border-bottom:2px solid #eee;">
+                            <th style="padding:10px 14px; text-align:left; color:#555; font-weight:600;">Atividade</th>
+                            <th style="padding:10px 14px; text-align:left; color:#555; font-weight:600;">Disciplina</th>
+                            <th style="padding:10px 14px; text-align:left; color:#555; font-weight:600;">Professor</th>
+                            <th style="padding:10px 14px; text-align:center; color:#555; font-weight:600;">Prazo</th>
+                            <th style="padding:10px 14px; text-align:center; color:#555; font-weight:600;">Ação</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for a in atividades_disponiveis %}
+                        <tr style="border-bottom:1px solid #f0f0f0;" onmouseover="this.style.background='#fafafa'" onmouseout="this.style.background=''">
+                            <td style="padding:8px 14px;">
+                                <strong>{{ a.titulo }}</strong>
+                                {% if a.descricao %}<br><small class="text-muted">{{ a.descricao|truncatewords:12 }}</small>{% endif %}
+                            </td>
+                            <td style="padding:8px 14px;">{{ a.codigo_disciplinafk.nome_disciplina }}</td>
+                            <td style="padding:8px 14px;">{{ a.id_professorfk.nome_completo }}</td>
+                            <td style="padding:8px 14px; text-align:center;">
+                                <span style="{% if a.prazo_vencido %}color:#dc3545;font-weight:600;{% endif %}">
+                                    {{ a.data_limite_resposta|date:"d/m/Y" }}
+                                    {% if a.prazo_vencido %}<br><small>Vencido</small>{% endif %}
+                                </span>
+                            </td>
+                            <td style="padding:8px 14px; text-align:center;">
+                                <a href="{% url 'dashboard:visualizar_atividade' a.id_atividade %}" class="uc-btn uc-btn--orange uc-btn--sm">
+                                    <i class="fas fa-reply me-1"></i> Responder
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                </div>
+                {% else %}
+                <div class="uc-empty">
+                    <i class="fas fa-check-circle" style="color:var(--uc-orange)"></i>
+                    <p>Nenhuma atividade pendente no momento.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- ══════════════════════════════════════════════════
+             MINHAS PORTARIAS
+        ═══════════════════════════════════════════════════ -->
+        <div class="uc-card" style="margin-bottom:20px;">
+            <div class="uc-card__head">
+                <span class="uc-card__head-title">
+                    <i class="fas fa-file-alt" style="color:var(--uc-orange)"></i>
+                    Minhas Portarias
+                    <small style="color:#999; font-weight:400; margin-left:6px;">{{ total_portarias }}</small>
+                </span>
+                <a href="{% url 'dashboard:minhas_portarias' %}" class="uc-btn uc-btn--sm" style="background:#f0f0f0;color:#333;">Ver todas</a>
+            </div>
+            <div class="uc-card__body" style="padding:0;">
+                {% if portarias_ativas %}
+                <div style="overflow-x:auto;">
+                <table style="width:100%; border-collapse:collapse; font-size:13px;">
+                    <thead>
+                        <tr style="background:#f8f9fa; border-bottom:2px solid #eee;">
+                            <th style="padding:10px 14px; text-align:left; color:#555; font-weight:600;">#</th>
+                            <th style="padding:10px 14px; text-align:left; color:#555; font-weight:600;">Motivo</th>
+                            <th style="padding:10px 14px; text-align:left; color:#555; font-weight:600;">Disciplinas</th>
+                            <th style="padding:10px 14px; text-align:center; color:#555; font-weight:600;">Prazo Resposta</th>
+                            <th style="padding:10px 14px; text-align:center; color:#555; font-weight:600;">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for p in portarias_ativas %}
+                        <tr style="border-bottom:1px solid #f0f0f0;" onmouseover="this.style.background='#fafafa'" onmouseout="this.style.background=''">
+                            <td style="padding:8px 14px;"><code style="background:#f0f0f0; padding:2px 6px; border-radius:4px; font-size:12px;">{{ p.numero_portaria }}</code></td>
+                            <td style="padding:8px 14px;">{{ p.motivo_portaria|truncatewords:10 }}</td>
+                            <td style="padding:8px 14px; font-size:12px;">
+                                {% for pd in p.disciplinas_portaria.all %}
+                                    <span style="background:#e9ecef; padding:1px 6px; border-radius:4px; margin-right:3px; white-space:nowrap;">{{ pd.codigo_disciplinafk.nome_disciplina }}</span>
+                                {% empty %}—{% endfor %}
+                            </td>
+                            <td style="padding:8px 14px; text-align:center;">{{ p.prazo_aluno_responder|date:"d/m/Y" }}</td>
+                            <td style="padding:8px 14px; text-align:center;">
+                                {% if p.status == 'concluida' %}
+                                    <span class="uc-badge uc-badge--approved">Concluída</span>
+                                {% elif p.status == 'aguardando_atividades' %}
+                                    <span class="uc-badge uc-badge--warning">Aguard. Atividades</span>
+                                {% elif p.status == 'aguardando_respostas' %}
+                                    <span class="uc-badge uc-badge--pending">Aguard. Respostas</span>
+                                {% else %}
+                                    <span class="uc-badge uc-badge--info">{{ p.get_status_display }}</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                </div>
+                {% else %}
+                <div class="uc-empty">
+                    <i class="fas fa-file-alt"></i>
+                    <p>Nenhuma portaria ativa no momento.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- ══════════════════════════════════════════════════
+             ÚLTIMAS RESPOSTAS
+        ═══════════════════════════════════════════════════ -->
+        {% if minhas_respostas %}
+        <div class="uc-card" style="margin-bottom:20px;">
+            <div class="uc-card__head">
+                <span class="uc-card__head-title">
+                    <i class="fas fa-paper-plane" style="color:var(--uc-orange)"></i>
+                    Últimas Respostas
+                </span>
+                <a href="{% url 'dashboard:minhas_respostas' %}" class="uc-btn uc-btn--sm" style="background:#f0f0f0;color:#333;">Ver todas</a>
+            </div>
+            <div class="uc-card__body" style="padding:0;">
+                <div style="overflow-x:auto;">
+                <table style="width:100%; border-collapse:collapse; font-size:13px;">
+                    <thead>
+                        <tr style="background:#f8f9fa; border-bottom:2px solid #eee;">
+                            <th style="padding:10px 14px; text-align:left; color:#555; font-weight:600;">Atividade</th>
+                            <th style="padding:10px 14px; text-align:left; color:#555; font-weight:600;">Disciplina</th>
+                            <th style="padding:10px 14px; text-align:center; color:#555; font-weight:600;">Enviada em</th>
+                            <th style="padding:10px 14px; text-align:center; color:#555; font-weight:600;">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for r in minhas_respostas %}
+                        <tr style="border-bottom:1px solid #f0f0f0;" onmouseover="this.style.background='#fafafa'" onmouseout="this.style.background=''">
+                            <td style="padding:8px 14px;">{{ r.id_atividade.titulo }}</td>
+                            <td style="padding:8px 14px;">{{ r.id_atividade.codigo_disciplinafk.nome_disciplina }}</td>
+                            <td style="padding:8px 14px; text-align:center;">{{ r.data_envio|date:"d/m/Y H:i" }}</td>
+                            <td style="padding:8px 14px; text-align:center;">
+                                {% if r.status == 'aprovada_diretor' %}
+                                    <span class="uc-badge uc-badge--approved">Aprovada</span>
+                                {% elif r.status == 'aprovada_professor' %}
+                                    <span class="uc-badge" style="background:#d4edda;color:#155724;padding:3px 10px;border-radius:20px;font-size:11px;">Aprov. Professor</span>
+                                {% elif r.status == 'rejeitada_professor' or r.status == 'rejeitada_diretor' %}
+                                    <span class="uc-badge uc-badge--rejected">Rejeitada</span>
+                                {% else %}
+                                    <span class="uc-badge uc-badge--pending">Pendente</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+    </div><!-- /uc-content -->
+</div><!-- /uc-main -->
+
+</body>
+{% endblock %}
+
+{% block footer %}{% endblock %}
+
+{% block extra_js %}
+<script>
+    function ucToggleSidebar() {
+        document.getElementById('ucSidebar').classList.toggle('collapsed');
+        document.getElementById('ucMain').classList.add('expanded');
+        localStorage.setItem('uc_sb', document.getElementById('ucSidebar').classList.contains('collapsed'));
+    }
+    document.addEventListener('DOMContentLoaded', function () {
+        if (localStorage.getItem('uc_sb') === 'true') {
+            document.getElementById('ucSidebar').classList.add('collapsed');
+            document.getElementById('ucMain').classList.add('expanded');
+        }
+    });
+</script>
+{% endblock %}

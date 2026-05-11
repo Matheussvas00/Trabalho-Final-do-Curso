@@ -1,0 +1,212 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Resposta — {{ resposta.id_atividade.titulo }} | UniClass{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+{% endblock %}
+
+{% block body %}
+<body class="dashboard-body">
+
+{% include 'dashboard/partials/_sidebar.html' with active_page='respostas' %}
+
+<div class="uc-main" id="ucMain">
+
+    <header class="uc-topbar">
+        <button class="uc-topbar__toggle" onclick="ucToggleSidebar()"><i class="fas fa-bars"></i></button>
+        <div class="uc-topbar__title-wrap">
+            <div class="uc-topbar__title">Detalhe da Resposta</div>
+            <div class="uc-topbar__subtitle">{{ greeting }}, {{ display_name }}!</div>
+        </div>
+    </header>
+
+    <div class="uc-content">
+
+        {% if messages %}
+            {% for message in messages %}
+                <div class="uc-alert uc-alert--{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %}">
+                    <i class="fas fa-{% if message.tags == 'success' %}check-circle{% elif message.tags == 'error' %}exclamation-circle{% else %}info-circle{% endif %}"></i>
+                    <span>{{ message }}</span>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <div style="margin-bottom:16px;">
+            <a href="{% url 'dashboard:minhas_respostas' %}" style="color:#555; font-size:13px; text-decoration:none;">
+                <i class="fas fa-arrow-left me-1"></i> Voltar para respostas
+            </a>
+        </div>
+
+        <!-- Informações da atividade -->
+        <div class="uc-card" style="margin-bottom:20px;">
+            <div class="uc-card__head">
+                <span class="uc-card__head-title">
+                    <i class="fas fa-tasks" style="color:var(--uc-orange)"></i>
+                    Atividade: {{ resposta.id_atividade.titulo }}
+                </span>
+            </div>
+            <div class="uc-card__body">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <div style="font-size:11px;color:#999;text-transform:uppercase;font-weight:600;margin-bottom:2px;">Disciplina</div>
+                        <div style="font-size:14px;">{{ resposta.id_atividade.codigo_disciplinafk.nome_disciplina }}</div>
+                    </div>
+                    <div class="col-md-4">
+                        <div style="font-size:11px;color:#999;text-transform:uppercase;font-weight:600;margin-bottom:2px;">Professor</div>
+                        <div style="font-size:14px;">{{ resposta.id_atividade.id_professorfk.nome_completo }}</div>
+                    </div>
+                    <div class="col-md-4">
+                        <div style="font-size:11px;color:#999;text-transform:uppercase;font-weight:600;margin-bottom:2px;">Portaria</div>
+                        <div style="font-size:14px;"><code>{{ resposta.id_atividade.id_portariafk.numero_portaria }}</code></div>
+                    </div>
+                </div>
+                {% if resposta.id_atividade.descricao %}
+                <div style="margin-top:14px;">
+                    <div style="font-size:11px;color:#999;text-transform:uppercase;font-weight:600;margin-bottom:6px;">Enunciado</div>
+                    <div style="background:#f8f9fa; border-radius:8px; padding:14px; font-size:14px;">{{ resposta.id_atividade.descricao|linebreaksbr }}</div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Sua resposta -->
+        <div class="uc-card" style="margin-bottom:20px;">
+            <div class="uc-card__head">
+                <span class="uc-card__head-title">
+                    <i class="fas fa-paper-plane" style="color:var(--uc-orange)"></i>
+                    Sua Resposta
+                </span>
+                <small style="color:#999;">Enviada em {{ resposta.data_envio|date:"d/m/Y H:i" }}</small>
+            </div>
+            <div class="uc-card__body">
+                {% if resposta.descricao_resposta %}
+                <div style="background:#f8f9fa; border-radius:8px; padding:14px; font-size:14px; margin-bottom:12px;">
+                    {{ resposta.descricao_resposta|linebreaksbr }}
+                </div>
+                {% endif %}
+
+                {% if resposta.arquivo %}
+                <div style="padding:10px 16px; background:#e8f4fd; border:1px solid #bee5eb; border-radius:8px; margin-bottom:12px; font-size:13px;">
+                    <i class="fas fa-paperclip me-2" style="color:#0c5460;"></i>
+                    <strong>Arquivo:</strong>
+                    <a href="/media/{{ resposta.arquivo }}" target="_blank" class="ms-2">{{ resposta.arquivo }}</a>
+                </div>
+                {% endif %}
+
+                {% if resposta.status_professor == 'pendente' %}
+                <div style="margin-top:12px; display:flex; gap:8px;">
+                    <a href="{% url 'dashboard:editar_resposta' resposta.id_resposta %}" class="uc-btn uc-btn--orange uc-btn--sm">
+                        <i class="fas fa-edit me-1"></i> Editar
+                    </a>
+                    <button type="button" class="uc-btn uc-btn--sm" style="background:#dc3545;color:#fff;"
+                        onclick="document.getElementById('formExcluir').submit()">
+                        <i class="fas fa-trash me-1"></i> Excluir
+                    </button>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Timeline de validação -->
+        <div class="uc-card">
+            <div class="uc-card__head">
+                <span class="uc-card__head-title">
+                    <i class="fas fa-clipboard-check" style="color:var(--uc-orange)"></i>
+                    Status da Validação
+                </span>
+            </div>
+            <div class="uc-card__body">
+                <div style="display:flex; flex-direction:column; gap:12px;">
+
+                    <!-- Etapa 1: Envio -->
+                    <div style="display:flex; align-items:flex-start; gap:14px;">
+                        <div style="width:32px; height:32px; border-radius:50%; background:#28a745; display:flex; align-items:center; justify-content:center; color:#fff; flex-shrink:0;">
+                            <i class="fas fa-check" style="font-size:14px;"></i>
+                        </div>
+                        <div>
+                            <div style="font-weight:600; font-size:13px;">Resposta enviada</div>
+                            <div style="font-size:12px; color:#999;">{{ resposta.data_envio|date:"d/m/Y H:i" }}</div>
+                        </div>
+                    </div>
+
+                    <!-- Etapa 2: Professor -->
+                    <div style="display:flex; align-items:flex-start; gap:14px;">
+                        <div style="width:32px; height:32px; border-radius:50%; background:{% if resposta.status_professor == 'aprovada' %}#28a745{% elif resposta.status_professor == 'rejeitada' %}#dc3545{% else %}#adb5bd{% endif %}; display:flex; align-items:center; justify-content:center; color:#fff; flex-shrink:0;">
+                            <i class="fas fa-{% if resposta.status_professor == 'aprovada' %}check{% elif resposta.status_professor == 'rejeitada' %}times{% else %}clock{% endif %}" style="font-size:14px;"></i>
+                        </div>
+                        <div>
+                            <div style="font-weight:600; font-size:13px;">Avaliação do Professor</div>
+                            {% if resposta.status_professor == 'pendente' %}
+                                <div style="font-size:12px; color:#999;">Aguardando avaliação...</div>
+                            {% elif resposta.status_professor == 'aprovada' %}
+                                <div style="font-size:12px; color:#28a745;">Aprovada em {{ resposta.data_validacao_professor|date:"d/m/Y H:i" }}</div>
+                                {% if resposta.observacao_professor %}
+                                <div style="font-size:12px; background:#f8f9fa; border-radius:6px; padding:6px 10px; margin-top:4px;">{{ resposta.observacao_professor }}</div>
+                                {% endif %}
+                            {% else %}
+                                <div style="font-size:12px; color:#dc3545;">Rejeitada em {{ resposta.data_validacao_professor|date:"d/m/Y H:i" }}</div>
+                                {% if resposta.observacao_professor %}
+                                <div style="font-size:12px; background:#f8d7da; border-radius:6px; padding:6px 10px; margin-top:4px; color:#721c24;">{{ resposta.observacao_professor }}</div>
+                                {% endif %}
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Etapa 3: Diretor -->
+                    <div style="display:flex; align-items:flex-start; gap:14px;">
+                        <div style="width:32px; height:32px; border-radius:50%; background:{% if resposta.status_diretor == 'aprovada' %}#28a745{% elif resposta.status_diretor == 'rejeitada' %}#dc3545{% else %}#adb5bd{% endif %}; display:flex; align-items:center; justify-content:center; color:#fff; flex-shrink:0;">
+                            <i class="fas fa-{% if resposta.status_diretor == 'aprovada' %}check-double{% elif resposta.status_diretor == 'rejeitada' %}times{% else %}lock{% endif %}" style="font-size:14px;"></i>
+                        </div>
+                        <div>
+                            <div style="font-weight:600; font-size:13px;">Validação Final do Diretor</div>
+                            {% if resposta.status_professor != 'aprovada' %}
+                                <div style="font-size:12px; color:#999;">Aguardando aprovação do professor primeiro.</div>
+                            {% elif resposta.status_diretor == 'pendente' %}
+                                <div style="font-size:12px; color:#999;">Aguardando validação...</div>
+                            {% elif resposta.status_diretor == 'aprovada' %}
+                                <div style="font-size:12px; color:#28a745;">Aprovada em {{ resposta.data_validacao_diretor|date:"d/m/Y H:i" }}</div>
+                                {% if resposta.observacao_diretor %}
+                                <div style="font-size:12px; background:#f8f9fa; border-radius:6px; padding:6px 10px; margin-top:4px;">{{ resposta.observacao_diretor }}</div>
+                                {% endif %}
+                            {% else %}
+                                <div style="font-size:12px; color:#dc3545;">Rejeitada em {{ resposta.data_validacao_diretor|date:"d/m/Y H:i" }}</div>
+                                {% if resposta.observacao_diretor %}
+                                <div style="font-size:12px; background:#f8d7da; border-radius:6px; padding:6px 10px; margin-top:4px; color:#721c24;">{{ resposta.observacao_diretor }}</div>
+                                {% endif %}
+                            {% endif %}
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<form id="formExcluir" method="post" action="{% url 'dashboard:excluir_resposta' resposta.id_resposta %}" style="display:none;">
+    {% csrf_token %}
+</form>
+
+</body>
+{% endblock %}
+
+{% block footer %}{% endblock %}
+
+{% block extra_js %}
+<script>
+    function ucToggleSidebar() {
+        document.getElementById('ucSidebar').classList.toggle('collapsed');
+        document.getElementById('ucMain').classList.toggle('expanded');
+        localStorage.setItem('uc_sb', document.getElementById('ucSidebar').classList.contains('collapsed'));
+    }
+    document.addEventListener('DOMContentLoaded', function () {
+        if (localStorage.getItem('uc_sb') === 'true') {
+            document.getElementById('ucSidebar').classList.add('collapsed');
+            document.getElementById('ucMain').classList.add('expanded');
+        }
+    });
+</script>
+{% endblock %}

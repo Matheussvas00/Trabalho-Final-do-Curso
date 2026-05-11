@@ -1,0 +1,32 @@
+{% extends 'atividades/base.html' %}
+
+{% block title %}Dashboard - UniClass{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4><i class="fas fa-tachometer-alt"></i> Dashboard</h4>
+                </div>
+                <div class="card-body">
+                    <h5>Bem-vindo(a), {{ user.email }}!</h5>
+                    <p><strong>Tipo de usuário:</strong> {{ user.get_tipo_usuario_display }}</p>
+                    
+                    <hr>
+                    
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i>
+                        Esta é a página inicial. O dashboard específico para {{ user.get_tipo_usuario_display }} será desenvolvido em breve.
+                    </div>
+                    
+                    <a href="{% url 'logout' %}" class="btn btn-danger">
+                        <i class="fas fa-sign-out-alt"></i> Sair
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

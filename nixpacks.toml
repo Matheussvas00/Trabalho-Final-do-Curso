@@ -1,0 +1,8 @@
+[phases.setup]
+nixPkgs = ["python313", "pkg-config", "libmysqlclient"]
+
+[phases.install]
+cmds = ["pip install -r requirements.txt"]
+
+[start]
+cmd = "cd UniClass_TFC && gunicorn UniCLass.wsgi --bind 0.0.0.0:$PORT --workers 2 --timeout 120"

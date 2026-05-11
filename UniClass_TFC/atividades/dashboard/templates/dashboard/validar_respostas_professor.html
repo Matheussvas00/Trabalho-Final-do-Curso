@@ -1,0 +1,197 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Avaliar Respostas | UniClass{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+{% endblock %}
+
+{% block body %}
+<body class="dashboard-body">
+
+{% include 'dashboard/partials/_sidebar.html' with active_page='respostas' %}
+
+<div class="uc-main" id="ucMain">
+
+    <header class="uc-topbar">
+        <button class="uc-topbar__toggle" onclick="ucToggleSidebar()"><i class="fas fa-bars"></i></button>
+        <div class="uc-topbar__title-wrap">
+            <div class="uc-topbar__title">Avaliar Respostas</div>
+            <div class="uc-topbar__subtitle">{{ greeting }}, {{ display_name }}!</div>
+        </div>
+    </header>
+
+    <div class="uc-content">
+
+        {% if messages %}
+            {% for message in messages %}
+                <div class="uc-alert uc-alert--{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %}">
+                    <i class="fas fa-{% if message.tags == 'success' %}check-circle{% elif message.tags == 'error' %}exclamation-circle{% else %}info-circle{% endif %}"></i>
+                    <span>{{ message }}</span>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <div class="uc-card">
+            <div class="uc-card__head">
+                <span class="uc-card__head-title">
+                    <i class="fas fa-clipboard-check" style="color:var(--uc-orange)"></i>
+                    Respostas Pendentes de Avaliação
+                    <small style="color:#999; font-weight:400; margin-left:6px;">{{ respostas|length }}</small>
+                </span>
+            </div>
+            <div class="uc-card__body" style="padding:0;">
+                {% if respostas %}
+                <div style="overflow-x:auto;">
+                <table style="width:100%; border-collapse:collapse; font-size:13px;">
+                    <thead>
+                        <tr style="background:#f8f9fa; border-bottom:2px solid #eee;">
+                            <th style="padding:10px 14px; color:#555; font-weight:600;">Aluno</th>
+                            <th style="padding:10px 14px; color:#555; font-weight:600;">Atividade</th>
+                            <th style="padding:10px 14px; color:#555; font-weight:600;">Disciplina</th>
+                            <th style="padding:10px 14px; color:#555; font-weight:600;">Portaria</th>
+                            <th style="padding:10px 14px; text-align:center; color:#555; font-weight:600;">Enviada em</th>
+                            <th style="padding:10px 14px; text-align:center; color:#555; font-weight:600;">Ação</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for r in respostas %}
+                        <tr style="border-bottom:1px solid #f0f0f0;" onmouseover="this.style.background='#fafafa'" onmouseout="this.style.background=''">
+                            <td style="padding:8px 14px; font-weight:500;">{{ r.id_alunofk.nome_completo }}</td>
+                            <td style="padding:8px 14px;">{{ r.id_atividade.titulo }}</td>
+                            <td style="padding:8px 14px;">{{ r.id_atividade.codigo_disciplinafk.nome_disciplina }}</td>
+                            <td style="padding:8px 14px;"><code style="background:#f0f0f0; padding:2px 6px; border-radius:4px; font-size:11px;">{{ r.id_atividade.id_portariafk.numero_portaria }}</code></td>
+                            <td style="padding:8px 14px; text-align:center; white-space:nowrap;">{{ r.data_envio|date:"d/m/Y H:i" }}</td>
+                            <td style="padding:8px 14px; text-align:center;">
+                                <button type="button" class="uc-btn uc-btn--orange uc-btn--sm"
+                                    data-bs-toggle="modal" data-bs-target="#modalAvaliar{{ r.id_resposta }}">
+                                    <i class="fas fa-search me-1"></i> Avaliar
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                </div>
+                {% else %}
+                <div class="uc-empty">
+                    <i class="fas fa-clipboard-check"></i>
+                    <p>Nenhuma resposta pendente de avaliação no momento.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+    </div><!-- /uc-content -->
+</div><!-- /uc-main -->
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     MODAIS — Avaliar cada resposta
+══════════════════════════════════════════════════════════════ -->
+{% for r in respostas %}
+<div class="modal fade" id="modalAvaliar{{ r.id_resposta }}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content" style="border-radius:12px; overflow:hidden;">
+            <div class="modal-header" style="background:linear-gradient(135deg,#1C1C2E,#0F2952); color:#fff; border:none;">
+                <h5 class="modal-title">
+                    <i class="fas fa-clipboard-check me-2" style="color:#FF6B00;"></i>
+                    Avaliar Resposta — {{ r.id_atividade.titulo }}
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+
+                <!-- Informações -->
+                <div style="background:#f8f9fa; padding:12px 16px; border-radius:8px; margin-bottom:16px; font-size:13px;">
+                    <div class="row g-2">
+                        <div class="col-md-6">
+                            <strong style="color:#555;">Aluno:</strong> {{ r.id_alunofk.nome_completo }}<br>
+                            <strong style="color:#555;">Atividade:</strong> {{ r.id_atividade.titulo }}<br>
+                            <strong style="color:#555;">Disciplina:</strong> {{ r.id_atividade.codigo_disciplinafk.nome_disciplina }}
+                        </div>
+                        <div class="col-md-6">
+                            <strong style="color:#555;">Portaria:</strong> #{{ r.id_atividade.id_portariafk.numero_portaria }}<br>
+                            <strong style="color:#555;">Enviada em:</strong> {{ r.data_envio|date:"d/m/Y H:i" }}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Resposta textual -->
+                {% if r.descricao_resposta %}
+                <div style="background:#fff; border:1px solid #e9ecef; border-radius:8px; padding:14px; margin-bottom:12px;">
+                    <strong style="font-size:11px; color:#888; text-transform:uppercase; letter-spacing:.5px;">Resposta do aluno</strong>
+                    <p style="margin:8px 0 0; font-size:14px; white-space:pre-wrap;">{{ r.descricao_resposta }}</p>
+                </div>
+                {% endif %}
+
+                <!-- Arquivo anexado -->
+                {% if r.arquivo %}
+                <div style="background:#fff3cd; border:1px solid #ffc107; border-radius:8px; padding:10px 14px; margin-bottom:16px; font-size:13px;">
+                    <i class="fas fa-paperclip me-1"></i>
+                    <strong>Arquivo:</strong>
+                    <a href="/media/{{ r.arquivo }}" target="_blank" class="ms-1 text-primary">Visualizar / Baixar</a>
+                </div>
+                {% endif %}
+
+                <hr style="border-color:#eee; margin:16px 0;">
+
+                <!-- APROVAR -->
+                <p class="fw-semibold mb-2" style="font-size:13px; color:#555;">Ação:</p>
+                <form method="post" action="{% url 'dashboard:validar_resposta_professor' r.id_resposta %}" class="mb-3">
+                    {% csrf_token %}
+                    <div class="mb-2">
+                        <label class="form-label" style="font-size:13px;">Observação (opcional)</label>
+                        <textarea name="feedback_professor" class="form-control" rows="2"
+                            placeholder="Comentário para o diretor..." style="border-radius:8px;"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-sm text-white fw-semibold w-100"
+                        style="background:linear-gradient(135deg,#28a745,#1e7e34); border:none; border-radius:8px; padding:8px;">
+                        <i class="fas fa-check me-1"></i> Aprovar e Encaminhar ao Diretor
+                    </button>
+                </form>
+
+                <!-- REJEITAR -->
+                <form method="post" action="{% url 'dashboard:rejeitar_resposta_professor' r.id_resposta %}">
+                    {% csrf_token %}
+                    <div class="mb-2">
+                        <label class="form-label" style="font-size:13px;">Motivo da rejeição <span style="color:#FF6B00">*</span></label>
+                        <textarea name="feedback_professor" class="form-control" rows="2" required
+                            placeholder="Explique o motivo para que o aluno possa corrigir..." style="border-radius:8px;"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-sm btn-danger fw-semibold w-100"
+                        style="border-radius:8px; padding:8px;">
+                        <i class="fas fa-times me-1"></i> Rejeitar (devolver ao aluno)
+                    </button>
+                </form>
+
+            </div>
+            <div class="modal-footer" style="border:none; padding-top:0;">
+                <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Fechar</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+</body>
+{% endblock %}
+
+{% block footer %}{% endblock %}
+
+{% block extra_js %}
+<script>
+    function ucToggleSidebar() {
+        document.getElementById('ucSidebar').classList.toggle('collapsed');
+        document.getElementById('ucMain').classList.toggle('expanded');
+        localStorage.setItem('uc_sb', document.getElementById('ucSidebar').classList.contains('collapsed'));
+    }
+    document.addEventListener('DOMContentLoaded', function () {
+        if (localStorage.getItem('uc_sb') === 'true') {
+            document.getElementById('ucSidebar').classList.add('collapsed');
+            document.getElementById('ucMain').classList.add('expanded');
+        }
+    });
+</script>
+{% endblock %}

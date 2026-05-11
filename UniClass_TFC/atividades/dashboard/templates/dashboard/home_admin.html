@@ -1,0 +1,161 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Painel Admin | UniClass{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+{% endblock %}
+
+{% block body %}
+<body class="dashboard-body">
+
+{% include 'dashboard/partials/_sidebar.html' with active_page='inicio' %}
+
+<div class="uc-main" id="ucMain">
+
+    <!-- Topbar -->
+    <header class="uc-topbar">
+        <button class="uc-topbar__toggle" onclick="ucToggleSidebar()"><i class="fas fa-bars"></i></button>
+        <div class="uc-topbar__title-wrap">
+            <div class="uc-topbar__title">Painel do Administrador</div>
+            <div class="uc-topbar__subtitle">Gerencie diretores e cursos do sistema</div>
+        </div>
+        <div class="uc-topbar__right">
+            <a href="#" class="uc-topbar__btn" title="Notificações">
+                <i class="fas fa-bell"></i>
+                {% if notificacoes_nao_lidas %}<span class="uc-topbar__notif-dot"></span>{% endif %}
+            </a>
+        </div>
+    </header>
+
+    <div class="uc-content">
+
+        {% if messages %}
+            {% for message in messages %}
+                <div class="uc-alert uc-alert--{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %}">
+                    <i class="fas fa-{% if message.tags == 'success' %}check-circle{% elif message.tags == 'error' %}exclamation-circle{% else %}info-circle{% endif %}"></i>
+                    <span>{{ message }}</span>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <!-- Cards de resumo -->
+        <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:16px; margin-bottom:28px;">
+
+            <div class="uc-card" style="text-align:center; padding:20px;">
+                <div style="font-size:2rem; color:#FF6B00; margin-bottom:4px;"><i class="fas fa-user-tie"></i></div>
+                <div style="font-size:2rem; font-weight:700; color:var(--uc-text);">{{ total_diretores }}</div>
+                <div style="font-size:13px; color:var(--uc-text-muted);">Diretores</div>
+            </div>
+
+            <div class="uc-card" style="text-align:center; padding:20px;">
+                <div style="font-size:2rem; color:#FF6B00; margin-bottom:4px;"><i class="fas fa-graduation-cap"></i></div>
+                <div style="font-size:2rem; font-weight:700; color:var(--uc-text);">{{ total_cursos }}</div>
+                <div style="font-size:13px; color:var(--uc-text-muted);">Cursos</div>
+            </div>
+
+            <div class="uc-card" style="text-align:center; padding:20px;">
+                <div style="font-size:2rem; color:#0F2952; margin-bottom:4px;"><i class="fas fa-chalkboard-teacher"></i></div>
+                <div style="font-size:2rem; font-weight:700; color:var(--uc-text);">{{ total_professores }}</div>
+                <div style="font-size:13px; color:var(--uc-text-muted);">Professores</div>
+            </div>
+
+            <div class="uc-card" style="text-align:center; padding:20px;">
+                <div style="font-size:2rem; color:#0F2952; margin-bottom:4px;"><i class="fas fa-user-graduate"></i></div>
+                <div style="font-size:2rem; font-weight:700; color:var(--uc-text);">{{ total_alunos }}</div>
+                <div style="font-size:13px; color:var(--uc-text-muted);">Alunos</div>
+            </div>
+
+        </div>
+
+        <!-- Atalhos rápidos -->
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">
+
+            <!-- Diretores -->
+            <div class="uc-card">
+                <div class="uc-card__body">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+                        <h5 style="margin:0; color:var(--uc-text);">
+                            <i class="fas fa-user-tie me-2" style="color:var(--uc-orange)"></i>Diretores
+                        </h5>
+                        <a href="{% url 'dashboard:gerenciar_diretores' %}" class="uc-btn uc-btn--orange uc-btn--sm">
+                            <i class="fas fa-arrow-right me-1"></i> Gerenciar
+                        </a>
+                    </div>
+                    {% if diretores %}
+                    <ul style="list-style:none; padding:0; margin:0;">
+                        {% for d in diretores|slice:":5" %}
+                        <li style="padding:6px 0; border-bottom:1px solid #f0f0f0; font-size:13px; display:flex; justify-content:space-between;">
+                            <span><i class="fas fa-user me-1" style="color:#aaa;"></i> {{ d.nome_completo }}</span>
+                            <span style="color:#aaa;">{{ d.curso_fk.nome_curso|default:d.curso_diretor|default:"—" }}</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% if total_diretores > 5 %}
+                    <p style="font-size:12px; color:var(--uc-text-muted); margin-top:8px; text-align:right;">
+                        + {{ total_diretores|add:"-5" }} diretores
+                    </p>
+                    {% endif %}
+                    {% else %}
+                    <p style="color:var(--uc-text-muted); font-size:13px;">Nenhum diretor cadastrado.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Cursos -->
+            <div class="uc-card">
+                <div class="uc-card__body">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+                        <h5 style="margin:0; color:var(--uc-text);">
+                            <i class="fas fa-graduation-cap me-2" style="color:var(--uc-orange)"></i>Cursos
+                        </h5>
+                        <a href="{% url 'dashboard:gerenciar_cursos' %}" class="uc-btn uc-btn--orange uc-btn--sm">
+                            <i class="fas fa-arrow-right me-1"></i> Gerenciar
+                        </a>
+                    </div>
+                    {% if cursos %}
+                    <ul style="list-style:none; padding:0; margin:0;">
+                        {% for c in cursos|slice:":6" %}
+                        <li style="padding:6px 0; border-bottom:1px solid #f0f0f0; font-size:13px; display:flex; justify-content:space-between;">
+                            <span><i class="fas fa-book me-1" style="color:#aaa;"></i> {{ c.nome_curso }}</span>
+                            <span style="color:#aaa;">{{ c.disciplinas.count }} disciplina{{ c.disciplinas.count|pluralize }}</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% if total_cursos > 6 %}
+                    <p style="font-size:12px; color:var(--uc-text-muted); margin-top:8px; text-align:right;">
+                        + {{ total_cursos|add:"-6" }} cursos
+                    </p>
+                    {% endif %}
+                    {% else %}
+                    <p style="color:var(--uc-text-muted); font-size:13px;">Nenhum curso cadastrado.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+        </div>
+
+    </div><!-- /uc-content -->
+</div><!-- /uc-main -->
+
+</body>
+{% endblock %}
+
+{% block footer %}{% endblock %}
+
+{% block extra_js %}
+<script>
+    function ucToggleSidebar() {
+        document.getElementById('ucSidebar').classList.toggle('collapsed');
+        document.getElementById('ucMain').classList.toggle('expanded');
+        localStorage.setItem('uc_sb', document.getElementById('ucSidebar').classList.contains('collapsed'));
+    }
+    document.addEventListener('DOMContentLoaded', function () {
+        if (localStorage.getItem('uc_sb') === 'true') {
+            document.getElementById('ucSidebar').classList.add('collapsed');
+            document.getElementById('ucMain').classList.add('expanded');
+        }
+    });
+</script>
+{% endblock %}
