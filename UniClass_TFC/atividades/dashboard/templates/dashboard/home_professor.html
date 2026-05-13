@@ -1,4 +1,4 @@
-{% extends 'base.html' %}
+﻿{% extends 'base.html' %}
 {% load static %}
 
 {% block title %}Início — Professor | UniClass{% endblock %}
@@ -95,33 +95,33 @@
             </div>
             <div class="uc-card__body" style="padding:0;">
                 {% if portarias %}
-                <div style="overflow-x:auto;">
-                <table style="width:100%; border-collapse:collapse; font-size:13px;">
+                <div class="uc-table-wrap">
+                <table class="uc-table">
                     <thead>
-                        <tr style="background:#f8f9fa; border-bottom:2px solid #eee;">
-                            <th style="padding:10px 14px; text-align:left; color:#555; font-weight:600;">#</th>
-                            <th style="padding:10px 14px; text-align:left; color:#555; font-weight:600;">Aluno</th>
-                            <th style="padding:10px 14px; text-align:center; color:#555; font-weight:600;">Prazo Atividades</th>
-                            <th style="padding:10px 14px; text-align:center; color:#555; font-weight:600;">Prazo Respostas</th>
-                            <th style="padding:10px 14px; text-align:left; color:#555; font-weight:600;">Disciplinas</th>
-                            <th style="padding:10px 14px; text-align:center; color:#555; font-weight:600;">Status</th>
+                        <tr>
+                            <th style="text-align:left;">#</th>
+                            <th style="text-align:left;">Aluno</th>
+                            <th style="text-align:center;">Prazo Atividades</th>
+                            <th style="text-align:center;">Prazo Respostas</th>
+                            <th style="text-align:left;">Disciplinas</th>
+                            <th style="text-align:center;">Status</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for p in portarias %}
-                        <tr style="border-bottom:1px solid #f0f0f0;" onmouseover="this.style.background='#fafafa'" onmouseout="this.style.background=''">
-                            <td style="padding:8px 14px;"><code style="background:#f0f0f0; padding:2px 6px; border-radius:4px; font-size:12px;">{{ p.numero_portaria }}</code></td>
-                            <td style="padding:8px 14px;">{{ p.id_alunofk.nome_completo }}</td>
-                            <td style="padding:8px 14px; text-align:center;">{{ p.prazo_professor_criar_atividades|date:"d/m/Y" }}</td>
-                            <td style="padding:8px 14px; text-align:center;">{{ p.prazo_aluno_responder|date:"d/m/Y" }}</td>
-                            <td style="padding:8px 14px; font-size:12px;">
+                        <tr>
+                            <td><code style="background:#f0f0f0; padding:2px 6px; border-radius:4px; font-size:12px;">{{ p.numero_portaria }}</code></td>
+                            <td>{{ p.id_alunofk.nome_completo }}</td>
+                            <td style="text-align:center;">{{ p.prazo_professor_criar_atividades|date:"d/m/Y" }}</td>
+                            <td style="text-align:center;">{{ p.prazo_aluno_responder|date:"d/m/Y" }}</td>
+                            <td style="font-size:12px;">
                                 {% for pd in p.disciplinas_portaria.all %}
                                     <span style="background:#e9ecef; padding:1px 6px; border-radius:4px; margin-right:3px; white-space:nowrap;">{{ pd.codigo_disciplinafk.nome_disciplina }}</span>
                                 {% empty %}
                                     <span style="color:#999;">—</span>
                                 {% endfor %}
                             </td>
-                            <td style="padding:8px 14px; text-align:center;">
+                            <td style="text-align:center;">
                                 {% if p.status == 'aguardando_atividades' %}
                                     <span class="uc-badge uc-badge--warning">Aguard. Atividades</span>
                                 {% elif p.status == 'aguardando_respostas' %}
@@ -164,35 +164,37 @@
             </div>
             <div class="uc-card__body" style="padding:0;">
                 {% if atividades %}
-                <div style="overflow-x:auto;">
-                <table style="width:100%; border-collapse:collapse; font-size:13px;">
+                <div class="uc-table-wrap">
+                <table class="uc-table">
                     <thead>
-                        <tr style="background:#f8f9fa; border-bottom:2px solid #eee;">
-                            <th style="padding:10px 14px; text-align:left; color:#555; font-weight:600;">Título</th>
-                            <th style="padding:10px 14px; text-align:left; color:#555; font-weight:600;">Disciplina</th>
-                            <th style="padding:10px 14px; text-align:left; color:#555; font-weight:600;">Aluno</th>
-                            <th style="padding:10px 14px; text-align:center; color:#555; font-weight:600;">Prazo</th>
-                            <th style="padding:10px 14px; text-align:center; color:#555; font-weight:600;">Status</th>
+                        <tr>
+                            <th style="text-align:left;">Título</th>
+                            <th style="text-align:left;">Disciplina</th>
+                            <th style="text-align:left;">Aluno</th>
+                            <th style="text-align:center;">Prazo</th>
+                            <th style="text-align:center;">Status</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for a in atividades %}
-                        <tr style="border-bottom:1px solid #f0f0f0;" onmouseover="this.style.background='#fafafa'" onmouseout="this.style.background=''">
-                            <td style="padding:8px 14px;"><strong>{{ a.titulo }}</strong></td>
-                            <td style="padding:8px 14px;">{{ a.codigo_disciplinafk.nome_disciplina }}</td>
-                            <td style="padding:8px 14px;">{{ a.id_portariafk.id_alunofk.nome_completo }}</td>
-                            <td style="padding:8px 14px; text-align:center;">{{ a.data_limite_resposta|date:"d/m/Y" }}</td>
-                            <td style="padding:8px 14px; text-align:center;">
-                                {% if a.status == 'validada_diretor' %}
-                                    <span class="uc-badge uc-badge--approved">Validada</span>
-                                {% elif a.status == 'validada_professor' %}
-                                    <span class="uc-badge" style="background:#d4edda;color:#155724;padding:3px 10px;border-radius:20px;font-size:11px;">Aprovada</span>
-                                {% elif a.status == 'rejeitada_professor' or a.status == 'rejeitada_diretor' %}
-                                    <span class="uc-badge uc-badge--rejected">Rejeitada</span>
+                        <tr>
+                            <td><strong>{{ a.titulo }}</strong></td>
+                            <td>{{ a.codigo_disciplinafk.nome_disciplina }}</td>
+                            <td>{{ a.id_portariafk.id_alunofk.nome_completo }}</td>
+                            <td style="text-align:center;">{{ a.data_limite_resposta|date:"d/m/Y" }}</td>
+                            <td style="text-align:center;">
+                                {% if a.status == 'aprovada_diretor' %}
+                                    <span class="uc-badge uc-badge--success">Aprovada (Diretor)</span>
+                                {% elif a.status == 'aprovada_professor' %}
+                                    <span class="uc-badge" style="background:#d4edda;color:#155724;padding:3px 10px;border-radius:20px;font-size:11px;">Aprovada (Prof.)</span>
+                                {% elif a.status == 'reprovada_professor' %}
+                                    <span class="uc-badge uc-badge--danger">Reprovada (Prof.)</span>
+                                {% elif a.status == 'reprovada_diretor' %}
+                                    <span class="uc-badge uc-badge--danger">Reprovada (Diretor)</span>
                                 {% elif a.status == 'respondida' %}
-                                    <span class="uc-badge uc-badge--warning">Respondida</span>
+                                    <span class="uc-badge uc-badge--pending">Respondida</span>
                                 {% else %}
-                                    <span class="uc-badge uc-badge--pending">Aguardando</span>
+                                    <span class="uc-badge uc-badge--pending">Aguardando Resposta</span>
                                 {% endif %}
                             </td>
                         </tr>
@@ -225,25 +227,25 @@
                 </a>
             </div>
             <div class="uc-card__body" style="padding:0;">
-                <div style="overflow-x:auto;">
-                <table style="width:100%; border-collapse:collapse; font-size:13px;">
+                <div class="uc-table-wrap">
+                <table class="uc-table">
                     <thead>
-                        <tr style="background:#f8f9fa; border-bottom:2px solid #eee;">
-                            <th style="padding:10px 14px; text-align:left; color:#555; font-weight:600;">Aluno</th>
-                            <th style="padding:10px 14px; text-align:left; color:#555; font-weight:600;">Atividade</th>
-                            <th style="padding:10px 14px; text-align:left; color:#555; font-weight:600;">Disciplina</th>
-                            <th style="padding:10px 14px; text-align:center; color:#555; font-weight:600;">Enviada em</th>
-                            <th style="padding:10px 14px; text-align:center; color:#555; font-weight:600;">Ação</th>
+                        <tr>
+                            <th style="text-align:left;">Aluno</th>
+                            <th style="text-align:left;">Atividade</th>
+                            <th style="text-align:left;">Disciplina</th>
+                            <th style="text-align:center;">Enviada em</th>
+                            <th class="uc-th-actions">Ação</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for r in respostas %}
-                        <tr style="border-bottom:1px solid #f0f0f0;" onmouseover="this.style.background='#fafafa'" onmouseout="this.style.background=''">
-                            <td style="padding:8px 14px;">{{ r.id_alunofk.nome_completo }}</td>
-                            <td style="padding:8px 14px;">{{ r.id_atividade.titulo }}</td>
-                            <td style="padding:8px 14px;">{{ r.id_atividade.codigo_disciplinafk.nome_disciplina }}</td>
-                            <td style="padding:8px 14px; text-align:center;">{{ r.data_envio|date:"d/m/Y H:i" }}</td>
-                            <td style="padding:8px 14px; text-align:center;">
+                        <tr>
+                            <td>{{ r.id_alunofk.nome_completo }}</td>
+                            <td>{{ r.id_atividade.titulo }}</td>
+                            <td>{{ r.id_atividade.codigo_disciplinafk.nome_disciplina }}</td>
+                            <td style="text-align:center;">{{ r.data_envio|date:"d/m/Y H:i" }}</td>
+                            <td style="text-align:center;">
                                 <button type="button" class="uc-btn uc-btn--orange uc-btn--sm" data-bs-toggle="modal" data-bs-target="#modalAvaliar{{ r.id_resposta }}">
                                     <i class="fas fa-search me-1"></i> Avaliar
                                 </button>
@@ -306,7 +308,7 @@
                         <label class="form-label fw-semibold" style="font-size:13px;">Observação (aprovação)</label>
                         <textarea name="feedback_professor" class="form-control" rows="2" placeholder="Comentário para o aluno (opcional)..." style="border-radius:8px;"></textarea>
                     </div>
-                    <button type="submit" class="btn btn-sm text-white fw-semibold w-100" style="background:linear-gradient(135deg,#28a745,#1e7e34); border:none; border-radius:8px; padding:8px;">
+                    <button type="submit" class="uc-btn uc-btn--success uc-btn--sm w-100">
                         <i class="fas fa-check me-1"></i> Aprovar e Encaminhar ao Diretor
                     </button>
                 </form>
@@ -326,7 +328,7 @@
                 </form>
             </div>
             <div class="modal-footer" style="border:none; padding-top:0;">
-                <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Fechar</button>
+                <button type="button" class="uc-btn uc-btn--ghost uc-btn--sm" data-bs-dismiss="modal">Fechar</button>
             </div>
         </div>
     </div>
@@ -353,3 +355,5 @@
     });
 </script>
 {% endblock %}
+
+

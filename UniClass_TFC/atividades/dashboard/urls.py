@@ -19,12 +19,14 @@ urlpatterns = [
     path('gerenciar/alunos/cadastrar/', views.cadastrar_aluno, name='cadastrar_aluno'),
     path('gerenciar/alunos/<int:aluno_id>/editar/', views.editar_aluno, name='editar_aluno'),
     path('gerenciar/alunos/<int:aluno_id>/excluir/', views.excluir_aluno, name='excluir_aluno'),
+    path('gerenciar/alunos/<int:aluno_id>/reativar/', views.reativar_aluno, name='reativar_aluno'),
 
     # Diretor — CRUD Professores
     path('gerenciar/professores/', views.gerenciar_professores, name='gerenciar_professores'),
     path('gerenciar/professores/cadastrar/', views.cadastrar_professor, name='cadastrar_professor'),
     path('gerenciar/professores/<int:professor_id>/editar/', views.editar_professor, name='editar_professor'),
     path('gerenciar/professores/<int:professor_id>/excluir/', views.excluir_professor, name='excluir_professor'),
+    path('gerenciar/professores/<int:professor_id>/reativar/', views.reativar_professor, name='reativar_professor'),
 
     # Diretor — CRUD Portarias
     path('gerenciar/portarias/', views.gerenciar_portarias, name='gerenciar_portarias'),
@@ -44,6 +46,7 @@ urlpatterns = [
     path('admin/diretores/cadastrar/', views.cadastrar_diretor, name='cadastrar_diretor'),
     path('admin/diretores/<int:diretor_id>/editar/', views.editar_diretor, name='editar_diretor'),
     path('admin/diretores/<int:diretor_id>/excluir/', views.excluir_diretor, name='excluir_diretor'),
+    path('admin/diretores/<int:diretor_id>/reativar/', views.reativar_diretor, name='reativar_diretor'),
 
     # Admin — CRUD Cursos
     path('admin/cursos/', views.gerenciar_cursos, name='gerenciar_cursos'),

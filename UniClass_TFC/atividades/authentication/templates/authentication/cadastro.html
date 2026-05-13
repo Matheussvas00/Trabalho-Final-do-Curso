@@ -6,7 +6,7 @@
 {% block extra_css %}
 <style>
     body {
-        background: linear-gradient(to bottom, #ffffff 0%, #828282 100%);
+        background: linear-gradient(135deg, #f0f4ff 0%, #e8eaf0 40%, #d0d4de 100%);
         min-height: 100vh;
         display: flex;
         flex-direction: column;
@@ -14,147 +14,219 @@
         justify-content: center;
     }
 
+    body::before {
+        content: '';
+        position: fixed;
+        top: -150px; right: -150px;
+        width: 500px; height: 500px;
+        background: radial-gradient(circle, rgba(255,107,0,.12) 0%, transparent 70%);
+        pointer-events: none;
+    }
+    body::after {
+        content: '';
+        position: fixed;
+        bottom: -150px; left: -150px;
+        width: 500px; height: 500px;
+        background: radial-gradient(circle, rgba(0,80,159,.10) 0%, transparent 70%);
+        pointer-events: none;
+    }
+
     .logo-top {
         position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 120px;
-        z-index: 10;
-        overflow: hidden;
+        top: 0; left: 0;
+        width: 100%; height: 120px;
+        z-index: 10; overflow: hidden;
     }
 
     .logo-top img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        display: block;
+        width: 100%; height: 100%;
+        object-fit: cover; display: block;
     }
 
     .cadastro-container {
-        max-width: 500px;
+        max-width: 560px;
         width: 100%;
         padding: 20px;
         margin-top: 130px;
         margin-bottom: 40px;
+        position: relative;
+        z-index: 1;
     }
 
     .cadastro-card {
-        background: white;
-        border-radius: 15px;
-        box-shadow: 0 10px 40px rgba(0,0,0,0.2);
-        padding: 40px;
+        background: #fff;
+        border-radius: 20px;
+        box-shadow: 0 20px 60px rgba(0,0,0,.14), 0 4px 16px rgba(0,0,0,.06);
+        padding: 44px 48px;
+        border-top: 4px solid #FF6B00;
     }
 
     .cadastro-header {
         text-align: center;
-        margin-bottom: 30px;
+        margin-bottom: 32px;
     }
 
     .cadastro-header h1 {
-        color: #333;
-        font-size: 26px;
-        font-weight: 700;
-        margin-bottom: 8px;
+        color: #1C1C2E;
+        font-size: 24px;
+        font-weight: 800;
+        margin-bottom: 6px;
+        letter-spacing: -.3px;
     }
 
     .cadastro-header p {
-        color: #666;
-        font-size: 14px;
+        color: #8A93A4;
+        font-size: 13.5px;
     }
 
     .logo-container {
         text-align: center;
-        margin-bottom: 20px;
+        margin-bottom: 18px;
     }
 
     .logo-container i {
-        font-size: 54px;
+        font-size: 48px;
         color: #FF6B00;
     }
 
     .form-label {
         font-weight: 600;
-        color: #333;
-        margin-bottom: 8px;
+        color: #444;
+        margin-bottom: 6px;
+        font-size: 13.5px;
     }
 
+    /* Input com ícone */
+    .input-icon-wrap {
+        position: relative;
+    }
+
+    .input-icon-wrap .input-icon-left {
+        position: absolute;
+        left: 14px; top: 50%;
+        transform: translateY(-50%);
+        color: #b0b8c8; font-size: 14px;
+        pointer-events: none;
+        transition: color .25s; z-index: 5;
+    }
+
+    .input-icon-wrap .input-icon-right {
+        position: absolute;
+        right: 14px; top: 50%;
+        transform: translateY(-50%);
+        color: #b0b8c8; font-size: 14px;
+        cursor: pointer; background: none;
+        border: none; padding: 0;
+        line-height: 1; z-index: 5;
+        transition: color .2s;
+    }
+
+    .input-icon-wrap .input-icon-right:hover { color: #FF6B00; }
+    .input-icon-wrap .form-control,
+    .input-icon-wrap .form-select { padding-left: 42px; }
+    .input-icon-wrap:focus-within .input-icon-left { color: #FF6B00; }
+
     .form-control, .form-select {
-        border-radius: 8px;
-        border: 2px solid #e0e0e0;
-        padding: 12px 15px;
+        border-radius: 10px;
+        border: 1.5px solid #dde2ea;
+        padding: 13px 15px;
         font-size: 14px;
-        transition: all 0.3s;
+        background: #fafbfc;
+        color: #1C1C2E;
+        transition: all .25s;
+        width: 100%;
     }
 
     .form-control:focus, .form-select:focus {
         border-color: #FF6B00;
-        box-shadow: 0 0 0 0.2rem rgba(255, 107, 0, 0.25);
+        background: #fff;
+        box-shadow: 0 0 0 3px rgba(255,107,0,.15);
+        outline: none;
     }
+
+    .form-control::placeholder { color: #b8bec8; }
 
     .btn-cadastro {
         width: 100%;
-        padding: 12px;
-        font-size: 16px;
-        font-weight: 600;
-        border-radius: 8px;
+        padding: 14px;
+        font-size: 15px;
+        font-weight: 700;
+        border-radius: 10px;
         background: linear-gradient(135deg, #FF6B00 0%, #D45400 100%);
         border: none;
         color: white;
-        transition: transform 0.2s;
+        letter-spacing: .3px;
+        transition: transform .2s, box-shadow .2s;
+        cursor: pointer;
     }
 
     .btn-cadastro:hover {
         transform: translateY(-2px);
-        box-shadow: 0 5px 15px rgba(255, 107, 0, 0.4);
+        box-shadow: 0 8px 24px rgba(255,107,0,.40);
         color: white;
     }
 
+    .btn-cadastro:active { transform: translateY(0); }
+
     .alert {
-        border-radius: 8px;
+        border-radius: 10px;
         font-size: 14px;
     }
 
     .domain-hint {
         font-size: 12px;
-        color: #999;
-        margin-top: 5px;
+        color: #a0a8b8;
+        margin-top: 6px;
+        display: flex;
+        align-items: center;
+        gap: 5px;
     }
 
     .divider {
         display: flex;
         align-items: center;
-        margin: 20px 0;
-        color: #999;
-        font-size: 13px;
+        margin: 22px 0;
+        color: #c0c8d8;
+        font-size: 12px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: .8px;
     }
 
-    .divider::before,
-    .divider::after {
+    .divider::before, .divider::after {
         content: '';
         flex: 1;
-        border-top: 1px solid #e0e0e0;
-        margin: 0 10px;
+        border-top: 1px solid #e8ecf2;
+        margin: 0 12px;
     }
 
     .btn-voltar {
         width: 100%;
-        padding: 11px;
-        font-size: 15px;
-        font-weight: 500;
-        border-radius: 8px;
+        padding: 13px;
+        font-size: 14.5px;
+        font-weight: 600;
+        border-radius: 10px;
         border: 2px solid #FF6B00;
         color: #FF6B00;
         background: transparent;
-        transition: all 0.2s;
+        transition: all .2s;
         text-decoration: none;
         display: block;
         text-align: center;
+        letter-spacing: .2px;
     }
 
     .btn-voltar:hover {
-        background: #FF6B00;
+        background: linear-gradient(135deg, #FF6B00, #D45400);
+        border-color: transparent;
         color: white;
+        box-shadow: 0 6px 20px rgba(255,107,0,.30);
+    }
+
+    /* Seção de campos de perfil */
+    #campos-perfil hr {
+        border-color: #f0f2f5;
+        margin: 20px 0;
     }
 </style>
 {% endblock %}
@@ -194,11 +266,14 @@
             {% csrf_token %}
 
             <!-- Email -->
-            <div class="mb-3">
+            <div class="mb-4">
                 <label for="{{ form.email.id_for_label }}" class="form-label">
                     {{ form.email.label }}
                 </label>
-                {{ form.email }}
+                <div class="input-icon-wrap">
+                    <i class="fas fa-envelope input-icon-left"></i>
+                    {{ form.email }}
+                </div>
                 <div class="domain-hint">
                     <i class="fas fa-info-circle"></i>
                     Alunos: @academico.unirv.edu.br | Staff: @unirv.edu.br
@@ -209,11 +284,14 @@
             </div>
 
             <!-- Tipo de Usuário -->
-            <div class="mb-3">
+            <div class="mb-4">
                 <label for="{{ form.tipo_usuario.id_for_label }}" class="form-label">
                     {{ form.tipo_usuario.label }}
                 </label>
-                {{ form.tipo_usuario }}
+                <div class="input-icon-wrap">
+                    <i class="fas fa-user-tag input-icon-left"></i>
+                    {{ form.tipo_usuario }}
+                </div>
                 {% if form.tipo_usuario.errors %}
                     <div class="text-danger small mt-1">{{ form.tipo_usuario.errors.0 }}</div>
                 {% endif %}
@@ -221,27 +299,36 @@
 
             <!-- Campos do Perfil (aparecem conforme o tipo) -->
             <div id="campos-perfil" style="display:none;">
-                <hr style="border-color:#eee; margin:16px 0;">
-                <p style="font-size:13px; color:#888; margin-bottom:12px;">
-                    <i class="fas fa-id-card me-1"></i> Dados do perfil
+                <hr>
+                <p style="font-size:13px; color:#8A93A4; margin-bottom:14px; font-weight:600;">
+                    <i class="fas fa-id-card me-1" style="color:#FF6B00;"></i> Dados do perfil
                 </p>
 
                 <div class="row">
                     <div class="col-6 mb-3">
                         <label for="{{ form.nome.id_for_label }}" class="form-label">{{ form.nome.label }}</label>
-                        {{ form.nome }}
+                        <div class="input-icon-wrap">
+                            <i class="fas fa-user input-icon-left"></i>
+                            {{ form.nome }}
+                        </div>
                         {% if form.nome.errors %}<div class="text-danger small mt-1">{{ form.nome.errors.0 }}</div>{% endif %}
                     </div>
                     <div class="col-6 mb-3">
                         <label for="{{ form.sobrenome.id_for_label }}" class="form-label">{{ form.sobrenome.label }}</label>
-                        {{ form.sobrenome }}
+                        <div class="input-icon-wrap">
+                            <i class="fas fa-user input-icon-left"></i>
+                            {{ form.sobrenome }}
+                        </div>
                         {% if form.sobrenome.errors %}<div class="text-danger small mt-1">{{ form.sobrenome.errors.0 }}</div>{% endif %}
                     </div>
                 </div>
 
                 <div class="mb-3">
                     <label for="{{ form.curso.id_for_label }}" class="form-label">{{ form.curso.label }}</label>
-                    {{ form.curso }}
+                    <div class="input-icon-wrap">
+                        <i class="fas fa-graduation-cap input-icon-left"></i>
+                        {{ form.curso }}
+                    </div>
                     {% if form.curso.errors %}<div class="text-danger small mt-1">{{ form.curso.errors.0 }}</div>{% endif %}
                 </div>
 
@@ -249,12 +336,18 @@
                     <div class="row">
                         <div class="col-6 mb-3">
                             <label for="{{ form.periodo.id_for_label }}" class="form-label">{{ form.periodo.label }}</label>
-                            {{ form.periodo }}
+                            <div class="input-icon-wrap">
+                                <i class="fas fa-layer-group input-icon-left"></i>
+                                {{ form.periodo }}
+                            </div>
                             {% if form.periodo.errors %}<div class="text-danger small mt-1">{{ form.periodo.errors.0 }}</div>{% endif %}
                         </div>
                         <div class="col-6 mb-3">
                             <label for="{{ form.matricula.id_for_label }}" class="form-label">{{ form.matricula.label }}</label>
-                            {{ form.matricula }}
+                            <div class="input-icon-wrap">
+                                <i class="fas fa-id-badge input-icon-left"></i>
+                                {{ form.matricula }}
+                            </div>
                             {% if form.matricula.errors %}<div class="text-danger small mt-1">{{ form.matricula.errors.0 }}</div>{% endif %}
                         </div>
                     </div>
@@ -266,9 +359,15 @@
                 <label for="{{ form.senha.id_for_label }}" class="form-label">
                     {{ form.senha.label }}
                 </label>
-                {{ form.senha }}
+                <div class="input-icon-wrap">
+                    <i class="fas fa-lock input-icon-left"></i>
+                    {{ form.senha }}
+                    <button type="button" class="input-icon-right" id="toggleSenha" title="Mostrar/ocultar senha">
+                        <i class="fas fa-eye" id="eyeIcon"></i>
+                    </button>
+                </div>
                 <div class="domain-hint">
-                    <i class="fas fa-lock"></i>
+                    <i class="fas fa-shield-alt"></i>
                     Mínimo 8 caracteres
                 </div>
                 {% if form.senha.errors %}
@@ -281,7 +380,13 @@
                 <label for="{{ form.confirmar_senha.id_for_label }}" class="form-label">
                     {{ form.confirmar_senha.label }}
                 </label>
-                {{ form.confirmar_senha }}
+                <div class="input-icon-wrap">
+                    <i class="fas fa-lock input-icon-left"></i>
+                    {{ form.confirmar_senha }}
+                    <button type="button" class="input-icon-right" id="toggleConfirmar" title="Mostrar/ocultar senha">
+                        <i class="fas fa-eye" id="eyeIcon2"></i>
+                    </button>
+                </div>
                 {% if form.confirmar_senha.errors %}
                     <div class="text-danger small mt-1">{{ form.confirmar_senha.errors.0 }}</div>
                 {% endif %}
@@ -329,7 +434,23 @@
     }
 
     tipoSelect.addEventListener('change', toggleCampos);
-    toggleCampos(); // executa ao carregar caso haja valor pré-selecionado
+    toggleCampos();
+
+    // Mostrar/ocultar senha
+    function bindToggle(btnId, iconId, fieldName) {
+        const btn = document.getElementById(btnId);
+        const icon = document.getElementById(iconId);
+        if (!btn) return;
+        btn.addEventListener('click', function () {
+            const field = document.querySelector('input[name="' + fieldName + '"]');
+            if (!field) return;
+            const show = field.type === 'password';
+            field.type = show ? 'text' : 'password';
+            icon.className = show ? 'fas fa-eye-slash' : 'fas fa-eye';
+        });
+    }
+    bindToggle('toggleSenha', 'eyeIcon', 'senha');
+    bindToggle('toggleConfirmar', 'eyeIcon2', 'confirmar_senha');
 })();
 </script>
 {% endblock %}

@@ -82,6 +82,7 @@ class Aluno(models.Model):
     curso_aluno = models.CharField(max_length=150)
     periodo = models.CharField(max_length=150)
     matricula_aluno = models.CharField(max_length=150, blank=True, null=True)
+    ativo = models.BooleanField(default=True, help_text='False = inativado por LGPD (não excluído)')
     cursos = models.ManyToManyField(
         'Curso',
         related_name='alunos',
@@ -113,6 +114,7 @@ class Professor(models.Model):
     nome_professor = models.CharField(max_length=150)
     sobrenome_professor = models.CharField(max_length=150)
     curso_professor = models.CharField(max_length=150)
+    ativo = models.BooleanField(default=True, help_text='False = inativado por LGPD (não excluído)')
     cursos = models.ManyToManyField(
         'Curso',
         related_name='professores',
@@ -144,6 +146,7 @@ class Diretor(models.Model):
     nome_diretor = models.CharField(max_length=150)
     sobrenome_diretor = models.CharField(max_length=150)
     curso_diretor = models.CharField(max_length=150)  # legado — mantido por compatibilidade
+    ativo = models.BooleanField(default=True, help_text='False = inativado por LGPD (não excluído)')
     curso_fk = models.ForeignKey(
         'Curso',
         on_delete=models.PROTECT,  # PROTECT para evitar exclusão de curso com diretor vinculado
@@ -280,10 +283,9 @@ class Portaria(models.Model):
     Define prazos para criação de atividades, respostas e validações.
     """
     STATUS_CHOICES = [
+        ('pendente', 'Pendente'),
         ('aguardando_atividades', 'Aguardando Criação de Atividades'),
-        ('aguardando_respostas', 'Aguardando Respostas dos Alunos'),
-        ('em_validacao_professor', 'Em Validação pelo Professor'),
-        ('em_validacao_diretor', 'Em Validação pelo Diretor'),
+        ('em_andamento', 'Em Andamento'),
         ('concluida', 'Concluída'),
         ('cancelada', 'Cancelada'),
     ]
@@ -315,7 +317,7 @@ class Portaria(models.Model):
         help_text="Data limite para conclusão de todo o processo"
     )
 
-    status = models.CharField(max_length=30, choices=STATUS_CHOICES, default='aguardando_atividades')
+    status = models.CharField(max_length=30, choices=STATUS_CHOICES, default='pendente')
     observacoes = models.TextField(blank=True, null=True)
     motivo_portaria = models.TextField(
         help_text="Motivo da criação da portaria (ex: afastamento por doença)"
@@ -433,12 +435,12 @@ class PortariaDisciplina(models.Model):
 class Atividade(models.Model):
     """Atividades domiciliares criadas pelos professores para as portarias"""
     STATUS_CHOICES = [
-        ('aguardando_resposta', 'Aguardando Resposta do Aluno'),
-        ('respondida', 'Respondida pelo Aluno'),
-        ('validada_professor', 'Validada pelo Professor'),
-        ('validada_diretor', 'Validada pelo Diretor'),
-        ('rejeitada_professor', 'Rejeitada pelo Professor'),
-        ('rejeitada_diretor', 'Rejeitada pelo Diretor'),
+        ('aguardando_resposta', 'Aguardando Resposta'),
+        ('respondida', 'Respondida'),
+        ('aprovada_professor', 'Aprovada pelo Professor'),
+        ('reprovada_professor', 'Reprovada pelo Professor'),
+        ('aprovada_diretor', 'Aprovada pelo Diretor'),
+        ('reprovada_diretor', 'Reprovada pelo Diretor'),
     ]
 
     id_atividade = models.AutoField(primary_key=True)
@@ -518,11 +520,11 @@ class Atividade(models.Model):
 class RespostaAtividade(models.Model):
     """Respostas dos alunos às atividades"""
     STATUS_CHOICES = [
-        ('pendente', 'Pendente de Validação'),
-        ('aprovada_professor', 'Pré-aprovada pelo Professor'),
-        ('rejeitada_professor', 'Rejeitada pelo Professor'),
-        ('aprovada_diretor', 'Validada pelo Diretor'),
-        ('rejeitada_diretor', 'Rejeitada pelo Diretor'),
+        ('pendente', 'Pendente'),
+        ('aprovada_prof', 'Aprovada pelo Professor'),
+        ('rejeitada_prof', 'Rejeitada pelo Professor'),
+        ('aprovada_dir', 'Aprovada pelo Diretor'),
+        ('rejeitada_dir', 'Rejeitada pelo Diretor'),
     ]
 
     id_resposta = models.AutoField(primary_key=True)
@@ -598,13 +600,17 @@ class RespostaAtividade(models.Model):
         from django.utils import timezone
         self.data_validacao_professor = timezone.now()
         self.observacao_professor = observacao
+        atividade = self.id_atividade
         if aprovada:
             self.status_professor = 'aprovada'
-            self.status = 'aprovada_professor'
+            self.status = 'aprovada_prof'
+            atividade.status = 'aprovada_professor'
         else:
             self.status_professor = 'rejeitada'
-            self.status = 'rejeitada_professor'
+            self.status = 'rejeitada_prof'
+            atividade.status = 'reprovada_professor'
         self.save()
+        atividade.save(update_fields=['status'])
 
     def validar_diretor(self, aprovada, observacao=''):
         """Validação final pelo diretor (segunda etapa)"""
@@ -614,13 +620,29 @@ class RespostaAtividade(models.Model):
 
         self.data_validacao_diretor = timezone.now()
         self.observacao_diretor = observacao
+        atividade = self.id_atividade
+        portaria = atividade.id_portariafk
         if aprovada:
             self.status_diretor = 'aprovada'
-            self.status = 'aprovada_diretor'
+            self.status = 'aprovada_dir'
+            atividade.status = 'aprovada_diretor'
+            atividade.save(update_fields=['status'])
+            self.save()
+            # Se todas as atividades da portaria foram aprovadas, conclui a portaria
+            total = portaria.atividades.count()
+            aprovadas = portaria.atividades.filter(status='aprovada_diretor').count()
+            if total > 0 and aprovadas == total:
+                portaria.status = 'concluida'
+                portaria.save(update_fields=['status'])
         else:
             self.status_diretor = 'rejeitada'
-            self.status = 'rejeitada_diretor'
-        self.save()
+            self.status = 'rejeitada_dir'
+            atividade.status = 'reprovada_diretor'
+            atividade.save(update_fields=['status'])
+            # Retorna ao professor para reavaliação
+            self.status_professor = 'pendente'
+            self.status_diretor = 'pendente'
+            self.save()
 
 
 

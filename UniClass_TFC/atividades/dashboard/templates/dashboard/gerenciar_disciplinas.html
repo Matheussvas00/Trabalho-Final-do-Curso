@@ -1,4 +1,4 @@
-{% extends 'base.html' %}
+﻿{% extends 'base.html' %}
 {% load static %}
 
 {% block title %}Gerenciar Disciplinas — Admin | UniClass{% endblock %}
@@ -43,59 +43,61 @@
             {% endfor %}
         {% endif %}
 
-        <!-- Cabeçalho + botão -->
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
-            <div>
-                <h4 style="margin:0; color:var(--uc-text);">
-                    <i class="fas fa-book me-2" style="color:var(--uc-orange)"></i>
-                    Disciplinas Cadastradas
-                </h4>
-                <small style="color:var(--uc-text-muted);">{{ disciplinas|length }} disciplina{{ disciplinas|length|pluralize }}</small>
-            </div>
-            <button type="button" class="uc-btn uc-btn--orange" data-bs-toggle="modal" data-bs-target="#modalCadastrarDisciplina">
-                <i class="fas fa-plus me-1"></i> Nova Disciplina
-            </button>
-        </div>
-
         <!-- Tabela -->
         <div class="uc-card">
+            <!-- Cabeçalho integrado -->
+            <div class="uc-card__head">
+                <span class="uc-card__head-title">
+                    <i class="fas fa-book" style="color:var(--uc-orange)"></i>
+                    Disciplinas Cadastradas
+                    <span class="uc-card__head-count">{{ disciplinas|length }}</span>
+                </span>
+                <button type="button" class="uc-btn uc-btn--orange uc-btn--sm" data-bs-toggle="modal" data-bs-target="#modalCadastrarDisciplina">
+                    <i class="fas fa-plus me-1"></i> Nova Disciplina
+                </button>
+            </div>
+            <!-- Barra de busca -->
+            <div class="uc-search-bar">
+                <div class="uc-search-wrap">
+                    <i class="fas fa-search uc-search-icon"></i>
+                    <input type="text" id="searchDisciplinas" class="uc-search-input"
+                           placeholder="Buscar por nome, código, professor, curso..."
+                           data-search-table="tabelaDisciplinas" data-search-counter="countDisciplinas">
+                    <button id="searchDisciplinas-clear" class="uc-search-clear"><i class="fas fa-times"></i></button>
+                </div>
+                <div class="uc-search-info">Exibindo <strong id="countDisciplinas">{{ disciplinas|length }}</strong> disciplina{{ disciplinas|length|pluralize }}</div>
+            </div>
             <div class="uc-card__body" style="padding:0;">
                 {% if disciplinas %}
-                <div style="overflow-x:auto;">
-                <table style="width:100%; border-collapse:collapse; font-size:14px;">
+                <div class="uc-table-wrap">
+                <table class="uc-table" id="tabelaDisciplinas">
                     <thead>
-                        <tr style="background:#f8f9fa; border-bottom:2px solid #eee;">
-                            <th style="padding:12px 16px; text-align:left; color:#555; font-weight:600;">#</th>
-                            <th style="padding:12px 16px; text-align:left; color:#555; font-weight:600;">Código</th>
-                            <th style="padding:12px 16px; text-align:left; color:#555; font-weight:600;">Nome</th>
-                            <th style="padding:12px 16px; text-align:left; color:#555; font-weight:600;">Professor</th>
-                            <th style="padding:12px 16px; text-align:left; color:#555; font-weight:600;">Curso</th>
-                            <th style="padding:12px 16px; text-align:center; color:#555; font-weight:600;">Ações</th>
+                        <tr>
+                            <th>#</th>
+                            <th>Código</th>
+                            <th>Nome</th>
+                            <th>Professor</th>
+                            <th>Curso</th>
+                            <th class="uc-th-actions">Ações</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for disc in disciplinas %}
-                        <tr style="border-bottom:1px solid #f0f0f0; transition:background .15s;"
-                            onmouseover="this.style.background='#fff8f4'" onmouseout="this.style.background=''">
-                            <td style="padding:10px 16px; color:#aaa;">{{ forloop.counter }}</td>
-                            <td style="padding:10px 16px;">
-                                <code style="background:#f0f0f0; padding:2px 8px; border-radius:4px; font-size:12px;">{{ disc.codigo_disciplina }}</code>
-                            </td>
-                            <td style="padding:10px 16px;">
+                        <tr>
+                            <td class="uc-td-num">{{ forloop.counter }}</td>
+                            <td><code>{{ disc.codigo_disciplina }}</code></td>
+                            <td>
                                 <i class="fas fa-book me-1" style="color:var(--uc-orange)"></i>
                                 <strong>{{ disc.nome_disciplina }}</strong>
                             </td>
-                            <td style="padding:10px 16px; color:#666;">{{ disc.id_professorfk.nome_completo }}</td>
-                            <td style="padding:10px 16px;">
-                                <span class="uc-badge uc-badge--pending">{{ disc.curso_fk.nome_curso }}</span>
-                            </td>
-                            <td style="padding:10px 16px; text-align:center; white-space:nowrap;">
+                            <td>{{ disc.id_professorfk.nome_completo }}</td>
+                            <td><span class="uc-badge uc-badge--pending">{{ disc.curso_fk.nome_curso }}</span></td>
+                            <td class="uc-td-actions">
                                 <button type="button" class="uc-btn uc-btn--outline uc-btn--sm"
                                         data-bs-toggle="modal" data-bs-target="#modalEditarDisc{{ disc.pk }}">
                                     <i class="fas fa-edit"></i> Editar
                                 </button>
-                                <button type="button" class="uc-btn uc-btn--sm"
-                                        style="background:#dc3545; color:#fff; border:none; margin-left:4px;"
+                                <button type="button" class="uc-btn uc-btn--danger uc-btn--sm"
                                         data-bs-toggle="modal" data-bs-target="#modalExcluirDisc{{ disc.pk }}">
                                     <i class="fas fa-trash-alt"></i> Excluir
                                 </button>
@@ -103,6 +105,9 @@
                         </tr>
                         {% endfor %}
                     </tbody>
+                        <tr id="tabelaDisciplinas-empty" class="uc-search-empty-row" style="display:none;">
+                            <td colspan="5"><i class="fas fa-search me-2"></i>Nenhuma disciplina encontrada para essa busca.</td>
+                        </tr>
                 </table>
                 </div>
                 {% else %}
@@ -155,9 +160,8 @@
                     </div>
                 </div>
                 <div class="modal-footer" style="border:none; padding-top:0;">
-                    <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-sm text-white fw-semibold"
-                            style="background:linear-gradient(135deg,#FF6B00,#D45400); border:none; border-radius:8px; padding:8px 24px;">
+                    <button type="button" class="uc-btn uc-btn--ghost uc-btn--sm" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="uc-btn uc-btn--orange uc-btn--sm">
                         <i class="fas fa-save me-1"></i> Cadastrar
                     </button>
                 </div>
@@ -208,9 +212,8 @@
                     </div>
                 </div>
                 <div class="modal-footer" style="border:none; padding-top:0;">
-                    <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-sm text-white fw-semibold"
-                            style="background:linear-gradient(135deg,#FF6B00,#D45400); border:none; border-radius:8px; padding:8px 24px;">
+                    <button type="button" class="uc-btn uc-btn--ghost uc-btn--sm" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="uc-btn uc-btn--orange uc-btn--sm">
                         <i class="fas fa-save me-1"></i> Salvar Alterações
                     </button>
                 </div>
@@ -243,8 +246,8 @@
                     </p>
                 </div>
                 <div class="modal-footer" style="border:none; padding-top:0;">
-                    <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-danger btn-sm fw-semibold" style="border-radius:8px; padding:8px 20px;">
+                    <button type="button" class="uc-btn uc-btn--ghost uc-btn--sm" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="uc-btn uc-btn--danger uc-btn--sm">
                         <i class="fas fa-trash-alt me-1"></i> Excluir
                     </button>
                 </div>
@@ -275,3 +278,6 @@
     });
 </script>
 {% endblock %}
+
+
+

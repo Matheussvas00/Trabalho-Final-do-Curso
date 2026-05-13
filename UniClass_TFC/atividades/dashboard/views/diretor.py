@@ -268,16 +268,38 @@ def editar_professor(request, professor_id):
 @_diretor_required
 @require_POST
 def excluir_professor(request, professor_id):
-    """Remove um professor e seu usuário vinculado."""
+    """Inativa um professor (LGPD — dados preservados, acesso bloqueado)."""
     professor = get_object_or_404(Professor, pk=professor_id)
     nome = professor.nome_completo
+
+    professor.ativo = False
+    professor.save(update_fields=['ativo'])
+
     usuario = professor.id_professor
+    usuario.email = f'_inativo_{professor_id}_{usuario.email}'
+    usuario.save(update_fields=['email'])
 
-    with transaction.atomic():
-        professor.delete()
-        usuario.delete()
+    messages.success(request, f'Professor {nome} inativado com sucesso (dados preservados conforme LGPD).')
+    return redirect('dashboard:gerenciar_professores')
 
-    messages.success(request, f'Professor {nome} excluído com sucesso.')
+
+@_diretor_required
+@require_POST
+def reativar_professor(request, professor_id):
+    """Reativa um professor previamente inativado, restaurando o acesso ao sistema."""
+    professor = get_object_or_404(Professor, pk=professor_id)
+    nome = professor.nome_completo
+
+    professor.ativo = True
+    professor.save(update_fields=['ativo'])
+
+    usuario = professor.id_professor
+    prefix = f'_inativo_{professor_id}_'
+    if usuario.email.startswith(prefix):
+        usuario.email = usuario.email[len(prefix):]
+        usuario.save(update_fields=['email'])
+
+    messages.success(request, f'Professor {nome} reativado com sucesso.')
     return redirect('dashboard:gerenciar_professores')
 
 
@@ -449,16 +471,38 @@ def editar_aluno(request, aluno_id):
 @_diretor_required
 @require_POST
 def excluir_aluno(request, aluno_id):
-    """Remove um aluno e seu usuário vinculado."""
+    """Inativa um aluno (LGPD — dados preservados, acesso bloqueado)."""
     aluno = get_object_or_404(Aluno, pk=aluno_id)
     nome = aluno.nome_completo
+
+    aluno.ativo = False
+    aluno.save(update_fields=['ativo'])
+
     usuario = aluno.id_aluno
+    usuario.email = f'_inativo_{aluno_id}_{usuario.email}'
+    usuario.save(update_fields=['email'])
 
-    with transaction.atomic():
-        aluno.delete()
-        usuario.delete()
+    messages.success(request, f'Aluno {nome} inativado com sucesso (dados preservados conforme LGPD).')
+    return redirect('dashboard:gerenciar_alunos')
 
-    messages.success(request, f'Aluno {nome} excluído com sucesso.')
+
+@_diretor_required
+@require_POST
+def reativar_aluno(request, aluno_id):
+    """Reativa um aluno previamente inativado, restaurando o acesso ao sistema."""
+    aluno = get_object_or_404(Aluno, pk=aluno_id)
+    nome = aluno.nome_completo
+
+    aluno.ativo = True
+    aluno.save(update_fields=['ativo'])
+
+    usuario = aluno.id_aluno
+    prefix = f'_inativo_{aluno_id}_'
+    if usuario.email.startswith(prefix):
+        usuario.email = usuario.email[len(prefix):]
+        usuario.save(update_fields=['email'])
+
+    messages.success(request, f'Aluno {nome} reativado com sucesso.')
     return redirect('dashboard:gerenciar_alunos')
 
 
@@ -578,6 +622,9 @@ def cadastrar_portaria(request):
                     id_portariafk=portaria,
                     codigo_disciplinafk=disciplina
                 )
+            # Com disciplinas vinculadas, portaria passa a aguardar criação de atividades
+            portaria.status = 'aguardando_atividades'
+            portaria.save(update_fields=['status'])
     except ValueError as e:
         return _erro(f'Erro ao criar portaria: {str(e)}')
 

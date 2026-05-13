@@ -1,4 +1,4 @@
-{% extends 'base.html' %}
+﻿{% extends 'base.html' %}
 {% load static %}
 
 {% block title %}Validar Atividades — Diretor | UniClass{% endblock %}
@@ -43,64 +43,63 @@
             {% endfor %}
         {% endif %}
 
-        <!-- Cabeçalho -->
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
-            <div>
-                <h4 style="margin:0; color:var(--uc-text);">
-                    <i class="fas fa-check-double me-2" style="color:var(--uc-orange)"></i>
-                    Aguardando Validação
-                </h4>
-                <small style="color:var(--uc-text-muted);">{{ total_validar }} resposta{{ total_validar|pluralize }} pendente{{ total_validar|pluralize }} de validação</small>
-            </div>
-        </div>
-
         <!-- Tabela -->
         <div class="uc-card">
+            <!-- Cabeçalho integrado -->
+            <div class="uc-card__head">
+                <span class="uc-card__head-title">
+                    <i class="fas fa-check-double" style="color:var(--uc-orange)"></i>
+                    Aguardando Validação
+                    <span class="uc-card__head-count">{{ total_validar }}</span>
+                </span>
+            </div>
+            <!-- Barra de busca -->
+            <div class="uc-search-bar">
+                <div class="uc-search-wrap">
+                    <i class="fas fa-search uc-search-icon"></i>
+                    <input type="text" id="searchValidacoes" class="uc-search-input"
+                           placeholder="Buscar por atividade, aluno, disciplina..."
+                           data-search-table="tabelaValidacoes" data-search-counter="countValidacoes">
+                    <button id="searchValidacoes-clear" class="uc-search-clear"><i class="fas fa-times"></i></button>
+                </div>
+                <div class="uc-search-info">Exibindo <strong id="countValidacoes">{{ respostas_para_validar|length }}</strong> resposta{{ respostas_para_validar|length|pluralize }}</div>
+            </div>
             <div class="uc-card__body" style="padding:0;">
                 {% if respostas_para_validar %}
-                <div style="overflow-x:auto;">
-                <table style="width:100%; border-collapse:collapse; font-size:14px;">
+                <div class="uc-table-wrap">
+                <table class="uc-table" id="tabelaValidacoes">
                     <thead>
-                        <tr style="background:#f8f9fa; border-bottom:2px solid #eee;">
-                            <th style="padding:12px 16px; text-align:left; color:#555; font-weight:600;">#</th>
-                            <th style="padding:12px 16px; text-align:left; color:#555; font-weight:600;">Atividade</th>
-                            <th style="padding:12px 16px; text-align:left; color:#555; font-weight:600;">Aluno</th>
-                            <th style="padding:12px 16px; text-align:left; color:#555; font-weight:600;">Disciplina</th>
-                            <th style="padding:12px 16px; text-align:left; color:#555; font-weight:600;">Professor</th>
-                            <th style="padding:12px 16px; text-align:left; color:#555; font-weight:600;">Enviado em</th>
-                            <th style="padding:12px 16px; text-align:left; color:#555; font-weight:600;">Obs. Professor</th>
-                            <th style="padding:12px 16px; text-align:center; color:#555; font-weight:600;">Ações</th>
+                        <tr>
+                            <th>#</th>
+                            <th>Atividade</th>
+                            <th>Aluno</th>
+                            <th>Disciplina</th>
+                            <th>Professor</th>
+                            <th>Enviado em</th>
+                            <th>Obs. Professor</th>
+                            <th class="uc-th-actions">Ações</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for resposta in respostas_para_validar %}
-                        <tr style="border-bottom:1px solid #f0f0f0; transition:background .15s;"
-                            onmouseover="this.style.background='#fff8f4'" onmouseout="this.style.background=''">
-                            <td style="padding:10px 16px; color:#aaa;">{{ resposta.id_resposta }}</td>
-                            <td style="padding:10px 16px;">
-                                <strong>{{ resposta.id_atividade.titulo|default:"Sem título" }}</strong>
-                            </td>
-                            <td style="padding:10px 16px;">
+                        <tr>
+                            <td class="uc-td-num">{{ resposta.id_resposta }}</td>
+                            <td><strong>{{ resposta.id_atividade.titulo|default:"Sem título" }}</strong></td>
+                            <td>
                                 <i class="fas fa-user-graduate me-1" style="color:var(--uc-orange)"></i>
                                 {{ resposta.id_alunofk.nome_completo }}
                             </td>
-                            <td style="padding:10px 16px;">
-                                {{ resposta.id_atividade.codigo_disciplinafk.nome_disciplina }}
-                            </td>
-                            <td style="padding:10px 16px;">
-                                {{ resposta.id_atividade.id_professorfk.nome_completo }}
-                            </td>
-                            <td style="padding:10px 16px; white-space:nowrap;">
-                                {{ resposta.data_envio|date:"d/m/Y H:i" }}
-                            </td>
-                            <td style="padding:10px 16px; max-width:200px;">
+                            <td>{{ resposta.id_atividade.codigo_disciplinafk.nome_disciplina }}</td>
+                            <td>{{ resposta.id_atividade.id_professorfk.nome_completo }}</td>
+                            <td style="white-space:nowrap;">{{ resposta.data_envio|date:"d/m/Y H:i" }}</td>
+                            <td>
                                 {% if resposta.observacao_professor %}
                                     <span style="font-size:12px; color:#555;">{{ resposta.observacao_professor|truncatechars:60 }}</span>
                                 {% else %}
                                     <span style="color:#aaa;">—</span>
                                 {% endif %}
                             </td>
-                            <td style="padding:10px 16px; text-align:center; white-space:nowrap;">
+                            <td class="uc-td-actions">
                                 <button type="button" class="uc-btn uc-btn--orange uc-btn--sm"
                                         data-bs-toggle="modal" data-bs-target="#modalAnalisar{{ resposta.pk }}">
                                     <i class="fas fa-search me-1"></i> Analisar
@@ -108,6 +107,9 @@
                             </td>
                         </tr>
                         {% endfor %}
+                        <tr id="tabelaValidacoes-empty" class="uc-search-empty-row" style="display:none;">
+                            <td colspan="8"><i class="fas fa-search me-2"></i>Nenhuma resposta encontrada para essa busca.</td>
+                        </tr>
                     </tbody>
                 </table>
                 </div>
@@ -193,8 +195,7 @@
                         <textarea name="observacao_diretor" class="form-control" rows="2"
                             placeholder="Comentário para o aluno..." style="border-radius:8px;"></textarea>
                     </div>
-                    <button type="submit" class="btn btn-sm text-white fw-semibold w-100"
-                        style="background:linear-gradient(135deg,#28a745,#1e7e34); border:none; border-radius:8px; padding:8px;">
+                    <button type="submit" class="uc-btn uc-btn--success uc-btn--sm w-100">
                         <i class="fas fa-check-double me-1"></i> Aprovar e Concluir Validação
                     </button>
                 </form>
@@ -208,15 +209,14 @@
                         <textarea name="observacao_diretor" class="form-control" rows="2" required
                             placeholder="Descreva o motivo para que o professor possa reanalisar..." style="border-radius:8px;"></textarea>
                     </div>
-                    <button type="submit" class="btn btn-sm btn-danger fw-semibold w-100"
-                        style="border-radius:8px; padding:8px;">
+                    <button type="submit" class="uc-btn uc-btn--danger uc-btn--sm w-100">
                         <i class="fas fa-times me-1"></i> Rejeitar (devolver ao professor)
                     </button>
                 </form>
 
             </div>
             <div class="modal-footer" style="border:none; padding-top:0;">
-                <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Fechar</button>
+                <button type="button" class="uc-btn uc-btn--ghost uc-btn--sm" data-bs-dismiss="modal">Fechar</button>
             </div>
         </div>
     </div>
@@ -243,3 +243,4 @@
     });
 </script>
 {% endblock %}
+

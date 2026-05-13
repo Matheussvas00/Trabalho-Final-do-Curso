@@ -75,27 +75,27 @@
             </div>
             <div class="uc-card__body" style="padding:0;">
                 {% if respostas %}
-                <div style="overflow-x:auto;">
-                <table style="width:100%; border-collapse:collapse; font-size:13px;">
+                <div class="uc-table-wrap">
+                <table class="uc-table">
                     <thead>
-                        <tr style="background:#f8f9fa; border-bottom:2px solid #eee;">
-                            <th style="padding:10px 14px;">Atividade</th>
-                            <th style="padding:10px 14px;">Disciplina</th>
-                            <th style="padding:10px 14px;">Professor</th>
-                            <th style="padding:10px 14px; text-align:center;">Enviada em</th>
-                            <th style="padding:10px 14px; text-align:center;">Status Professor</th>
-                            <th style="padding:10px 14px; text-align:center;">Status Diretor</th>
-                            <th style="padding:10px 14px; text-align:center;">Ações</th>
+                        <tr>
+                            <th>Atividade</th>
+                            <th>Disciplina</th>
+                            <th>Professor</th>
+                            <th style="text-align:center;">Enviada em</th>
+                            <th style="text-align:center;">Status Professor</th>
+                            <th style="text-align:center;">Status Diretor</th>
+                            <th class="uc-th-actions">Ações</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for r in respostas %}
-                        <tr style="border-bottom:1px solid #f0f0f0;" onmouseover="this.style.background='#fafafa'" onmouseout="this.style.background=''">
-                            <td style="padding:8px 14px;"><strong>{{ r.id_atividade.titulo }}</strong></td>
-                            <td style="padding:8px 14px;">{{ r.id_atividade.codigo_disciplinafk.nome_disciplina }}</td>
-                            <td style="padding:8px 14px;">{{ r.id_atividade.id_professorfk.nome_completo }}</td>
-                            <td style="padding:8px 14px; text-align:center;">{{ r.data_envio|date:"d/m/Y H:i" }}</td>
-                            <td style="padding:8px 14px; text-align:center;">
+                        <tr>
+                            <td><strong>{{ r.id_atividade.titulo }}</strong></td>
+                            <td>{{ r.id_atividade.codigo_disciplinafk.nome_disciplina }}</td>
+                            <td>{{ r.id_atividade.id_professorfk.nome_completo }}</td>
+                            <td style="text-align:center;">{{ r.data_envio|date:"d/m/Y H:i" }}</td>
+                            <td style="text-align:center;">
                                 {% if r.status_professor == 'aprovada' %}
                                     <span class="uc-badge uc-badge--approved">Aprovada</span>
                                 {% elif r.status_professor == 'rejeitada' %}
@@ -104,7 +104,7 @@
                                     <span class="uc-badge uc-badge--pending">Pendente</span>
                                 {% endif %}
                             </td>
-                            <td style="padding:8px 14px; text-align:center;">
+                            <td style="text-align:center;">
                                 {% if r.status_professor != 'aprovada' %}
                                     <span style="color:#999; font-size:12px;">—</span>
                                 {% elif r.status_diretor == 'aprovada' %}
@@ -115,15 +115,15 @@
                                     <span class="uc-badge uc-badge--pending">Pendente</span>
                                 {% endif %}
                             </td>
-                            <td style="padding:8px 14px; text-align:center;">
-                                <a href="{% url 'dashboard:visualizar_resposta' r.id_resposta %}" class="uc-btn uc-btn--sm" style="background:#f0f0f0;color:#333; margin-right:4px;">
+                            <td class="uc-td-actions">
+                                <a href="{% url 'dashboard:visualizar_resposta' r.id_resposta %}" class="uc-btn uc-btn--ghost uc-btn--sm">
                                     <i class="fas fa-eye"></i>
                                 </a>
                                 {% if r.status_professor == 'pendente' %}
                                 <a href="{% url 'dashboard:editar_resposta' r.id_resposta %}" class="uc-btn uc-btn--orange uc-btn--sm" style="margin-right:4px;">
                                     <i class="fas fa-edit"></i>
                                 </a>
-                                <button type="button" class="uc-btn uc-btn--sm" style="background:#dc3545;color:#fff;"
+                                <button type="button" class="uc-btn uc-btn--danger uc-btn--sm"
                                     onclick="confirmarExclusao({{ r.id_resposta }}, '{{ r.id_atividade.titulo|escapejs }}')">
                                     <i class="fas fa-trash"></i>
                                 </button>

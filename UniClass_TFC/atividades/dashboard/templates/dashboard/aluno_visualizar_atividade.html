@@ -112,12 +112,14 @@
                     <i class="fas fa-paper-plane" style="color:var(--uc-orange)"></i>
                     Sua Resposta
                 </span>
-                {% if resposta_existente.status == 'aprovada_diretor' %}
-                    <span class="uc-badge uc-badge--approved">Aprovada</span>
-                {% elif resposta_existente.status == 'aprovada_professor' %}
+                {% if resposta_existente.status == 'aprovada_dir' %}
+                    <span class="uc-badge uc-badge--success">Aprovada (Diretor)</span>
+                {% elif resposta_existente.status == 'aprovada_prof' %}
                     <span class="uc-badge" style="background:#d4edda;color:#155724;padding:3px 10px;border-radius:20px;font-size:11px;">Aprovada pelo Professor</span>
-                {% elif resposta_existente.status == 'rejeitada_professor' or resposta_existente.status == 'rejeitada_diretor' %}
-                    <span class="uc-badge uc-badge--rejected">Rejeitada</span>
+                {% elif resposta_existente.status == 'rejeitada_prof' %}
+                    <span class="uc-badge uc-badge--danger">Rejeitada pelo Professor</span>
+                {% elif resposta_existente.status == 'rejeitada_dir' %}
+                    <span class="uc-badge uc-badge--danger">Rejeitada pelo Diretor</span>
                 {% else %}
                     <span class="uc-badge uc-badge--pending">Aguardando Avaliação</span>
                 {% endif %}
@@ -147,7 +149,7 @@
 
                 {% if resposta_existente.status_professor == 'pendente' %}
                 <div style="margin-top:16px; display:flex; gap:8px;">
-                    <a href="{% url 'dashboard:visualizar_resposta' resposta_existente.id_resposta %}" class="uc-btn uc-btn--sm" style="background:#f0f0f0;color:#333;">
+                    <a href="{% url 'dashboard:visualizar_resposta' resposta_existente.id_resposta %}" class="uc-btn uc-btn--ghost uc-btn--sm">
                         <i class="fas fa-eye me-1"></i> Ver detalhes
                     </a>
                     <a href="{% url 'dashboard:editar_resposta' resposta_existente.id_resposta %}" class="uc-btn uc-btn--orange uc-btn--sm">
@@ -184,8 +186,8 @@
                         </div>
                     </div>
                     <div style="margin-top:20px; text-align:right;">
-                        <a href="{% url 'dashboard:atividades_disponiveis' %}" class="btn btn-outline-secondary btn-sm me-2">Cancelar</a>
-                        <button type="submit" class="btn btn-sm text-white fw-semibold" style="background:linear-gradient(135deg,#FF6B00,#D45400); border:none; border-radius:8px; padding:8px 24px;">
+                        <a href="{% url 'dashboard:atividades_disponiveis' %}" class="uc-btn uc-btn--ghost uc-btn--sm me-2">Cancelar</a>
+                        <button type="submit" class="uc-btn uc-btn--orange uc-btn--sm">
                             <i class="fas fa-paper-plane me-1"></i> Enviar Resposta
                         </button>
                     </div>

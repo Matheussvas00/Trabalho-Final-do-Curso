@@ -65,13 +65,14 @@ def home_aluno(request):
         ctx['portarias_ativas'] = portarias_ativas
         ctx['total_portarias'] = portarias_ativas.count()
 
-        # Atividades disponíveis para responder
+        # Atividades disponíveis para responder (inclui reprovadas para reenvio)
         atividades_disponiveis = Atividade.objects.filter(
             id_portariafk__id_alunofk=aluno,
-            status='aguardando_resposta'
+            status__in=['aguardando_resposta', 'reprovada_professor', 'reprovada_diretor']
         ).exclude(
-            # Exclui atividades que o aluno já respondeu
-            respostas__id_alunofk=aluno
+            # Exclui atividades que o aluno já respondeu e não foram reprovadas
+            respostas__id_alunofk=aluno,
+            respostas__status__in=['pendente', 'aprovada_prof', 'aprovada_dir']
         ).select_related(
             'codigo_disciplinafk',
             'id_professorfk__id_professor',
@@ -95,19 +96,19 @@ def home_aluno(request):
         # Respostas aguardando validação
         ctx['aguardando_validacao'] = RespostaAtividade.objects.filter(
             id_alunofk=aluno,
-            status__in=['pendente', 'aprovada_professor']
+            status__in=['pendente', 'aprovada_prof']
         ).count()
 
         # Respostas aprovadas finalmente
         ctx['aprovadas'] = RespostaAtividade.objects.filter(
             id_alunofk=aluno,
-            status='aprovada_diretor'
+            status='aprovada_dir'
         ).count()
 
         # Respostas rejeitadas
         ctx['rejeitadas'] = RespostaAtividade.objects.filter(
             id_alunofk=aluno,
-            status__in=['rejeitada_professor', 'rejeitada_diretor']
+            status__in=['rejeitada_prof', 'rejeitada_dir']
         ).count()
     else:
         ctx['portarias_ativas'] = []
@@ -161,12 +162,13 @@ def atividades_disponiveis(request):
     aluno = ctx.get('aluno')
 
     if aluno:
-        # Atividades que o aluno ainda não respondeu
+        # Atividades que o aluno pode responder (novas ou reprovadas)
         ctx['atividades'] = Atividade.objects.filter(
-            id_portariafk__id_alunofk=aluno
+            id_portariafk__id_alunofk=aluno,
+            status__in=['aguardando_resposta', 'reprovada_professor', 'reprovada_diretor']
         ).exclude(
-            # Exclui atividades que o aluno já respondeu
-            respostas__id_alunofk=aluno
+            respostas__id_alunofk=aluno,
+            respostas__status__in=['pendente', 'aprovada_prof', 'aprovada_dir']
         ).select_related(
             'codigo_disciplinafk',
             'id_professorfk__id_professor',
@@ -227,8 +229,11 @@ def responder_atividade(request, atividade_id):
         messages.error(request, 'Você não tem acesso a esta atividade.')
         return redirect('dashboard:atividades_disponiveis')
 
-    # Verifica se já respondeu
-    if RespostaAtividade.objects.filter(id_atividade=atividade, id_alunofk=aluno).exists():
+    # Verifica se já respondeu (e a resposta não foi reprovada para reenvio)
+    resposta_existente = RespostaAtividade.objects.filter(
+        id_atividade=atividade, id_alunofk=aluno
+    ).first()
+    if resposta_existente and resposta_existente.status not in ['rejeitada_prof', 'rejeitada_dir']:
         messages.error(request, 'Você já respondeu esta atividade.')
         return redirect('dashboard:minhas_respostas')
 
@@ -250,13 +255,35 @@ def responder_atividade(request, atividade_id):
 
     try:
         with transaction.atomic():
-            resposta = RespostaAtividade(
-                id_atividade=atividade,
-                id_alunofk=aluno,
-                arquivo=arquivo_path,
-                descricao_resposta=descricao or None
-            )
-            resposta.save()  # Validações do modelo serão executadas
+            if resposta_existente:
+                # Reenvio após reprovação: atualiza a resposta existente
+                resposta_existente.arquivo = arquivo_path or resposta_existente.arquivo
+                resposta_existente.descricao_resposta = descricao or resposta_existente.descricao_resposta
+                resposta_existente.data_envio = timezone.now()
+                resposta_existente.status = 'pendente'
+                resposta_existente.status_professor = 'pendente'
+                resposta_existente.status_diretor = 'pendente'
+                resposta_existente.observacao_professor = None
+                resposta_existente.observacao_diretor = None
+                resposta_existente.data_validacao_professor = None
+                resposta_existente.data_validacao_diretor = None
+                resposta_existente.save()
+            else:
+                resposta_existente = RespostaAtividade(
+                    id_atividade=atividade,
+                    id_alunofk=aluno,
+                    arquivo=arquivo_path,
+                    descricao_resposta=descricao or None
+                )
+                resposta_existente.save()  # Validações do modelo serão executadas
+            # Marca a atividade como respondida
+            atividade.status = 'respondida'
+            atividade.save(update_fields=['status'])
+            # Avança portaria para em_andamento se estava aguardando atividades
+            portaria = atividade.id_portariafk
+            if portaria.status == 'aguardando_atividades':
+                portaria.status = 'em_andamento'
+                portaria.save(update_fields=['status'])
 
         messages.success(request,
             f'Resposta enviada com sucesso! Aguarde a validação do professor {atividade.id_professorfk.nome_completo}.')
@@ -289,9 +316,9 @@ def minhas_respostas(request):
         ctx['total_respostas'] = ctx['respostas'].count()
         ctx['pendentes'] = ctx['respostas'].filter(status_professor='pendente').count()
         ctx['aprovadas_professor'] = ctx['respostas'].filter(status_professor='aprovada', status_diretor='pendente').count()
-        ctx['aprovadas_final'] = ctx['respostas'].filter(status='aprovada_diretor').count()
+        ctx['aprovadas_final'] = ctx['respostas'].filter(status='aprovada_dir').count()
         ctx['rejeitadas'] = ctx['respostas'].filter(
-            status__in=['rejeitada_professor', 'rejeitada_diretor']
+            status__in=['rejeitada_prof', 'rejeitada_dir']
         ).count()
     else:
         ctx['respostas'] = []

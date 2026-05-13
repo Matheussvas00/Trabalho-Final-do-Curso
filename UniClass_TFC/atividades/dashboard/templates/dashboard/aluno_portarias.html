@@ -43,33 +43,33 @@
             </div>
             <div class="uc-card__body" style="padding:0;">
                 {% if portarias %}
-                <div style="overflow-x:auto;">
-                <table style="width:100%; border-collapse:collapse; font-size:13px;">
+                <div class="uc-table-wrap">
+                <table class="uc-table">
                     <thead>
-                        <tr style="background:#f8f9fa; border-bottom:2px solid #eee;">
-                            <th style="padding:10px 14px;">#</th>
-                            <th style="padding:10px 14px;">Motivo</th>
-                            <th style="padding:10px 14px;">Disciplinas</th>
-                            <th style="padding:10px 14px; text-align:center;">Prazo Atividades</th>
-                            <th style="padding:10px 14px; text-align:center;">Prazo Respostas</th>
-                            <th style="padding:10px 14px; text-align:center;">Prazo Final</th>
-                            <th style="padding:10px 14px; text-align:center;">Status</th>
+                        <tr>
+                            <th>#</th>
+                            <th>Motivo</th>
+                            <th>Disciplinas</th>
+                            <th style="text-align:center;">Prazo Atividades</th>
+                            <th style="text-align:center;">Prazo Respostas</th>
+                            <th style="text-align:center;">Prazo Final</th>
+                            <th style="text-align:center;">Status</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for p in portarias %}
-                        <tr style="border-bottom:1px solid #f0f0f0;" onmouseover="this.style.background='#fafafa'" onmouseout="this.style.background=''">
-                            <td style="padding:8px 14px;"><code style="background:#f0f0f0; padding:2px 6px; border-radius:4px;">{{ p.numero_portaria }}</code></td>
-                            <td style="padding:8px 14px;">{{ p.motivo_portaria }}</td>
-                            <td style="padding:8px 14px; font-size:12px;">
+                        <tr>
+                            <td><code style="background:#f0f0f0; padding:2px 6px; border-radius:4px;">{{ p.numero_portaria }}</code></td>
+                            <td>{{ p.motivo_portaria }}</td>
+                            <td style="font-size:12px;">
                                 {% for pd in p.disciplinas_portaria.all %}
                                     <span style="background:#e9ecef; padding:1px 6px; border-radius:4px; margin-right:3px; display:inline-block; margin-bottom:2px;">{{ pd.codigo_disciplinafk.nome_disciplina }}</span>
                                 {% empty %}—{% endfor %}
                             </td>
-                            <td style="padding:8px 14px; text-align:center;">{{ p.prazo_professor_criar_atividades|date:"d/m/Y" }}</td>
-                            <td style="padding:8px 14px; text-align:center;">{{ p.prazo_aluno_responder|date:"d/m/Y" }}</td>
-                            <td style="padding:8px 14px; text-align:center;">{{ p.prazo_validacao_final|date:"d/m/Y" }}</td>
-                            <td style="padding:8px 14px; text-align:center;">
+                            <td style="text-align:center;">{{ p.prazo_professor_criar_atividades|date:"d/m/Y" }}</td>
+                            <td style="text-align:center;">{{ p.prazo_aluno_responder|date:"d/m/Y" }}</td>
+                            <td style="text-align:center;">{{ p.prazo_validacao_final|date:"d/m/Y" }}</td>
+                            <td style="text-align:center;">
                                 {% if p.status == 'concluida' %}
                                     <span class="uc-badge uc-badge--approved">Concluída</span>
                                 {% elif p.status == 'cancelada' %}

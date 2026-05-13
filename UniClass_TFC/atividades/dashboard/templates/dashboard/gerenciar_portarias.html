@@ -1,4 +1,4 @@
-{% extends 'base.html' %}
+﻿{% extends 'base.html' %}
 {% load static %}
 
 {% block title %}Gerenciar Portarias — Diretor | UniClass{% endblock %}
@@ -48,68 +48,67 @@
             {% endfor %}
         {% endif %}
 
-        <!-- Cabeçalho + botão -->
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
-            <div>
-                <h4 style="margin:0; color:var(--uc-text);">
-                    <i class="fas fa-file-medical me-2" style="color:var(--uc-orange)"></i>
-                    Portarias Cadastradas
-                </h4>
-                <small style="color:var(--uc-text-muted);">{{ portarias|length }} portaria{{ portarias|length|pluralize }}</small>
-            </div>
-            <button type="button" class="uc-btn uc-btn--orange" id="btnNovaPortaria">
-                <i class="fas fa-plus me-1"></i> Nova Portaria
-            </button>
-        </div>
-
         <!-- Tabela -->
         <div class="uc-card">
+            <!-- Cabeçalho integrado -->
+            <div class="uc-card__head">
+                <span class="uc-card__head-title">
+                    <i class="fas fa-file-medical" style="color:var(--uc-orange)"></i>
+                    Portarias Cadastradas
+                    <span class="uc-card__head-count">{{ portarias|length }}</span>
+                </span>
+                <button type="button" class="uc-btn uc-btn--orange uc-btn--sm" id="btnNovaPortaria">
+                    <i class="fas fa-plus me-1"></i> Nova Portaria
+                </button>
+            </div>
+            <!-- Barra de busca -->
+            <div class="uc-search-bar">
+                <div class="uc-search-wrap">
+                    <i class="fas fa-search uc-search-icon"></i>
+                    <input type="text" id="searchPortarias" class="uc-search-input"
+                           placeholder="Buscar por nº, aluno, motivo ou status..."
+                           data-search-table="tabelaPortarias" data-search-counter="countPortarias">
+                    <button id="searchPortarias-clear" class="uc-search-clear"><i class="fas fa-times"></i></button>
+                </div>
+                <div class="uc-search-info">Exibindo <strong id="countPortarias">{{ portarias|length }}</strong> portaria{{ portarias|length|pluralize }}</div>
+            </div>
             <div class="uc-card__body" style="padding:0;">
                 {% if portarias %}
-                <div style="overflow-x:auto;">
-                <table style="width:100%; border-collapse:collapse; font-size:14px;">
+                <div class="uc-table-wrap">
+                <table class="uc-table" id="tabelaPortarias">
                     <thead>
-                        <tr style="background:#f8f9fa; border-bottom:2px solid #eee;">
-                            <th style="padding:12px 16px; text-align:left; color:#555; font-weight:600;">Nº Portaria</th>
-                            <th style="padding:12px 16px; text-align:left; color:#555; font-weight:600;">Aluno</th>
-                            <th style="padding:12px 16px; text-align:left; color:#555; font-weight:600;">Motivo</th>
-                            <th style="padding:12px 16px; text-align:left; color:#555; font-weight:600;">Prazo Atividades</th>
-                            <th style="padding:12px 16px; text-align:left; color:#555; font-weight:600;">Prazo Respostas</th>
-                            <th style="padding:12px 16px; text-align:left; color:#555; font-weight:600;">Prazo Validação</th>
-                            <th style="padding:12px 16px; text-align:left; color:#555; font-weight:600;">Status</th>
-                            <th style="padding:12px 16px; text-align:left; color:#555; font-weight:600;">Disciplinas</th>
-                            <th style="padding:12px 16px; text-align:left; color:#555; font-weight:600;">Atestado</th>
-                            <th style="padding:12px 16px; text-align:center; color:#555; font-weight:600;">Ações</th>
+                        <tr>
+                            <th>Nº Portaria</th>
+                            <th>Aluno</th>
+                            <th>Motivo</th>
+                            <th>Prazo Atividades</th>
+                            <th>Prazo Respostas</th>
+                            <th>Prazo Validação</th>
+                            <th>Status</th>
+                            <th>Disciplinas</th>
+                            <th>Atestado</th>
+                            <th class="uc-th-actions">Ações</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for portaria in portarias %}
-                        <tr style="border-bottom:1px solid #f0f0f0; transition:background .15s;"
-                            onmouseover="this.style.background='#fff8f4'" onmouseout="this.style.background=''">
-                            <td style="padding:10px 16px;">
-                                <code style="background:#f0f0f0; padding:2px 8px; border-radius:4px;">{{ portaria.numero_portaria }}</code>
-                            </td>
-                            <td style="padding:10px 16px;">
+                        <tr>
+                            <td><code>{{ portaria.numero_portaria }}</code></td>
+                            <td>
                                 <i class="fas fa-user-graduate me-1" style="color:var(--uc-orange)"></i>
                                 <strong>{{ portaria.id_alunofk.nome_completo }}</strong>
                             </td>
-                            <td style="padding:10px 16px; max-width:200px;">
-                                <span title="{{ portaria.motivo_portaria }}" style="display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:180px;">
-                                    {{ portaria.motivo_portaria }}
-                                </span>
-                            </td>
-                            <td style="padding:10px 16px; white-space:nowrap;">{{ portaria.prazo_professor_criar_atividades|date:"d/m/Y" }}</td>
-                            <td style="padding:10px 16px; white-space:nowrap;">{{ portaria.prazo_aluno_responder|date:"d/m/Y" }}</td>
-                            <td style="padding:10px 16px; white-space:nowrap;">{{ portaria.prazo_validacao_final|date:"d/m/Y" }}</td>
-                            <td style="padding:10px 16px;">
-                                {% if portaria.status == 'aguardando_atividades' %}
+                            <td style="max-width:180px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ portaria.motivo_portaria }}</td>
+                            <td style="white-space:nowrap;">{{ portaria.prazo_professor_criar_atividades|date:"d/m/Y" }}</td>
+                            <td style="white-space:nowrap;">{{ portaria.prazo_aluno_responder|date:"d/m/Y" }}</td>
+                            <td style="white-space:nowrap;">{{ portaria.prazo_validacao_final|date:"d/m/Y" }}</td>
+                            <td>
+                                {% if portaria.status == 'pendente' %}
+                                    <span class="uc-badge uc-badge--pending">Pendente</span>
+                                {% elif portaria.status == 'aguardando_atividades' %}
                                     <span class="uc-badge uc-badge--pending">Aguard. Atividades</span>
-                                {% elif portaria.status == 'aguardando_respostas' %}
-                                    <span class="uc-badge" style="background:#e3f2fd; color:#1565c0;">Aguard. Respostas</span>
-                                {% elif portaria.status == 'em_validacao_professor' %}
-                                    <span class="uc-badge" style="background:#e8eaf6; color:#3949ab;">Val. Professor</span>
-                                {% elif portaria.status == 'em_validacao_diretor' %}
-                                    <span class="uc-badge" style="background:#f3e5f5; color:#7b1fa2;">Val. Diretor</span>
+                                {% elif portaria.status == 'em_andamento' %}
+                                    <span class="uc-badge" style="background:#e3f2fd; color:#1565c0;">Em Andamento</span>
                                 {% elif portaria.status == 'concluida' %}
                                     <span class="uc-badge uc-badge--success">Concluída</span>
                                 {% elif portaria.status == 'cancelada' %}
@@ -118,7 +117,7 @@
                                     <span class="uc-badge uc-badge--pending">{{ portaria.status }}</span>
                                 {% endif %}
                             </td>
-                            <td style="padding:10px 16px; font-size:13px;">
+                            <td style="font-size:13px;">
                                 {% for dp in portaria.disciplinas_portaria.all %}
                                     <span style="background:#f0f4ff; color:#333; padding:2px 6px; border-radius:4px; margin:1px; display:inline-block;">
                                         {{ dp.codigo_disciplinafk.nome_disciplina }}
@@ -127,7 +126,7 @@
                                     <span style="color:#aaa;">—</span>
                                 {% endfor %}
                             </td>
-                            <td style="padding:10px 16px;">
+                            <td>
                                 {% if portaria.atestado %}
                                     <a href="{{ portaria.atestado.url }}" target="_blank" class="uc-btn uc-btn--outline uc-btn--sm" title="Ver atestado">
                                         <i class="fas fa-file-alt"></i>
@@ -136,19 +135,21 @@
                                     <span style="color:#aaa;">—</span>
                                 {% endif %}
                             </td>
-                            <td style="padding:10px 16px; text-align:center; white-space:nowrap;">
+                            <td class="uc-td-actions">
                                 <button type="button" class="uc-btn uc-btn--outline uc-btn--sm"
                                         data-bs-toggle="modal" data-bs-target="#modalEditarPortaria{{ portaria.pk }}">
                                     <i class="fas fa-edit"></i> Editar
                                 </button>
-                                <button type="button" class="uc-btn uc-btn--sm"
-                                        style="background:#dc3545; color:#fff; border:none; margin-left:4px;"
+                                <button type="button" class="uc-btn uc-btn--danger uc-btn--sm"
                                         data-bs-toggle="modal" data-bs-target="#modalExcluirPortaria{{ portaria.pk }}">
                                     <i class="fas fa-trash-alt"></i> Excluir
                                 </button>
                             </td>
                         </tr>
                         {% endfor %}
+                        <tr id="tabelaPortarias-empty" class="uc-search-empty-row" style="display:none;">
+                            <td colspan="10"><i class="fas fa-search me-2"></i>Nenhuma portaria encontrada para essa busca.</td>
+                        </tr>
                     </tbody>
                 </table>
                 </div>
@@ -241,9 +242,8 @@
                     </div>
                 </div>
                 <div class="modal-footer" style="border:none; padding-top:0;">
-                    <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="button" id="btn_cad_portaria_submit" class="btn btn-sm text-white fw-semibold"
-                            style="background:linear-gradient(135deg,#FF6B00,#D45400); border:none; border-radius:8px; padding:8px 24px;">
+                    <button type="button" class="uc-btn uc-btn--ghost uc-btn--sm" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" id="btn_cad_portaria_submit" class="uc-btn uc-btn--orange uc-btn--sm">
                         <i class="fas fa-save me-1"></i> Cadastrar
                     </button>
                 </div>
@@ -303,10 +303,9 @@
                         <div class="col-md-6">
                             <label class="form-label fw-semibold" style="font-size:13px;">Status</label>
                             <select name="status" class="form-select" style="border-radius:8px; border:2px solid #e0e0e0;">
+                                <option value="pendente" {% if portaria.status == 'pendente' %}selected{% endif %}>Pendente</option>
                                 <option value="aguardando_atividades" {% if portaria.status == 'aguardando_atividades' %}selected{% endif %}>Aguardando Criação de Atividades</option>
-                                <option value="aguardando_respostas" {% if portaria.status == 'aguardando_respostas' %}selected{% endif %}>Aguardando Respostas dos Alunos</option>
-                                <option value="em_validacao_professor" {% if portaria.status == 'em_validacao_professor' %}selected{% endif %}>Em Validação pelo Professor</option>
-                                <option value="em_validacao_diretor" {% if portaria.status == 'em_validacao_diretor' %}selected{% endif %}>Em Validação pelo Diretor</option>
+                                <option value="em_andamento" {% if portaria.status == 'em_andamento' %}selected{% endif %}>Em Andamento</option>
                                 <option value="concluida" {% if portaria.status == 'concluida' %}selected{% endif %}>Concluída</option>
                                 <option value="cancelada" {% if portaria.status == 'cancelada' %}selected{% endif %}>Cancelada</option>
                             </select>
@@ -351,9 +350,8 @@
                     </div>
                 </div>
                 <div class="modal-footer" style="border:none; padding-top:0;">
-                    <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-sm text-white fw-semibold"
-                            style="background:linear-gradient(135deg,#FF6B00,#D45400); border:none; border-radius:8px; padding:8px 24px;">
+                    <button type="button" class="uc-btn uc-btn--ghost uc-btn--sm" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="uc-btn uc-btn--orange uc-btn--sm">
                         <i class="fas fa-save me-1"></i> Salvar Alterações
                     </button>
                 </div>
@@ -386,8 +384,8 @@
                     </p>
                 </div>
                 <div class="modal-footer" style="border:none; padding-top:0;">
-                    <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-danger btn-sm fw-semibold" style="border-radius:8px; padding:8px 24px;">
+                    <button type="button" class="uc-btn uc-btn--ghost uc-btn--sm" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="uc-btn uc-btn--danger uc-btn--sm">
                         <i class="fas fa-trash-alt me-1"></i> Excluir
                     </button>
                 </div>
@@ -535,3 +533,5 @@
     });
 </script>
 {% endblock %}
+
+

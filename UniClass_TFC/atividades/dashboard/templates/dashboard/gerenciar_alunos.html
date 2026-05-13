@@ -1,4 +1,4 @@
-{% extends 'base.html' %}
+﻿{% extends 'base.html' %}
 {% load static %}
 
 {% block title %}Gerenciar Alunos — Diretor | UniClass{% endblock %}
@@ -43,65 +43,85 @@
             {% endfor %}
         {% endif %}
 
-        <!-- Cabeçalho + botão cadastrar -->
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
-            <div>
-                <h4 style="margin:0; color:var(--uc-text);">
-                    <i class="fas fa-user-graduate me-2" style="color:var(--uc-orange)"></i>
-                    Alunos Cadastrados
-                </h4>
-                <small style="color:var(--uc-text-muted);">{{ alunos|length }} aluno{{ alunos|length|pluralize }}</small>
-            </div>
-            <button type="button" class="uc-btn uc-btn--orange" data-bs-toggle="modal" data-bs-target="#modalCadastrarAluno">
-                <i class="fas fa-user-plus me-1"></i> Novo Aluno
-            </button>
-        </div>
-
         <!-- Tabela de Alunos -->
         <div class="uc-card">
+            <!-- Cabeçalho integrado -->
+            <div class="uc-card__head">
+                <span class="uc-card__head-title">
+                    <i class="fas fa-user-graduate" style="color:var(--uc-orange)"></i>
+                    Alunos Cadastrados
+                    <span class="uc-card__head-count">{{ alunos|length }}</span>
+                </span>
+                <button type="button" class="uc-btn uc-btn--orange uc-btn--sm" data-bs-toggle="modal" data-bs-target="#modalCadastrarAluno">
+                    <i class="fas fa-user-plus me-1"></i> Novo Aluno
+                </button>
+            </div>
+            <!-- Barra de busca -->
+            <div class="uc-search-bar">
+                <div class="uc-search-wrap">
+                    <i class="fas fa-search uc-search-icon"></i>
+                    <input type="text" id="searchAlunos" class="uc-search-input"
+                           placeholder="Buscar por nome, matrícula, curso..."
+                           data-search-table="tabelaAlunos" data-search-counter="countAlunos">
+                    <button id="searchAlunos-clear" class="uc-search-clear"><i class="fas fa-times"></i></button>
+                </div>
+                <div class="uc-search-info">Exibindo <strong id="countAlunos">{{ alunos|length }}</strong> aluno{{ alunos|length|pluralize }}</div>
+            </div>
             <div class="uc-card__body" style="padding:0;">
                 {% if alunos %}
-                <div style="overflow-x:auto;">
-                <table style="width:100%; border-collapse:collapse; font-size:14px;">
+                <div class="uc-table-wrap">
+                <table class="uc-table" id="tabelaAlunos">
                     <thead>
-                        <tr style="background:#f8f9fa; border-bottom:2px solid #eee;">
-                            <th style="padding:12px 16px; text-align:left; color:#555; font-weight:600;">#</th>
-                            <th style="padding:12px 16px; text-align:left; color:#555; font-weight:600;">Nome Completo</th>
-                            <th style="padding:12px 16px; text-align:left; color:#555; font-weight:600;">Matrícula</th>
-                            <th style="padding:12px 16px; text-align:left; color:#555; font-weight:600;">Curso</th>
-                            <th style="padding:12px 16px; text-align:left; color:#555; font-weight:600;">Período</th>
-                            <th style="padding:12px 16px; text-align:center; color:#555; font-weight:600;">Ações</th>
+                        <tr>
+                            <th>#</th>
+                            <th>Nome Completo</th>
+                            <th>Matrícula</th>
+                            <th>Curso</th>
+                            <th>Período</th>
+                            <th class="text-center">Status</th>
+                            <th class="uc-th-actions">Ações</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for aluno in alunos %}
-                        <tr style="border-bottom:1px solid #f0f0f0; transition:background .15s;"
-                            onmouseover="this.style.background='#fff8f4'" onmouseout="this.style.background=''">
-                            <td style="padding:10px 16px; color:#aaa;">{{ forloop.counter }}</td>
-                            <td style="padding:10px 16px;">
+                        <tr>
+                            <td class="uc-td-num">{{ forloop.counter }}</td>
+                            <td>
                                 <i class="fas fa-user-graduate me-1" style="color:var(--uc-orange)"></i>
                                 <strong>{{ aluno.nome_aluno }} {{ aluno.sobrenome_aluno }}</strong>
                             </td>
-                            <td style="padding:10px 16px;">
-                                <code style="background:#f0f0f0; padding:2px 8px; border-radius:4px;">{{ aluno.matricula_aluno|default:"-" }}</code>
+                            <td><code>{{ aluno.matricula_aluno|default:"-" }}</code></td>
+                            <td>{{ aluno.curso_aluno }}</td>
+                            <td><span class="uc-badge uc-badge--pending">{{ aluno.periodo }}º</span></td>
+                            <td class="text-center">
+                                {% if aluno.ativo %}
+                                    <span class="uc-badge uc-badge--success">Ativo</span>
+                                {% else %}
+                                    <span class="uc-badge uc-badge--danger">Inativo</span>
+                                {% endif %}
                             </td>
-                            <td style="padding:10px 16px;">{{ aluno.curso_aluno }}</td>
-                            <td style="padding:10px 16px;">
-                                <span class="uc-badge uc-badge--pending">{{ aluno.periodo }}º</span>
-                            </td>
-                            <td style="padding:10px 16px; text-align:center; white-space:nowrap;">
+                            <td class="uc-td-actions">
                                 <button type="button" class="uc-btn uc-btn--outline uc-btn--sm"
                                         data-bs-toggle="modal" data-bs-target="#modalEditar{{ aluno.pk }}">
                                     <i class="fas fa-edit"></i> Editar
                                 </button>
-                                <button type="button" class="uc-btn uc-btn--sm"
-                                        style="background:#dc3545; color:#fff; border:none; margin-left:4px;"
+                                {% if aluno.ativo %}
+                                <button type="button" class="uc-btn uc-btn--danger uc-btn--sm"
                                         data-bs-toggle="modal" data-bs-target="#modalExcluir{{ aluno.pk }}">
-                                    <i class="fas fa-trash-alt"></i> Excluir
+                                    <i class="fas fa-user-slash"></i> Inativar
                                 </button>
+                                {% else %}
+                                <button type="button" class="uc-btn uc-btn--success uc-btn--sm"
+                                        data-bs-toggle="modal" data-bs-target="#modalReativar{{ aluno.pk }}">
+                                    <i class="fas fa-user-check"></i> Reativar
+                                </button>
+                                {% endif %}
                             </td>
                         </tr>
                         {% endfor %}
+                        <tr id="tabelaAlunos-empty" class="uc-search-empty-row" style="display:none;">
+                            <td colspan="7"><i class="fas fa-search me-2"></i>Nenhum aluno encontrado para essa busca.</td>
+                        </tr>
                     </tbody>
                 </table>
                 </div>
@@ -188,9 +208,8 @@
                         {% endif %}                    </div>
                 </div>
                 <div class="modal-footer" style="border:none; padding-top:0;">
-                    <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="button" class="btn btn-sm text-white fw-semibold" id="btn_cad_aluno_submit"
-                            style="background:linear-gradient(135deg,#FF6B00,#D45400); border:none; border-radius:8px; padding:8px 24px;">
+                    <button type="button" class="uc-btn uc-btn--ghost uc-btn--sm" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="uc-btn uc-btn--orange uc-btn--sm" id="btn_cad_aluno_submit">
                         <i class="fas fa-save me-1"></i> Cadastrar
                     </button>
                 </div>            </form>
@@ -267,9 +286,8 @@
                     </div>
                 </div>
                 <div class="modal-footer" style="border:none; padding-top:0;">
-                    <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-sm text-white fw-semibold"
-                            style="background:linear-gradient(135deg,#FF6B00,#D45400); border:none; border-radius:8px; padding:8px 24px;">
+                    <button type="button" class="uc-btn uc-btn--ghost uc-btn--sm" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="uc-btn uc-btn--orange uc-btn--sm">
                         <i class="fas fa-save me-1"></i> Salvar Alterações
                     </button>
                 </div>
@@ -281,30 +299,64 @@
 <!-- Modal Excluir -->
 <div class="modal fade" id="modalExcluir{{ aluno.pk }}" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content" style="border-radius:12px; overflow:hidden;">
-            <div class="modal-header" style="background:#dc3545; color:#fff; border:none;">
+        <div class="modal-content" style="border-radius:16px; overflow:hidden; border:none; box-shadow:0 20px 60px rgba(0,0,0,.18);">
+            <div class="modal-header" style="background:linear-gradient(135deg,#b91c1c,#dc3545); color:#fff; border:none; padding:20px 24px;">
                 <h5 class="modal-title">
-                    <i class="fas fa-exclamation-triangle me-2"></i> Confirmar Exclusão
+                    <i class="fas fa-user-slash me-2"></i> Inativar Aluno
                 </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <form method="post" action="{% url 'dashboard:excluir_aluno' aluno.pk %}">
                 {% csrf_token %}
                 <div class="modal-body p-4">
-                    <p>Tem certeza que deseja excluir o aluno:</p>
-                    <div style="background:#f8f9fa; padding:12px 16px; border-radius:8px; margin:8px 0;">
+                    <p style="color:var(--uc-text); font-size:15px;">Deseja inativar o aluno:</p>
+                    <div style="background:var(--uc-orange-faint); border-left:4px solid var(--uc-orange); padding:12px 16px; border-radius:0 10px 10px 0; margin:8px 0 16px;">
                         <strong><i class="fas fa-user-graduate me-1" style="color:var(--uc-orange)"></i> {{ aluno.nome_completo }}</strong><br>
-                        <small class="text-muted">Matrícula: {{ aluno.matricula_aluno|default:"-" }} · {{ aluno.curso_aluno }}</small>
+                        <small class="text-muted">Matrícula: {{ aluno.matricula_aluno|default:"-" }} &middot; {{ aluno.curso_aluno }}</small>
                     </div>
-                    <p class="text-danger mt-3 mb-0" style="font-size:13px;">
-                        <i class="fas fa-exclamation-circle me-1"></i>
-                        Esta ação é irreversível. Todos os dados vinculados serão removidos.
-                    </p>
+                    <div style="background:#fff3cd; border:1px solid #ffc107; border-radius:10px; padding:12px 14px; font-size:13px; color:#856404;">
+                        <i class="fas fa-shield-alt me-1"></i>
+                        <strong>Conforme a LGPD</strong>, os dados serão preservados, mas o acesso ao sistema será bloqueado. A ação pode ser revertida pelo administrador.
+                    </div>
                 </div>
                 <div class="modal-footer" style="border:none; padding-top:0;">
-                    <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-danger btn-sm fw-semibold" style="border-radius:8px; padding:8px 24px;">
-                        <i class="fas fa-trash-alt me-1"></i> Excluir
+                    <button type="button" class="uc-btn uc-btn--ghost uc-btn--sm" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="uc-btn uc-btn--danger uc-btn--sm">
+                        <i class="fas fa-user-slash me-1"></i> Inativar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Reativar -->
+<div class="modal fade" id="modalReativar{{ aluno.pk }}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius:16px; overflow:hidden; border:none; box-shadow:0 20px 60px rgba(0,0,0,.18);">
+            <div class="modal-header" style="background:linear-gradient(135deg,#166534,#16a34a); color:#fff; border:none; padding:20px 24px;">
+                <h5 class="modal-title">
+                    <i class="fas fa-user-check me-2"></i> Reativar Aluno
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" action="{% url 'dashboard:reativar_aluno' aluno.pk %}">
+                {% csrf_token %}
+                <div class="modal-body p-4">
+                    <p style="color:var(--uc-text); font-size:15px;">Deseja reativar o aluno:</p>
+                    <div style="background:var(--uc-orange-faint); border-left:4px solid var(--uc-orange); padding:12px 16px; border-radius:0 10px 10px 0; margin:8px 0 16px;">
+                        <strong><i class="fas fa-user-graduate me-1" style="color:var(--uc-orange)"></i> {{ aluno.nome_completo }}</strong><br>
+                        <small class="text-muted">Matrícula: {{ aluno.matricula_aluno|default:"-" }} &middot; {{ aluno.curso_aluno }}</small>
+                    </div>
+                    <div style="background:#d1fae5; border:1px solid #16a34a; border-radius:10px; padding:12px 14px; font-size:13px; color:#166534;">
+                        <i class="fas fa-check-circle me-1"></i>
+                        O acesso ao sistema será restaurado e o aluno poderá fazer login normalmente.
+                    </div>
+                </div>
+                <div class="modal-footer" style="border:none; padding-top:0;">
+                    <button type="button" class="uc-btn uc-btn--ghost uc-btn--sm" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="uc-btn uc-btn--success uc-btn--sm">
+                        <i class="fas fa-user-check me-1"></i> Reativar
                     </button>
                 </div>
             </form>
@@ -353,3 +405,6 @@
     });
 </script>
 {% endblock %}
+
+
+

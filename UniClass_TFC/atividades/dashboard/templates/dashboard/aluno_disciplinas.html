@@ -43,25 +43,25 @@
             </div>
             <div class="uc-card__body" style="padding:0;">
                 {% if disciplinas %}
-                <div style="overflow-x:auto;">
-                <table style="width:100%; border-collapse:collapse; font-size:13px;">
+                <div class="uc-table-wrap">
+                <table class="uc-table">
                     <thead>
-                        <tr style="background:#f8f9fa; border-bottom:2px solid #eee;">
-                            <th style="padding:10px 14px;">Código</th>
-                            <th style="padding:10px 14px;">Disciplina</th>
-                            <th style="padding:10px 14px;">Curso</th>
-                            <th style="padding:10px 14px;">Professores</th>
+                        <tr>
+                            <th>Código</th>
+                            <th>Disciplina</th>
+                            <th>Curso</th>
+                            <th>Professores</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for d in disciplinas %}
-                        <tr style="border-bottom:1px solid #f0f0f0;" onmouseover="this.style.background='#fafafa'" onmouseout="this.style.background=''">
-                            <td style="padding:8px 14px;">
+                        <tr>
+                            <td>
                                 <code style="background:#f0f0f0; padding:2px 8px; border-radius:4px;">{{ d.codigo_disciplina }}</code>
                             </td>
-                            <td style="padding:8px 14px;"><strong>{{ d.nome_disciplina }}</strong></td>
-                            <td style="padding:8px 14px;">{{ d.curso_fk.nome_curso }}</td>
-                            <td style="padding:8px 14px; font-size:12px;">
+                            <td><strong>{{ d.nome_disciplina }}</strong></td>
+                            <td>{{ d.curso_fk.nome_curso }}</td>
+                            <td style="font-size:12px;">
                                 {% for pd in d.professores_disciplina.all %}
                                     <span style="display:inline-block; background:#e9ecef; padding:2px 8px; border-radius:4px; margin-right:4px; margin-bottom:2px;">
                                         {{ pd.id_professorfk.nome_completo }}

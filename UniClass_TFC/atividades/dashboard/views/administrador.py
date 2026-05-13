@@ -169,15 +169,39 @@ def editar_diretor(request, diretor_id):
 @_admin_required
 @require_POST
 def excluir_diretor(request, diretor_id):
-    """Remove um diretor e seu usuário vinculado."""
+    """Inativa um diretor (LGPD — dados preservados, acesso bloqueado)."""
     diretor = get_object_or_404(Diretor, pk=diretor_id)
     nome    = diretor.nome_completo
+
+    diretor.ativo = False
+    diretor.save(update_fields=['ativo'])
+
+    # Bloqueia login: marca is_active=False no Usuario via campo is_active simulado
     usuario = diretor.id_diretor
+    usuario.email = f'_inativo_{diretor_id}_{usuario.email}'
+    usuario.save(update_fields=['email'])
 
-    diretor.delete()
-    usuario.delete()
+    messages.success(request, f'Diretor {nome} inativado com sucesso (dados preservados conforme LGPD).')
+    return redirect('dashboard:gerenciar_diretores')
 
-    messages.success(request, f'Diretor {nome} excluído com sucesso.')
+
+@_admin_required
+@require_POST
+def reativar_diretor(request, diretor_id):
+    """Reativa um diretor previamente inativado, restaurando o acesso ao sistema."""
+    diretor = get_object_or_404(Diretor, pk=diretor_id)
+    nome = diretor.nome_completo
+
+    diretor.ativo = True
+    diretor.save(update_fields=['ativo'])
+
+    usuario = diretor.id_diretor
+    prefix = f'_inativo_{diretor_id}_'
+    if usuario.email.startswith(prefix):
+        usuario.email = usuario.email[len(prefix):]
+        usuario.save(update_fields=['email'])
+
+    messages.success(request, f'Diretor {nome} reativado com sucesso.')
     return redirect('dashboard:gerenciar_diretores')
 
 

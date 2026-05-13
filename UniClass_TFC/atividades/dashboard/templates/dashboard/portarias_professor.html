@@ -46,44 +46,44 @@
             </div>
             <div class="uc-card__body" style="padding:0;">
                 {% if portarias %}
-                <div style="overflow-x:auto;">
-                <table style="width:100%; border-collapse:collapse; font-size:13px;">
+                <div class="uc-table-wrap">
+                <table class="uc-table">
                     <thead>
-                        <tr style="background:#f8f9fa; border-bottom:2px solid #eee;">
-                            <th style="padding:10px 14px; color:#555; font-weight:600;">#</th>
-                            <th style="padding:10px 14px; color:#555; font-weight:600;">Aluno</th>
-                            <th style="padding:10px 14px; color:#555; font-weight:600;">Motivo</th>
-                            <th style="padding:10px 14px; color:#555; font-weight:600;">Disciplinas</th>
-                            <th style="padding:10px 14px; text-align:center; color:#555; font-weight:600;">Prazo Atividades</th>
-                            <th style="padding:10px 14px; text-align:center; color:#555; font-weight:600;">Prazo Respostas</th>
-                            <th style="padding:10px 14px; text-align:center; color:#555; font-weight:600;">Status</th>
-                            <th style="padding:10px 14px; text-align:center; color:#555; font-weight:600;">Ações</th>
+                        <tr>
+                            <th>#</th>
+                            <th>Aluno</th>
+                            <th>Motivo</th>
+                            <th>Disciplinas</th>
+                            <th style="text-align:center;">Prazo Atividades</th>
+                            <th style="text-align:center;">Prazo Respostas</th>
+                            <th style="text-align:center;">Status</th>
+                            <th class="uc-th-actions">Ações</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for p in portarias %}
-                        <tr style="border-bottom:1px solid #f0f0f0;" onmouseover="this.style.background='#fafafa'" onmouseout="this.style.background=''">
-                            <td style="padding:8px 14px;">
+                        <tr>
+                            <td>
                                 <code style="background:#f0f0f0; padding:2px 6px; border-radius:4px; font-size:11px;">{{ p.numero_portaria }}</code>
                             </td>
-                            <td style="padding:8px 14px; font-weight:500;">{{ p.id_alunofk.nome_completo }}</td>
-                            <td style="padding:8px 14px; max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="{{ p.motivo_portaria }}">
+                            <td>{{ p.id_alunofk.nome_completo }}</td>
+                            <td style="max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="{{ p.motivo_portaria }}">
                                 {{ p.motivo_portaria }}
                             </td>
-                            <td style="padding:8px 14px; font-size:12px;">
+                            <td style="font-size:12px;">
                                 {% for pd in p.disciplinas_portaria.all %}
                                     <span style="background:#e9ecef; padding:1px 6px; border-radius:4px; margin-right:3px; white-space:nowrap;">{{ pd.codigo_disciplinafk.nome_disciplina }}</span>
                                 {% empty %}
                                     <span style="color:#999;">—</span>
                                 {% endfor %}
                             </td>
-                            <td style="padding:8px 14px; text-align:center; white-space:nowrap;">
+                            <td style="text-align:center; white-space:nowrap;">
                                 <span {% if p.prazo_atividades_vencido %}style="color:#dc3545; font-weight:600;"{% endif %}>
                                     {{ p.prazo_professor_criar_atividades|date:"d/m/Y" }}
                                 </span>
                             </td>
-                            <td style="padding:8px 14px; text-align:center; white-space:nowrap;">{{ p.prazo_aluno_responder|date:"d/m/Y" }}</td>
-                            <td style="padding:8px 14px; text-align:center;">
+                            <td style="text-align:center; white-space:nowrap;">{{ p.prazo_aluno_responder|date:"d/m/Y" }}</td>
+                            <td style="text-align:center;">
                                 {% if p.status == 'concluida' %}
                                     <span class="uc-badge uc-badge--approved">Concluída</span>
                                 {% elif p.status == 'cancelada' %}
@@ -98,15 +98,14 @@
                                     <span class="uc-badge uc-badge--pending">{{ p.get_status_display }}</span>
                                 {% endif %}
                             </td>
-                            <td style="padding:8px 14px; text-align:center;">
+                            <td class="uc-td-actions">
                                 {% if not p.prazo_atividades_vencido and p.status == 'aguardando_atividades' %}
                                 <a href="{% url 'dashboard:cadastrar_atividade' %}?portaria={{ p.pk }}"
                                    class="uc-btn uc-btn--orange uc-btn--sm" title="Criar atividade para esta portaria">
                                     <i class="fas fa-plus me-1"></i> Atividade
                                 </a>
                                 {% else %}
-                                <a href="{% url 'dashboard:gerenciar_atividades' %}" class="uc-btn uc-btn--sm"
-                                   style="background:#f0f0f0; color:#555;" title="Ver atividades">
+                                <a href="{% url 'dashboard:gerenciar_atividades' %}" class="uc-btn uc-btn--ghost uc-btn--sm" title="Ver atividades">
                                     <i class="fas fa-eye"></i>
                                 </a>
                                 {% endif %}
