@@ -65,7 +65,14 @@
                            data-search-table="tabelaAlunos" data-search-counter="countAlunos">
                     <button id="searchAlunos-clear" class="uc-search-clear"><i class="fas fa-times"></i></button>
                 </div>
-                <div class="uc-search-info">Exibindo <strong id="countAlunos">{{ alunos|length }}</strong> aluno{{ alunos|length|pluralize }}</div>
+                <div style="display:flex;align-items:center;gap:10px;">
+                    <div class="uc-search-info">Exibindo <strong id="countAlunos">{{ alunos|length }}</strong> aluno{{ alunos|length|pluralize }}</div>
+                    <button type="button" id="btnFiltroInativosAlu" data-showing="false"
+                            class="uc-btn uc-btn--outline uc-btn--sm" onclick="toggleInativos()"
+                            title="Mostrar/ocultar inativos">
+                        <i class="fas fa-eye-slash me-1"></i> Ver Inativos
+                    </button>
+                </div>
             </div>
             <div class="uc-card__body" style="padding:0;">
                 {% if alunos %}
@@ -84,7 +91,7 @@
                     </thead>
                     <tbody>
                         {% for aluno in alunos %}
-                        <tr>
+                        <tr data-inactive="{{ aluno.ativo|yesno:'false,true' }}">
                             <td class="uc-td-num">{{ forloop.counter }}</td>
                             <td>
                                 <i class="fas fa-user-graduate me-1" style="color:var(--uc-orange)"></i>
@@ -179,13 +186,21 @@
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-semibold" style="font-size:13px;">E-mail <span style="color:#FF6B00">*</span></label>
-                            <input type="email" name="email" class="form-control" required
-                                   placeholder="aluno@universidade.edu.br" style="border-radius:8px; border:2px solid #e0e0e0;">
+                            <input type="email" name="email" id="emailCadAluno" class="form-control" required
+                                   placeholder="aluno@academico.unirv.edu.br" style="border-radius:8px; border:2px solid #e0e0e0;">
+                            <small class="text-muted"><i class="fas fa-info-circle me-1"></i>Deve terminar com @academico.unirv.edu.br</small>
+                            <div id="erroCadAluno" class="text-danger small mt-1" style="display:none;"></div>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-semibold" style="font-size:13px;">Senha <span style="color:#FF6B00">*</span></label>
-                            <input type="password" name="senha" class="form-control" required minlength="8"
-                                   placeholder="Mínimo 8 caracteres" style="border-radius:8px; border:2px solid #e0e0e0;">
+                            <div style="position:relative;">
+                                <input type="password" name="senha" id="senhaCadAluno" class="form-control" required minlength="8"
+                                       placeholder="Mínimo 8 caracteres" style="border-radius:8px; border:2px solid #e0e0e0; padding-right:42px;">
+                                <button type="button" onclick="toggleSenhaModal('senhaCadAluno','eyeCadAluno')"
+                                        style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:#aaa;cursor:pointer;">
+                                    <i class="fas fa-eye" id="eyeCadAluno"></i>
+                                </button>
+                            </div>
                         </div>
                         {% if disciplinas %}
                         <div class="col-12"><hr style="border-color:#eee;"></div>
@@ -262,8 +277,14 @@
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-semibold" style="font-size:13px;">Nova Senha <span style="color:#aaa; font-weight:400;">(deixe em branco para não alterar)</span></label>
-                            <input type="password" name="nova_senha" class="form-control" minlength="8"
-                                   placeholder="Mínimo 8 caracteres" style="border-radius:8px; border:2px solid #e0e0e0;">
+                            <div style="position:relative;">
+                                <input type="password" name="nova_senha" id="novasenhaAlu_{{ aluno.pk }}" class="form-control" minlength="8"
+                                       placeholder="Mínimo 8 caracteres" style="border-radius:8px; border:2px solid #e0e0e0; padding-right:42px;">
+                                <button type="button" onclick="toggleSenhaModal('novasenhaAlu_{{ aluno.pk }}','eyeAlu_{{ aluno.pk }}')"
+                                        style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:#aaa;cursor:pointer;">
+                                    <i class="fas fa-eye" id="eyeAlu_{{ aluno.pk }}"></i>
+                                </button>
+                            </div>
                         </div>
                         {% if disciplinas %}
                         <div class="col-12"><hr style="border-color:#eee;"></div>
@@ -383,26 +404,77 @@
             document.getElementById('ucSidebar').classList.add('collapsed');
             document.getElementById('ucMain').classList.add('expanded');
         }
+
+        // Ocultar inativos por padrão
+        document.querySelectorAll('tr[data-inactive="true"]').forEach(r => r.style.display = 'none');
+
+        // Validação de e-mail ao cadastrar aluno
+        const formCad = document.querySelector('#modalCadastrarAluno form');
+        if (formCad) {
+            formCad.addEventListener('submit', function(e) {
+                const email = document.getElementById('emailCadAluno').value.toLowerCase();
+                const erro = document.getElementById('erroCadAluno');
+                if (!email.endsWith('@academico.unirv.edu.br')) {
+                    e.preventDefault();
+                    erro.textContent = 'O e-mail do aluno deve terminar com @academico.unirv.edu.br';
+                    erro.style.display = '';
+                } else {
+                    erro.style.display = 'none';
+                }
+            });
+        }
+
+        // Cadastrar aluno — validate at least one discipline is checked
+        const btnCad = document.getElementById('btn_cad_aluno_submit');
+        if (btnCad) {
+            btnCad.addEventListener('click', function () {
+                const checkboxes = document.querySelectorAll('.cad-aluno-disc-check');
+                if (checkboxes.length === 0) {
+                    this.closest('form').submit();
+                    return;
+                }
+                const anyChecked = Array.from(checkboxes).some(cb => cb.checked);
+                const errorDiv = document.getElementById('cad_aluno_disc_error');
+                if (!anyChecked) {
+                    errorDiv.style.display = 'block';
+                    document.getElementById('cad_aluno_discs').scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    return;
+                }
+                errorDiv.style.display = 'none';
+                // Trigger email validation before submitting
+                const email = document.getElementById('emailCadAluno').value.toLowerCase();
+                const erro = document.getElementById('erroCadAluno');
+                if (!email.endsWith('@academico.unirv.edu.br')) {
+                    erro.textContent = 'O e-mail do aluno deve terminar com @academico.unirv.edu.br';
+                    erro.style.display = '';
+                    return;
+                }
+                erro.style.display = 'none';
+                this.closest('form').submit();
+            });
+        }
     });
 
-    // Cadastrar aluno — validate at least one discipline is checked
-    document.getElementById('btn_cad_aluno_submit').addEventListener('click', function () {
-        const checkboxes = document.querySelectorAll('.cad-aluno-disc-check');
-        if (checkboxes.length === 0) {
-            // No disciplines available — just submit
-            this.closest('form').submit();
-            return;
-        }
-        const anyChecked = Array.from(checkboxes).some(cb => cb.checked);
-        const errorDiv = document.getElementById('cad_aluno_disc_error');
-        if (!anyChecked) {
-            errorDiv.style.display = 'block';
-            document.getElementById('cad_aluno_discs').scrollIntoView({ behavior: 'smooth', block: 'center' });
-            return;
-        }
-        errorDiv.style.display = 'none';
-        this.closest('form').submit();
-    });
+    function toggleInativos() {
+        const btn = document.getElementById('btnFiltroInativosAlu');
+        const showing = btn.dataset.showing === 'true';
+        document.querySelectorAll('tr[data-inactive="true"]').forEach(r => {
+            r.style.display = showing ? 'none' : '';
+        });
+        btn.dataset.showing = showing ? 'false' : 'true';
+        btn.innerHTML = showing
+            ? '<i class="fas fa-eye-slash me-1"></i> Ver Inativos'
+            : '<i class="fas fa-eye me-1"></i> Ocultar Inativos';
+    }
+
+    function toggleSenhaModal(inputId, iconId) {
+        const input = document.getElementById(inputId);
+        const icon = document.getElementById(iconId);
+        if (!input) return;
+        const show = input.type === 'password';
+        input.type = show ? 'text' : 'password';
+        if (icon) icon.className = show ? 'fas fa-eye-slash' : 'fas fa-eye';
+    }
 </script>
 {% endblock %}
 
