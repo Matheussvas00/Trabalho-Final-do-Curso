@@ -9,7 +9,7 @@ from django.db import transaction
 from django.utils import timezone
 from atividades.models import (
     Professor, Atividade, Portaria, RespostaAtividade,
-    Disciplina, ProfessorDisciplina
+    Disciplina, ProfessorDisciplina, Notificacao, Historico
 )
 from .common import base_context
 
@@ -184,6 +184,23 @@ def cadastrar_atividade(request):
                             anexo=anexo_path,
                         )
                         atividade.save()
+                        # Notifica o aluno da portaria
+                        Notificacao.objects.create(
+                            id_usuariodestino=portaria.id_alunofk.id_aluno,
+                            titulo='Nova Atividade Disponível',
+                            mensagem=(
+                                f'O professor {professor.nome_completo} criou a atividade '
+                                f'"{titulo}" para a disciplina {disciplina.nome_disciplina} '
+                                f'(Portaria nº {portaria.numero_portaria}). '
+                                f'Prazo para resposta: {data_limite_resposta.strftime("%d/%m/%Y")}.'
+                            )
+                        )
+                        # Registra no histórico
+                        Historico.objects.create(
+                            id_usuario=request.user,
+                            acao='atividade_criada',
+                            descricao=f'Atividade "{titulo}" criada para a portaria nº {portaria.numero_portaria} — disciplina {disciplina.nome_disciplina}.'
+                        )
                     messages.success(request, f"Atividade '{titulo}' criada com sucesso!")
                     return redirect('dashboard:gerenciar_atividades')
                 except ValueError as e:
@@ -243,8 +260,8 @@ def editar_atividade(request, id_atividade):
 
 @login_required(login_url='authentication:login')
 @require_POST
-def excluir_atividade(request, id_atividade):
-    """Excluir uma atividade."""
+def Inativar_atividade(request, id_atividade):
+    """Inativar uma atividade."""
     professor = _get_professor(request)
 
     if not professor:
@@ -302,7 +319,36 @@ def validar_resposta_professor(request, id_resposta):
 
     try:
         resposta.validar_professor(aprovada=True, observacao=feedback)
+        # Notifica o aluno
+        Notificacao.objects.create(
+            id_usuariodestino=resposta.id_alunofk.id_aluno,
+            titulo='Resposta Pré-aprovada pelo Professor',
+            mensagem=(
+                f'O professor {professor.nome_completo} pré-aprovou sua resposta para a '
+                f'atividade "{resposta.id_atividade.titulo}". '
+                f'Aguardando validação final do diretor.'
+            )
+        )
+        # Notifica o diretor da portaria
+        diretor_usuario = resposta.id_atividade.id_portariafk.id_diretorfk.id_diretor
+        Notificacao.objects.create(
+            id_usuariodestino=diretor_usuario,
+            titulo='Resposta Aguardando Validação Final',
+            mensagem=(
+                f'O professor {professor.nome_completo} pré-aprovou a resposta do aluno '
+                f'{resposta.id_alunofk.nome_completo} para a atividade '
+                f'"{resposta.id_atividade.titulo}" (Portaria nº '
+                f'{resposta.id_atividade.id_portariafk.numero_portaria}). '
+                f'Aguarda sua validação final.'
+            )
+        )
         messages.success(request, "Resposta pré-aprovada! Enviada para validação final do diretor.")
+        # Registra no histórico
+        Historico.objects.create(
+            id_usuario=request.user,
+            acao='resposta_aprovada_prof',
+            descricao=f'Resposta #{resposta.pk} do aluno {resposta.id_alunofk.nome_completo} aprovada para a atividade "{resposta.id_atividade.titulo}".'
+        )
     except ValueError as e:
         messages.error(request, str(e))
 
@@ -329,7 +375,24 @@ def rejeitar_resposta_professor(request, id_resposta):
 
     try:
         resposta.validar_professor(aprovada=False, observacao=feedback)
+        # Notifica o aluno
+        Notificacao.objects.create(
+            id_usuariodestino=resposta.id_alunofk.id_aluno,
+            titulo='Resposta Rejeitada pelo Professor',
+            mensagem=(
+                f'O professor {professor.nome_completo} rejeitou sua resposta para a '
+                f'atividade "{resposta.id_atividade.titulo}". '
+                f'Motivo: {feedback or "Sem observações."} '
+                f'Você pode revisar e reenviar a resposta.'
+            )
+        )
         messages.success(request, "Resposta rejeitada. O aluno poderá revisar e reenviar.")
+        # Registra no histórico
+        Historico.objects.create(
+            id_usuario=request.user,
+            acao='resposta_rejeitada_prof',
+            descricao=f'Resposta #{resposta.pk} do aluno {resposta.id_alunofk.nome_completo} rejeitada para a atividade "{resposta.id_atividade.titulo}".'
+        )
     except ValueError as e:
         messages.error(request, str(e))
 

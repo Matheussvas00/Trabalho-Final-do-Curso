@@ -96,8 +96,8 @@
                                     <i class="fas fa-edit"></i> Editar
                                 </button>
                                 <button type="button" class="uc-btn uc-btn--danger uc-btn--sm"
-                                        data-bs-toggle="modal" data-bs-target="#modalExcluirCurso{{ c.pk }}">
-                                    <i class="fas fa-trash-alt"></i> Excluir
+                                        data-bs-toggle="modal" data-bs-target="#modalInativarCurso{{ c.pk }}">
+                                    <i class="fas fa-user-slash"></i> Inativar
                                 </button>
                             </td>
                         </tr>
@@ -151,7 +151,7 @@
 </div>
 
 <!-- ═══════════════════════════════════════════════════════════
-     MODAIS — Editar / Excluir (um por curso)
+     MODAIS — Editar / Inativar (um por curso)
 ══════════════════════════════════════════════════════════════ -->
 {% for c in cursos %}
 
@@ -189,8 +189,8 @@
     </div>
 </div>
 
-<!-- Modal Excluir -->
-<div class="modal fade" id="modalExcluirCurso{{ c.pk }}" tabindex="-1" aria-hidden="true">
+<!-- Modal Inativar -->
+<div class="modal fade" id="modalInativarCurso{{ c.pk }}" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content" style="border-radius:12px; overflow:hidden;">
             <div class="modal-header" style="background:#dc3545; color:#fff; border:none;">
@@ -199,10 +199,10 @@
                 </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <form method="post" action="{% url 'dashboard:excluir_curso_admin' c.pk %}">
+            <form method="post" action="{% url 'dashboard:Inativar_curso_admin' c.pk %}">
                 {% csrf_token %}
                 <div class="modal-body p-4">
-                    <p>Tem certeza que deseja excluir o curso:</p>
+                    <p>Tem certeza que deseja Inativar o curso:</p>
                     <div style="background:#f8f9fa; padding:12px 16px; border-radius:8px; margin:8px 0;">
                         <strong><i class="fas fa-graduation-cap me-1" style="color:var(--uc-orange)"></i> {{ c.nome_curso }}</strong>
                     </div>
@@ -220,7 +220,7 @@
                 <div class="modal-footer" style="border:none; padding-top:0;">
                     <button type="button" class="uc-btn uc-btn--ghost uc-btn--sm" data-bs-dismiss="modal">Cancelar</button>
                     <button type="submit" class="uc-btn uc-btn--danger uc-btn--sm">
-                        <i class="fas fa-trash-alt me-1"></i> Excluir
+                        <i class="fas fa-user-slash me-1"></i> Inativar
                     </button>
                 </div>
             </form>

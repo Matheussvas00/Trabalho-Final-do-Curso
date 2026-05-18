@@ -1,0 +1,193 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Histórico do Sistema | UniClass{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+<style>
+    .hist-item {
+        background: #fff;
+        border: 1.5px solid #e9ecef;
+        border-radius: 12px;
+        padding: 14px 18px;
+        margin-bottom: 10px;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+    }
+    .hist-icon {
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        background: var(--uc-orange, #e65c00);
+        color: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 15px;
+        flex-shrink: 0;
+    }
+    .hist-body { flex: 1; min-width: 0; }
+    .hist-acao {
+        font-weight: 700;
+        font-size: 13px;
+        color: #212529;
+    }
+    .hist-desc {
+        font-size: 13px;
+        color: #6c757d;
+        margin-top: 2px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .hist-meta {
+        font-size: 12px;
+        color: #adb5bd;
+        white-space: nowrap;
+        text-align: right;
+    }
+    .hist-user {
+        font-size: 12px;
+        color: #495057;
+        font-weight: 600;
+    }
+    .filter-bar {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 18px;
+        flex-wrap: wrap;
+    }
+    .filter-bar select, .filter-bar button {
+        padding: 7px 14px;
+        border-radius: 8px;
+        border: 1.5px solid #dee2e6;
+        font-size: 14px;
+    }
+    .filter-bar button {
+        background: var(--uc-orange, #e65c00);
+        color: #fff;
+        border-color: var(--uc-orange, #e65c00);
+        cursor: pointer;
+    }
+    .filter-bar a {
+        font-size: 13px;
+        color: #6c757d;
+        text-decoration: none;
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<body class="dashboard-body">
+
+{% include 'dashboard/partials/_sidebar.html' with active_page='historico' %}
+
+<div class="uc-main" id="ucMain">
+
+    <!-- Topbar -->
+    <header class="uc-topbar">
+        <button class="uc-topbar__toggle" onclick="ucToggleSidebar()"><i class="fas fa-bars"></i></button>
+        <div class="uc-topbar__title-wrap">
+            <div class="uc-topbar__title">Histórico do Sistema</div>
+            <div class="uc-topbar__subtitle">{{ greeting }}, {{ display_name }}!</div>
+        </div>
+        <div class="uc-topbar__right">
+            <a href="{% url 'dashboard:notificacoes' %}" class="uc-topbar__btn" title="Notificações">
+                <i class="fas fa-bell"></i>
+                {% if notificacoes_nao_lidas %}<span class="uc-topbar__notif-dot"></span>{% endif %}
+            </a>
+        </div>
+    </header>
+
+    <div class="uc-content">
+
+        <!-- Resumo -->
+        <div class="uc-stats" style="margin-bottom:24px;">
+            <div class="uc-stat uc-stat--blue">
+                <div class="uc-stat__icon"><i class="fas fa-history"></i></div>
+                <div>
+                    <div class="uc-stat__num">{{ historico|length }}</div>
+                    <div class="uc-stat__label">Registros exibidos</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filtro -->
+        <form method="get" class="filter-bar">
+            <label for="acao-filtro" style="font-size:14px;font-weight:600;">Filtrar por ação:</label>
+            <select id="acao-filtro" name="acao">
+                <option value="">Todas as ações</option>
+                {% for valor, label in acoes_disponiveis %}
+                    <option value="{{ valor }}" {% if acao_filtro == valor %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+            <button type="submit"><i class="fas fa-filter"></i> Filtrar</button>
+            {% if acao_filtro %}
+                <a href="{% url 'dashboard:historico' %}">Limpar filtro</a>
+            {% endif %}
+        </form>
+
+        <!-- Lista de registros -->
+        <div class="uc-card" style="padding:20px;">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+                <i class="fas fa-history" style="color:var(--uc-orange,#e65c00);font-size:18px;"></i>
+                <span style="font-weight:700;font-size:16px;">Registros do Histórico</span>
+                <span style="font-size:13px;color:#6c757d;">(últimos 100 registros)</span>
+            </div>
+
+            {% if historico %}
+                {% for entrada in historico %}
+                <div class="hist-item">
+                    <div class="hist-icon">
+                        {% if 'login' in entrada.acao %}
+                            <i class="fas fa-sign-in-alt"></i>
+                        {% elif 'logout' in entrada.acao %}
+                            <i class="fas fa-sign-out-alt"></i>
+                        {% elif 'criada' in entrada.acao or 'criado' in entrada.acao or 'cadastrado' in entrada.acao %}
+                            <i class="fas fa-plus"></i>
+                        {% elif 'editada' in entrada.acao or 'editado' in entrada.acao %}
+                            <i class="fas fa-edit"></i>
+                        {% elif 'excluida' in entrada.acao or 'excluido' in entrada.acao %}
+                            <i class="fas fa-trash"></i>
+                        {% elif 'aprovada' in entrada.acao %}
+                            <i class="fas fa-check"></i>
+                        {% elif 'rejeitada' in entrada.acao %}
+                            <i class="fas fa-times"></i>
+                        {% elif 'enviada' in entrada.acao %}
+                            <i class="fas fa-paper-plane"></i>
+                        {% else %}
+                            <i class="fas fa-info"></i>
+                        {% endif %}
+                    </div>
+                    <div class="hist-body">
+                        <div class="hist-acao">{{ entrada.get_acao_display }}</div>
+                        {% if entrada.descricao %}
+                            <div class="hist-desc">{{ entrada.descricao }}</div>
+                        {% endif %}
+                        <div class="hist-user">
+                            <i class="fas fa-user" style="font-size:11px;"></i>
+                            {{ entrada.id_usuario.email }}
+                        </div>
+                    </div>
+                    <div class="hist-meta">
+                        {{ entrada.data_hora|date:"d/m/Y" }}<br>
+                        <span style="font-size:11px;">{{ entrada.data_hora|time:"H:i" }}</span>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div style="text-align:center;padding:40px 20px;color:#6c757d;">
+                    <i class="fas fa-history" style="font-size:40px;margin-bottom:12px;opacity:.4;display:block;"></i>
+                    <p style="font-weight:600;margin-bottom:4px;">Nenhum registro encontrado</p>
+                    <p style="font-size:13px;">Nenhuma ação foi registrada no histórico ainda.</p>
+                </div>
+            {% endif %}
+        </div>
+
+    </div><!-- /.uc-content -->
+</div><!-- /.uc-main -->
+
+{% endblock %}

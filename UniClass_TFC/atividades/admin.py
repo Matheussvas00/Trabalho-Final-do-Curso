@@ -109,7 +109,8 @@ class NotificacaoAdmin(admin.ModelAdmin):
 
 @admin.register(Historico)
 class HistoricoAdmin(admin.ModelAdmin):
-    list_display = ('id_historico', 'id_usuario', 'data_hora')
-    list_filter = ('data_hora',)
-    search_fields = ('id_usuario__email',)
+    list_display = ('id_historico', 'id_usuario', 'acao', 'descricao', 'data_hora')
+    list_filter = ('acao', 'data_hora')
+    search_fields = ('id_usuario__email', 'descricao')
     date_hierarchy = 'data_hora'
+    readonly_fields = ('id_historico', 'id_usuario', 'acao', 'descricao', 'data_hora')

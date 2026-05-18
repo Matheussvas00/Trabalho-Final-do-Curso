@@ -168,7 +168,7 @@ def editar_diretor(request, diretor_id):
 
 @_admin_required
 @require_POST
-def excluir_diretor(request, diretor_id):
+def Inativar_diretor(request, diretor_id):
     """Inativa um diretor (LGPD — dados preservados, acesso bloqueado)."""
     diretor = get_object_or_404(Diretor, pk=diretor_id)
     nome    = diretor.nome_completo
@@ -259,7 +259,7 @@ def editar_curso_admin(request, curso_id):
 
 @_admin_required
 @require_POST
-def excluir_curso_admin(request, curso_id):
+def Inativar_curso_admin(request, curso_id):
     """Remove um curso."""
     curso = get_object_or_404(Curso, pk=curso_id)
     nome  = curso.nome_curso
@@ -335,7 +335,7 @@ def editar_disciplina(request, disciplina_codigo):
 
 @_admin_required
 @require_POST
-def excluir_disciplina(request, disciplina_codigo):
+def Inativar_disciplina(request, disciplina_codigo):
     """Remove uma disciplina (e todos os vínculos com professores através do CASCADE)."""
     disciplina = get_object_or_404(Disciplina, pk=disciplina_codigo)
     nome = disciplina.nome_disciplina

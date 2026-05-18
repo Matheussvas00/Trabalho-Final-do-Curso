@@ -41,12 +41,16 @@ function ucSearch(tableId, inputId, counterId) {
   var table = document.getElementById(tableId);
   if (!input || !table) return;
 
-  var query = input.value.toLowerCase().trim();
+  function normalize(str) {
+    return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  }
+
+  var query = normalize(input.value.toLowerCase().trim());
   var rows = table.querySelectorAll("tbody tr");
   var visible = 0;
 
   rows.forEach(function (row) {
-    var text = row.textContent.toLowerCase();
+    var text = normalize(row.textContent.toLowerCase());
     var show = !query || text.indexOf(query) !== -1;
     row.style.display = show ? "" : "none";
     if (show) visible++;

@@ -79,19 +79,19 @@
 
 - ✅ Criar: Obriga vinculação a um curso
 - ✅ Editar: Valida que curso é obrigatório
-- ✅ Excluir: Remove diretor e usuário vinculado
+- ✅ Inativar: Remove diretor e usuário vinculado
 
 **Cursos:**
 
 - ✅ Criar
 - ✅ Editar
-- ✅ Excluir
+- ✅ Inativar
 
 **Disciplinas:**
 
 - ✅ Criar: Permite vincular múltiplos professores
 - ✅ Editar: Atualiza professores vinculados
-- ✅ Excluir: Remove disciplina e vínculos com professores
+- ✅ Inativar: Remove disciplina e vínculos com professores
 
 ---
 
@@ -108,7 +108,7 @@
   - Vincula automaticamente ao curso do diretor
   - Permite atribuir disciplinas (apenas do curso do diretor)
 - ✅ Editar: Atualiza disciplinas vinculadas
-- ✅ Excluir: Remove professor e usuário
+- ✅ Inativar: Remove professor e usuário
 
 **Alunos:**
 
@@ -117,7 +117,7 @@
   - Vincula automaticamente ao curso do diretor
   - Permite matricular em disciplinas (apenas do curso do diretor)
 - ✅ Editar: Atualiza disciplinas matriculadas
-- ✅ Excluir: Remove aluno e usuário
+- ✅ Inativar: Remove aluno e usuário
 
 **Portarias:**
 
@@ -128,7 +128,7 @@
   - Gera número único de portaria
   - Define 3 prazos do processo
 - ✅ Editar: Atualiza portaria e disciplinas
-- ✅ Excluir: Remove portaria completa
+- ✅ Inativar: Remove portaria completa
 
 **Validação de Atividades:**
 
@@ -152,7 +152,7 @@
   - Valida prazo dentro da portaria
   - Anexos opcionais
 - ✅ Editar: Atualiza atividade existente
-- ✅ Excluir: Remove (apenas se não houver respostas)
+- ✅ Inativar: Remove (apenas se não houver respostas)
 
 **Pré-Validação:**
 
@@ -194,7 +194,7 @@
 - ✅ Listar: Todas as respostas enviadas
 - ✅ Visualizar: Feedback de professor e diretor
 - ✅ Editar: Apenas se não foi validada
-- ✅ Excluir: Apenas se não foi validada
+- ✅ Inativar: Apenas se não foi validada
 - ✅ Estatísticas: Pendentes, aprovadas, rejeitadas
 
 **Disciplinas:**
@@ -432,15 +432,15 @@ Certifique-se que todas as URLs estão configuradas em `dashboard/urls.py`:
 - `gerenciar-professores/`
 - `cadastrar-professor/`
 - `editar-professor/<int:professor_id>/`
-- `excluir-professor/<int:professor_id>/`
+- `Inativar-professor/<int:professor_id>/`
 - `gerenciar-alunos/`
 - `cadastrar-aluno/`
 - `editar-aluno/<int:aluno_id>/`
-- `excluir-aluno/<int:aluno_id>/`
+- `Inativar-aluno/<int:aluno_id>/`
 - `gerenciar-portarias/`
 - `cadastrar-portaria/`
 - `editar-portaria/<int:portaria_id>/`
-- `excluir-portaria/<int:portaria_id>/`
+- `Inativar-portaria/<int:portaria_id>/`
 - `gerenciar-validacoes/`
 - `validar-resposta/<int:resposta_id>/`
 
@@ -449,7 +449,7 @@ Certifique-se que todas as URLs estão configuradas em `dashboard/urls.py`:
 - `gerenciar-atividades/`
 - `cadastrar-atividade/`
 - `editar-atividade/<int:atividade_id>/`
-- `excluir-atividade/<int:atividade_id>/`
+- `Inativar-atividade/<int:atividade_id>/`
 - `validar-respostas/`
 - `validar-resposta-professor/<int:resposta_id>/`
 - `visualizar-portarias/`
@@ -463,7 +463,7 @@ Certifique-se que todas as URLs estão configuradas em `dashboard/urls.py`:
 - `minhas-respostas/`
 - `visualizar-resposta/<int:resposta_id>/`
 - `editar-resposta/<int:resposta_id>/`
-- `excluir-resposta/<int:resposta_id>/`
+- `Inativar-resposta/<int:resposta_id>/`
 - `minhas-disciplinas/`
 
 ### Passo 6: Atualizar Templates

@@ -98,7 +98,7 @@ DATABASES = {
         'USER': os.getenv('DB_USER', 'Matheussvas'),
         'PASSWORD': os.getenv('DB_PASSWORD', '553948'),
         'HOST': os.getenv('DB_HOST', '127.0.0.1'),
-        'PORT': os.getenv('DB_PORT', '3306'),
+        'PORT': os.getenv('DB_PORT', '33061'),
         'OPTIONS': {
             'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
             'charset': 'utf8mb4',
@@ -201,3 +201,15 @@ EMAIL_USE_TLS       = os.getenv('EMAIL_USE_TLS', 'True') == 'True'
 EMAIL_HOST_USER     = os.getenv('EMAIL_HOST_USER', 'matheus.s.vasconcelos@academico.unirv.edu.br')
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')   # ← cole aqui a Senha de App (16 chars)
 DEFAULT_FROM_EMAIL  = os.getenv('DEFAULT_FROM_EMAIL', 'UniClass <matheus.s.vasconcelos@academico.unirv.edu.br>')
+
+# ── Segurança HTTPS (ativa automaticamente em produção quando DEBUG=False) ─────
+if not DEBUG:
+    SECURE_HSTS_SECONDS        = 31536000  # 1 ano
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD        = True
+    SECURE_SSL_REDIRECT        = True
+    SESSION_COOKIE_SECURE      = True
+    CSRF_COOKIE_SECURE         = True
+    SECURE_BROWSER_XSS_FILTER  = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    X_FRAME_OPTIONS            = 'DENY'

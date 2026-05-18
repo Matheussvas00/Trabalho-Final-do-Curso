@@ -113,7 +113,7 @@
                                 </button>
                                 {% if d.ativo %}
                                 <button type="button" class="uc-btn uc-btn--danger uc-btn--sm"
-                                        data-bs-toggle="modal" data-bs-target="#modalExcluirDiretor{{ d.pk }}">
+                                        data-bs-toggle="modal" data-bs-target="#modalInativarDiretor{{ d.pk }}">
                                     <i class="fas fa-user-slash"></i> Inativar
                                 </button>
                                 {% else %}
@@ -206,7 +206,7 @@
 </div>
 
 <!-- ═══════════════════════════════════════════════════════════
-     MODAIS — Editar / Excluir (um por diretor)
+     MODAIS — Editar / Inativar (um por diretor)
 ══════════════════════════════════════════════════════════════ -->
 {% for d in diretores %}
 
@@ -277,8 +277,8 @@
     </div>
 </div>
 
-<!-- Modal Excluir -->
-<div class="modal fade" id="modalExcluirDiretor{{ d.pk }}" tabindex="-1" aria-hidden="true">
+<!-- Modal Inativar -->
+<div class="modal fade" id="modalInativarDiretor{{ d.pk }}" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content" style="border-radius:16px; overflow:hidden; border:none; box-shadow:0 20px 60px rgba(0,0,0,.18);">
             <div class="modal-header" style="background:linear-gradient(135deg,#b91c1c,#dc3545); color:#fff; border:none; padding:20px 24px;">
@@ -287,7 +287,7 @@
                 </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <form method="post" action="{% url 'dashboard:excluir_diretor' d.pk %}">
+            <form method="post" action="{% url 'dashboard:Inativar_diretor' d.pk %}">
                 {% csrf_token %}
                 <div class="modal-body p-4">
                     <p style="color:var(--uc-text); font-size:15px;">Deseja inativar o diretor:</p>

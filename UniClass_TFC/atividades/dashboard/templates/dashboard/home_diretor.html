@@ -122,7 +122,7 @@
                                     <i class="fas fa-pen"></i>
                                 </button>
                                 {% if aluno.ativo %}
-                                <button type="button" class="uc-btn uc-btn--danger uc-btn--sm" data-bs-toggle="modal" data-bs-target="#modalExcluirAluno{{ aluno.pk }}">
+                                <button type="button" class="uc-btn uc-btn--danger uc-btn--sm" data-bs-toggle="modal" data-bs-target="#modalInativarAluno{{ aluno.pk }}">
                                     <i class="fas fa-user-slash"></i> Inativar
                                 </button>
                                 {% else %}
@@ -194,7 +194,7 @@
                                     <i class="fas fa-pen"></i>
                                 </button>
                                 {% if prof.ativo %}
-                                <button type="button" class="uc-btn uc-btn--danger uc-btn--sm" data-bs-toggle="modal" data-bs-target="#modalExcluirProf{{ prof.pk }}">
+                                <button type="button" class="uc-btn uc-btn--danger uc-btn--sm" data-bs-toggle="modal" data-bs-target="#modalInativarProf{{ prof.pk }}">
                                     <i class="fas fa-user-slash"></i> Inativar
                                 </button>
                                 {% else %}
@@ -279,8 +279,8 @@
                                 <button type="button" class="uc-btn uc-btn--outline uc-btn--sm" data-bs-toggle="modal" data-bs-target="#modalHomeEditarPortaria{{ p.pk }}" title="Editar">
                                     <i class="fas fa-pen"></i>
                                 </button>
-                                <button type="button" class="uc-btn uc-btn--danger uc-btn--sm" data-bs-toggle="modal" data-bs-target="#modalHomeExcluirPortaria{{ p.pk }}" title="Excluir">
-                                    <i class="fas fa-trash-alt"></i>
+                                <button type="button" class="uc-btn uc-btn--danger uc-btn--sm" data-bs-toggle="modal" data-bs-target="#modalHomeInativarPortaria{{ p.pk }}" title="Inativar">
+                                    <i class="fas fa-user-slash"></i> Inativar
                                 </button>
                             </td>
                         </tr>
@@ -471,7 +471,7 @@
 </div>
 
 <!-- -----------------------------------------------------------
-     MODAIS — Editar / Excluir ALUNOS
+     MODAIS — Editar / Inativar ALUNOS
 -------------------------------------------------------------- -->
 {% for aluno in alunos %}
 <div class="modal fade" id="modalEditarAluno{{ aluno.pk }}" tabindex="-1" aria-hidden="true">
@@ -532,14 +532,14 @@
     </div>
 </div>
 
-<div class="modal fade" id="modalExcluirAluno{{ aluno.pk }}" tabindex="-1" aria-hidden="true">
+<div class="modal fade" id="modalInativarAluno{{ aluno.pk }}" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-sm">
         <div class="modal-content" style="border-radius:12px; overflow:hidden;">
             <div class="modal-header" style="background:#dc3545; color:#fff; border:none;">
                 <h5 class="modal-title"><i class="fas fa-user-slash me-2"></i> Inativar Aluno</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <form method="post" action="{% url 'dashboard:excluir_aluno' aluno.pk %}">
+            <form method="post" action="{% url 'dashboard:Inativar_aluno' aluno.pk %}">
                 {% csrf_token %}
                 <div class="modal-body p-4">
                     <p style="font-size:14px;">Inativar <strong>{{ aluno.nome_completo }}</strong>?</p>
@@ -582,7 +582,7 @@
 {% endfor %}
 
 <!-- -----------------------------------------------------------
-     MODAIS — Editar / Excluir PROFESSORES
+     MODAIS — Editar / Inativar PROFESSORES
 -------------------------------------------------------------- -->
 {% for prof in professores %}
 <div class="modal fade" id="modalEditarProf{{ prof.pk }}" tabindex="-1" aria-hidden="true">
@@ -639,14 +639,14 @@
     </div>
 </div>
 
-<div class="modal fade" id="modalExcluirProf{{ prof.pk }}" tabindex="-1" aria-hidden="true">
+<div class="modal fade" id="modalInativarProf{{ prof.pk }}" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-sm">
         <div class="modal-content" style="border-radius:12px; overflow:hidden;">
             <div class="modal-header" style="background:#dc3545; color:#fff; border:none;">
                 <h5 class="modal-title"><i class="fas fa-user-slash me-2"></i> Inativar Professor</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <form method="post" action="{% url 'dashboard:excluir_professor' prof.pk %}">
+            <form method="post" action="{% url 'dashboard:Inativar_professor' prof.pk %}">
                 {% csrf_token %}
                 <div class="modal-body p-4">
                     <p style="font-size:14px;">Inativar <strong>{{ prof.nome_completo }}</strong>?</p>
@@ -689,7 +689,7 @@
 {% endfor %}
 
 <!-- -----------------------------------------------------------
-     MODAIS — Editar / Excluir PORTARIAS
+     MODAIS — Editar / Inativar PORTARIAS
 -------------------------------------------------------------- -->
 {% for p in portarias %}
 <div class="modal fade" id="modalHomeEditarPortaria{{ p.pk }}" tabindex="-1" aria-hidden="true">
@@ -791,7 +791,7 @@
     </div>
 </div>
 
-<div class="modal fade" id="modalHomeExcluirPortaria{{ p.pk }}" tabindex="-1" aria-hidden="true">
+<div class="modal fade" id="modalHomeInativarPortaria{{ p.pk }}" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content" style="border-radius:12px; overflow:hidden;">
             <div class="modal-header" style="background:#dc3545; color:#fff; border:none;">
@@ -800,10 +800,10 @@
                 </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <form method="post" action="{% url 'dashboard:excluir_portaria' p.pk %}">
+            <form method="post" action="{% url 'dashboard:Inativar_portaria' p.pk %}">
                 {% csrf_token %}
                 <div class="modal-body p-4">
-                    <p>Tem certeza que deseja excluir a portaria:</p>
+                    <p>Tem certeza que deseja Inativar a portaria:</p>
                     <div style="background:#f8f9fa; padding:12px 16px; border-radius:8px; margin:8px 0;">
                         <strong><i class="fas fa-file-medical me-1" style="color:var(--uc-orange)"></i> Portaria #{{ p.numero_portaria }}</strong><br>
                         <small class="text-muted">{{ p.id_alunofk.nome_completo }} — Criada em {{ p.data_criacao|date:"d/m/Y" }}</small>
@@ -816,7 +816,7 @@
                 <div class="modal-footer" style="border:none; padding-top:0;">
                     <button type="button" class="uc-btn uc-btn--ghost uc-btn--sm" data-bs-dismiss="modal">Cancelar</button>
                     <button type="submit" class="uc-btn uc-btn--danger uc-btn--sm">
-                        <i class="fas fa-trash-alt me-1"></i> Excluir
+                        <i class="fas fa-user-slash me-1"></i> Inativar
                     </button>
                 </div>
             </form>

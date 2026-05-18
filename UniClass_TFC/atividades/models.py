@@ -673,6 +673,26 @@ class Notificacao(models.Model):
 
 class Historico(models.Model):
     """Histórico de ações dos usuários no sistema"""
+    ACAO_CHOICES = [
+        ('login', 'Login'),
+        ('logout', 'Logout'),
+        ('portaria_criada', 'Portaria Criada'),
+        ('portaria_editada', 'Portaria Editada'),
+        ('portaria_excluida', 'Portaria Excluída'),
+        ('atividade_criada', 'Atividade Criada'),
+        ('atividade_editada', 'Atividade Editada'),
+        ('atividade_excluida', 'Atividade Excluída'),
+        ('resposta_enviada', 'Resposta Enviada'),
+        ('resposta_editada', 'Resposta Editada'),
+        ('resposta_aprovada_prof', 'Resposta Aprovada pelo Professor'),
+        ('resposta_rejeitada_prof', 'Resposta Rejeitada pelo Professor'),
+        ('resposta_aprovada_dir', 'Resposta Aprovada pelo Diretor'),
+        ('resposta_rejeitada_dir', 'Resposta Rejeitada pelo Diretor'),
+        ('aluno_cadastrado', 'Aluno Cadastrado'),
+        ('professor_cadastrado', 'Professor Cadastrado'),
+        ('diretor_cadastrado', 'Diretor Cadastrado'),
+    ]
+
     id_historico = models.AutoField(primary_key=True)
     id_usuario = models.ForeignKey(
         Usuario,
@@ -681,6 +701,8 @@ class Historico(models.Model):
         related_name='historico'
     )
     data_hora = models.DateTimeField(default=timezone.now)
+    acao = models.CharField(max_length=50, choices=ACAO_CHOICES, default='login')
+    descricao = models.TextField(blank=True, null=True)
 
     class Meta:
         db_table = 'historico'
@@ -689,7 +711,7 @@ class Historico(models.Model):
         ordering = ['-data_hora']
 
     def __str__(self):
-        return f"Histórico #{self.id_historico} - {self.id_usuario.email}"
+        return f"Histórico #{self.id_historico} - {self.id_usuario.email} - {self.get_acao_display()}"
 
 
 class PasswordResetToken(models.Model):

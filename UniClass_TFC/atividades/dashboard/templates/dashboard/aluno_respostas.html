@@ -125,7 +125,7 @@
                                 </a>
                                 <button type="button" class="uc-btn uc-btn--danger uc-btn--sm"
                                     onclick="confirmarExclusao({{ r.id_resposta }}, '{{ r.id_atividade.titulo|escapejs }}')">
-                                    <i class="fas fa-trash"></i>
+                                    <i class="fas fa-user-slash"></i>
                                 </button>
                                 {% endif %}
                             </td>
@@ -168,7 +168,7 @@
 <!-- Formulários de exclusão ocultos -->
 {% for r in respostas %}
 {% if r.status_professor == 'pendente' %}
-<form id="formExcluir{{ r.id_resposta }}" method="post" action="{% url 'dashboard:excluir_resposta' r.id_resposta %}" style="display:none;">
+<form id="formInativar{{ r.id_resposta }}" method="post" action="{% url 'dashboard:Inativar_resposta' r.id_resposta %}" style="display:none;">
     {% csrf_token %}
 </form>
 {% endif %}
@@ -194,8 +194,8 @@
     });
 
     function confirmarExclusao(id, titulo) {
-        if (confirm('Tem certeza que deseja excluir a resposta da atividade "' + titulo + '"?')) {
-            document.getElementById('formExcluir' + id).submit();
+        if (confirm('Tem certeza que deseja Inativar a resposta da atividade "' + titulo + '"?')) {
+            document.getElementById('formInativar' + id).submit();
         }
     }
 </script>

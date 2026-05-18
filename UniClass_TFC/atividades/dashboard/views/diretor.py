@@ -12,7 +12,7 @@ from datetime import date
 from atividades.models import (
     Aluno, Professor, Diretor, Atividade, Portaria, PortariaDisciplina,
     Disciplina, ProfessorDisciplina, AlunoDisciplina, RespostaAtividade, Usuario, Curso,
-    Notificacao
+    Notificacao, Historico
 )
 from .common import base_context
 
@@ -267,7 +267,7 @@ def editar_professor(request, professor_id):
 
 @_diretor_required
 @require_POST
-def excluir_professor(request, professor_id):
+def Inativar_professor(request, professor_id):
     """Inativa um professor (LGPD — dados preservados, acesso bloqueado)."""
     professor = get_object_or_404(Professor, pk=professor_id)
     nome = professor.nome_completo
@@ -342,6 +342,10 @@ def cadastrar_aluno(request):
 
     if not all([nome, sobrenome, periodo, matricula, email, senha]):
         messages.error(request, 'Todos os campos são obrigatórios.')
+        return redirect('dashboard:gerenciar_alunos')
+
+    if not email.endswith('@academico.unirv.edu.br'):
+        messages.error(request, 'O e-mail do aluno deve ser do domínio @academico.unirv.edu.br.')
         return redirect('dashboard:gerenciar_alunos')
 
     if not disciplinas_ids:
@@ -470,7 +474,7 @@ def editar_aluno(request, aluno_id):
 
 @_diretor_required
 @require_POST
-def excluir_aluno(request, aluno_id):
+def Inativar_aluno(request, aluno_id):
     """Inativa um aluno (LGPD — dados preservados, acesso bloqueado)."""
     aluno = get_object_or_404(Aluno, pk=aluno_id)
     nome = aluno.nome_completo
@@ -648,6 +652,12 @@ def cadastrar_portaria(request):
             )
 
     sucesso_msg = f'Portaria {numero} criada com sucesso para {aluno.nome_completo}.'
+    # Registra no histórico
+    Historico.objects.create(
+        id_usuario=request.user,
+        acao='portaria_criada',
+        descricao=f'Portaria nº {numero} criada para o aluno {aluno.nome_completo} (matrícula {aluno.matricula_aluno}).'
+    )
     if is_ajax:
         return JsonResponse({'success': True, 'message': sucesso_msg})
     messages.success(request, sucesso_msg)
@@ -727,14 +737,14 @@ def editar_portaria(request, portaria_id):
 
 @_diretor_required
 @require_POST
-def excluir_portaria(request, portaria_id):
+def Inativar_portaria(request, portaria_id):
     """Diretor exclui uma portaria."""
     portaria = get_object_or_404(Portaria, pk=portaria_id)
     diretor = Diretor.objects.get(id_diretor=request.user)
 
-    # Apenas o diretor que criou pode excluir
+    # Apenas o diretor que criou pode Inativar
     if portaria.id_diretorfk != diretor:
-        messages.error(request, 'Você não tem permissão para excluir esta portaria.')
+        messages.error(request, 'Você não tem permissão para Inativar esta portaria.')
         return redirect('dashboard:gerenciar_portarias')
 
     numero = portaria.numero_portaria
@@ -823,10 +833,42 @@ def validar_resposta_diretor(request, resposta_id):
     try:
         if acao == 'aprovar':
             resposta.validar_diretor(aprovada=True, observacao=observacao)
+            # Notifica o aluno
+            Notificacao.objects.create(
+                id_usuariodestino=resposta.id_alunofk.id_aluno,
+                titulo='Resposta Aprovada pelo Diretor ✓',
+                mensagem=(
+                    f'Sua resposta para a atividade "{resposta.id_atividade.titulo}" '
+                    f'(Portaria nº {resposta.id_atividade.id_portariafk.numero_portaria}) '
+                    f'foi aprovada pelo diretor. Parabéns!'
+                )
+            )
             messages.success(request, 'Resposta validada com sucesso pelo diretor.')
+            Historico.objects.create(
+                id_usuario=request.user,
+                acao='resposta_aprovada_dir',
+                descricao=f'Resposta #{resposta.pk} do aluno {resposta.id_alunofk.nome_completo} aprovada para a atividade "{resposta.id_atividade.titulo}".'
+            )
         else:
             resposta.validar_diretor(aprovada=False, observacao=observacao)
+            # Notifica o aluno
+            Notificacao.objects.create(
+                id_usuariodestino=resposta.id_alunofk.id_aluno,
+                titulo='Resposta Rejeitada pelo Diretor',
+                mensagem=(
+                    f'Sua resposta para a atividade "{resposta.id_atividade.titulo}" '
+                    f'(Portaria nº {resposta.id_atividade.id_portariafk.numero_portaria}) '
+                    f'foi rejeitada pelo diretor. '
+                    f'Motivo: {observacao or "Sem observações."} '
+                    f'O professor irá reavaliá-la e você poderá reenviar se necessário.'
+                )
+            )
             messages.warning(request, 'Resposta rejeitada pelo diretor.')
+            Historico.objects.create(
+                id_usuario=request.user,
+                acao='resposta_rejeitada_dir',
+                descricao=f'Resposta #{resposta.pk} do aluno {resposta.id_alunofk.nome_completo} rejeitada para a atividade "{resposta.id_atividade.titulo}".'
+            )
     except ValueError as e:
         messages.error(request, f'Erro ao validar: {str(e)}')
 
@@ -882,3 +924,34 @@ def gerenciar_professores_diretor(request):
     ctx['active_page'] = 'professores'
     ctx['curso_diretor'] = curso_diretor
     return render(request, 'dashboard/gerenciar_professores.html', ctx)
+
+
+# ══════════════════════════════════════════════════════════════
+#  HISTÓRICO DE ATIVIDADES DO SISTEMA
+# ══════════════════════════════════════════════════════════════
+@login_required(login_url='authentication:login')
+def historico_sistema(request):
+    """Exibe o histórico de ações do sistema para o diretor e admin."""
+    user = request.user
+    if user.tipo_usuario not in ('diretor', 'admin'):
+        messages.error(request, 'Acesso negado.')
+        return redirect('dashboard:index')
+
+    if user.tipo_usuario == 'diretor':
+        ctx = _diretor_context(request)
+    else:
+        ctx = base_context(request)
+
+    # Filtrar histórico
+    historico_qs = Historico.objects.select_related('id_usuario').order_by('-data_hora')
+
+    # Filtro por tipo de ação
+    acao_filtro = request.GET.get('acao', '')
+    if acao_filtro:
+        historico_qs = historico_qs.filter(acao=acao_filtro)
+
+    ctx['historico'] = historico_qs[:100]  # últimos 100 registros
+    ctx['acao_filtro'] = acao_filtro
+    ctx['acoes_disponiveis'] = Historico.ACAO_CHOICES
+    ctx['active_page'] = 'historico'
+    return render(request, 'dashboard/historico.html', ctx)

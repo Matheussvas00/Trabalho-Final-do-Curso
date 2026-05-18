@@ -73,6 +73,9 @@
             <a href="{% url 'dashboard:gerenciar_disciplinas' %}" class="uc-sidebar__link {% if active_page == 'disciplinas' %}uc-sidebar__link--active{% endif %}" data-tip="Disciplinas">
                 <i class="fas fa-book"></i><span>Disciplinas</span>
             </a>
+            <a href="{% url 'dashboard:historico' %}" class="uc-sidebar__link {% if active_page == 'historico' %}uc-sidebar__link--active{% endif %}" data-tip="Histórico">
+                <i class="fas fa-history"></i><span>Histórico</span>
+            </a>
 
         {% elif user.tipo_usuario == 'diretor' %}
 
@@ -89,6 +92,9 @@
             <a href="{% url 'dashboard:gerenciar_validacoes' %}" class="uc-sidebar__link {% if active_page == 'validar' %}uc-sidebar__link--active{% endif %}" data-tip="Validar Atividades">
                 <i class="fas fa-check-double"></i><span>Validar Atividades</span>
                 {% if total_validar %}<em class="uc-sidebar__badge">{{ total_validar }}</em>{% endif %}
+            </a>
+            <a href="{% url 'dashboard:historico' %}" class="uc-sidebar__link {% if active_page == 'historico' %}uc-sidebar__link--active{% endif %}" data-tip="Histórico">
+                <i class="fas fa-history"></i><span>Histórico</span>
             </a>
 
         {% endif %}

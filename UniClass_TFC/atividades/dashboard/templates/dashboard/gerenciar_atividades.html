@@ -107,7 +107,7 @@
                                 </a>
                                 <button type="button" class="uc-btn uc-btn--danger uc-btn--sm"
                                     onclick="confirmarExclusao({{ a.id_atividade }}, '{{ a.titulo|escapejs }}')">
-                                    <i class="fas fa-trash"></i>
+                                    <i class="fas fa-user-slash"></i>
                                 </button>
                                 {% else %}
                                 <span style="color:#aaa; font-size:12px;">—</span>
@@ -138,7 +138,7 @@
 
 {% for a in atividades %}
 {% if a.status == 'aguardando_resposta' %}
-<form id="formExcluir{{ a.id_atividade }}" method="post" action="{% url 'dashboard:excluir_atividade' a.id_atividade %}" style="display:none;">
+<form id="formInativar{{ a.id_atividade }}" method="post" action="{% url 'dashboard:Inativar_atividade' a.id_atividade %}" style="display:none;">
     {% csrf_token %}
 </form>
 {% endif %}
@@ -164,8 +164,8 @@
     });
 
     function confirmarExclusao(id, titulo) {
-        if (confirm('Excluir a atividade "' + titulo + '"? Esta ação não pode ser desfeita.')) {
-            document.getElementById('formExcluir' + id).submit();
+        if (confirm('Inativar a atividade "' + titulo + '"? Esta ação não pode ser desfeita.')) {
+            document.getElementById('formInativar' + id).submit();
         }
     }
 </script>

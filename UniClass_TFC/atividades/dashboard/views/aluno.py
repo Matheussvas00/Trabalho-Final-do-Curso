@@ -8,7 +8,7 @@ from django.views.decorators.http import require_POST
 from django.db import transaction
 from django.utils import timezone
 from atividades.models import (
-    Aluno, Atividade, Portaria, RespostaAtividade, Disciplina
+    Aluno, Atividade, Portaria, RespostaAtividade, Disciplina, Notificacao, Historico
 )
 from .common import base_context
 
@@ -284,6 +284,23 @@ def responder_atividade(request, atividade_id):
             if portaria.status == 'aguardando_atividades':
                 portaria.status = 'em_andamento'
                 portaria.save(update_fields=['status'])
+            # Notifica o professor da atividade
+            prof_usuario = atividade.id_professorfk.id_professor
+            Notificacao.objects.create(
+                id_usuariodestino=prof_usuario,
+                titulo='Nova Resposta Aguardando Avaliação',
+                mensagem=(
+                    f'O aluno {aluno.nome_completo} enviou uma resposta para a atividade '
+                    f'"{atividade.titulo}" (Portaria nº {portaria.numero_portaria}). '
+                    f'Acesse o painel para avaliar.'
+                )
+            )
+            # Registra no histórico
+            Historico.objects.create(
+                id_usuario=request.user,
+                acao='resposta_enviada',
+                descricao=f'Resposta enviada para a atividade "{atividade.titulo}" (Portaria nº {portaria.numero_portaria}).'
+            )
 
         messages.success(request,
             f'Resposta enviada com sucesso! Aguarde a validação do professor {atividade.id_professorfk.nome_completo}.')
@@ -397,14 +414,14 @@ def editar_resposta(request, resposta_id):
 
 @_aluno_required
 @require_POST
-def excluir_resposta(request, resposta_id):
+def Inativar_resposta(request, resposta_id):
     """Aluno exclui uma resposta (apenas se não foi validada)."""
     aluno = Aluno.objects.get(id_aluno=request.user)
     resposta = get_object_or_404(RespostaAtividade, pk=resposta_id, id_alunofk=aluno)
 
-    # Só pode excluir se não foi validada ainda
+    # Só pode Inativar se não foi validada ainda
     if resposta.status_professor != 'pendente':
-        messages.error(request, 'Não é possível excluir resposta que já foi validada.')
+        messages.error(request, 'Não é possível Inativar resposta que já foi validada.')
         return redirect('dashboard:minhas_respostas')
 
     atividade_titulo = resposta.id_atividade.titulo

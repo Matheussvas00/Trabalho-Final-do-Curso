@@ -98,8 +98,8 @@
                                     <i class="fas fa-edit"></i> Editar
                                 </button>
                                 <button type="button" class="uc-btn uc-btn--danger uc-btn--sm"
-                                        data-bs-toggle="modal" data-bs-target="#modalExcluirDisc{{ disc.pk }}">
-                                    <i class="fas fa-trash-alt"></i> Excluir
+                                        data-bs-toggle="modal" data-bs-target="#modalInativarDisc{{ disc.pk }}">
+                                    <i class="fas fa-user-slash"></i> Inativar
                                 </button>
                             </td>
                         </tr>
@@ -171,7 +171,7 @@
 </div>
 
 <!-- ═══════════════════════════════════════════════════════════
-     MODAIS — Editar / Excluir (um por disciplina)
+     MODAIS — Editar / Inativar (um por disciplina)
 ══════════════════════════════════════════════════════════════ -->
 {% for disc in disciplinas %}
 
@@ -222,20 +222,20 @@
     </div>
 </div>
 
-<!-- Modal Excluir -->
-<div class="modal fade" id="modalExcluirDisc{{ disc.pk }}" tabindex="-1" aria-hidden="true">
+<!-- Modal Inativar -->
+<div class="modal fade" id="modalInativarDisc{{ disc.pk }}" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-sm">
         <div class="modal-content" style="border-radius:12px; overflow:hidden;">
             <div class="modal-header" style="background:#dc3545; color:#fff; border:none;">
                 <h5 class="modal-title">
-                    <i class="fas fa-exclamation-triangle me-2"></i> Excluir Disciplina
+                    <i class="fas fa-exclamation-triangle me-2"></i> Inativar Disciplina
                 </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <form method="post" action="{% url 'dashboard:excluir_disciplina' disc.pk %}">
+            <form method="post" action="{% url 'dashboard:Inativar_disciplina' disc.pk %}">
                 {% csrf_token %}
                 <div class="modal-body p-4">
-                    <p style="font-size:14px;">Excluir disciplina:</p>
+                    <p style="font-size:14px;">Inativar disciplina:</p>
                     <div style="background:#f8f9fa; padding:12px 16px; border-radius:8px; margin:8px 0;">
                         <code style="font-size:12px;">{{ disc.codigo_disciplina }}</code>
                         <strong style="margin-left:6px;">{{ disc.nome_disciplina }}</strong>
@@ -248,7 +248,7 @@
                 <div class="modal-footer" style="border:none; padding-top:0;">
                     <button type="button" class="uc-btn uc-btn--ghost uc-btn--sm" data-bs-dismiss="modal">Cancelar</button>
                     <button type="submit" class="uc-btn uc-btn--danger uc-btn--sm">
-                        <i class="fas fa-trash-alt me-1"></i> Excluir
+                        <i class="fas fa-user-slash me-1"></i> Inativar
                     </button>
                 </div>
             </form>

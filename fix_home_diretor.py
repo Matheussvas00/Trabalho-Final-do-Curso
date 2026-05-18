@@ -56,9 +56,9 @@ content = content.replace('<span style="color:#999;">\ufffd</span>', '<span styl
 content = content.replace('Painel \ufffd Dire', 'Painel — Dire')
 content = content.replace('MODAL \ufffd Cadastrar Aluno', 'MODAL — Cadastrar Aluno')
 content = content.replace('MODAL \ufffd Cadastrar Professor', 'MODAL — Cadastrar Professor')
-content = content.replace('MODAIS \ufffd Editar / Excluir ALUNOS', 'MODAIS — Editar / Excluir ALUNOS')
-content = content.replace('MODAIS \ufffd Editar / Excluir PROFESSORES', 'MODAIS — Editar / Excluir PROFESSORES')
-content = content.replace('MODAIS \ufffd Editar / Excluir PORTARIAS', 'MODAIS — Editar / Excluir PORTARIAS')
+content = content.replace('MODAIS \ufffd Editar / Inativar ALUNOS', 'MODAIS — Editar / Inativar ALUNOS')
+content = content.replace('MODAIS \ufffd Editar / Inativar PROFESSORES', 'MODAIS — Editar / Inativar PROFESSORES')
+content = content.replace('MODAIS \ufffd Editar / Inativar PORTARIAS', 'MODAIS — Editar / Inativar PORTARIAS')
 content = content.replace('MODAIS \ufffd Analisar', 'MODAIS — Analisar')
 content = content.replace('\ufffd RESPOSTAS APROVADAS', '— RESPOSTAS APROVADAS')
 content = content.replace('" \ufffd {{ p.id_alunofk.matricula_aluno }}', '" — {{ p.id_alunofk.matricula_aluno }}')
@@ -111,7 +111,7 @@ old_aluno_row = """\
                                 <button type="button" class="uc-btn uc-btn--outline uc-btn--sm" data-bs-toggle="modal" data-bs-target="#modalEditarAluno{{ aluno.pk }}" title="Editar">
                                     <i class="fas fa-pen"></i>
                                 </button>
-                                <button type="button" class="uc-btn uc-btn--danger uc-btn--sm" data-bs-toggle="modal" data-bs-target="#modalExcluirAluno{{ aluno.pk }}">
+                                <button type="button" class="uc-btn uc-btn--danger uc-btn--sm" data-bs-toggle="modal" data-bs-target="#modalInativarAluno{{ aluno.pk }}">
                                     <i class="fas fa-user-slash"></i> Inativar
                                 </button>
                             </td>
@@ -136,7 +136,7 @@ new_aluno_row = """\
                                     <i class="fas fa-pen"></i>
                                 </button>
                                 {% if aluno.ativo %}
-                                <button type="button" class="uc-btn uc-btn--danger uc-btn--sm" data-bs-toggle="modal" data-bs-target="#modalExcluirAluno{{ aluno.pk }}">
+                                <button type="button" class="uc-btn uc-btn--danger uc-btn--sm" data-bs-toggle="modal" data-bs-target="#modalInativarAluno{{ aluno.pk }}">
                                     <i class="fas fa-user-slash"></i> Inativar
                                 </button>
                                 {% else %}
@@ -190,7 +190,7 @@ old_prof_row = """\
                                 <button type="button" class="uc-btn uc-btn--outline uc-btn--sm" data-bs-toggle="modal" data-bs-target="#modalEditarProf{{ prof.pk }}" title="Editar">
                                     <i class="fas fa-pen"></i>
                                 </button>
-                                <button type="button" class="uc-btn uc-btn--danger uc-btn--sm" data-bs-toggle="modal" data-bs-target="#modalExcluirProf{{ prof.pk }}">
+                                <button type="button" class="uc-btn uc-btn--danger uc-btn--sm" data-bs-toggle="modal" data-bs-target="#modalInativarProf{{ prof.pk }}">
                                     <i class="fas fa-user-slash"></i> Inativar
                                 </button>
                             </td>
@@ -216,7 +216,7 @@ new_prof_row = """\
                                     <i class="fas fa-pen"></i>
                                 </button>
                                 {% if prof.ativo %}
-                                <button type="button" class="uc-btn uc-btn--danger uc-btn--sm" data-bs-toggle="modal" data-bs-target="#modalExcluirProf{{ prof.pk }}">
+                                <button type="button" class="uc-btn uc-btn--danger uc-btn--sm" data-bs-toggle="modal" data-bs-target="#modalInativarProf{{ prof.pk }}">
                                     <i class="fas fa-user-slash"></i> Inativar
                                 </button>
                                 {% else %}
@@ -234,28 +234,28 @@ else:
     print('✗ Professor table row NOT found')
 
 # ===================================================
-# STEP 6: Fix modalExcluirAluno — replace "Excluir" modal with
+# STEP 6: Fix modalInativarAluno — replace "Inativar" modal with
 #         proper "Inativar" modal + add new "Reativar" modal
 # ===================================================
 
 old_modal_aluno = """\
-<div class="modal fade" id="modalExcluirAluno{{ aluno.pk }}" tabindex="-1" aria-hidden="true">
+<div class="modal fade" id="modalInativarAluno{{ aluno.pk }}" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-sm">
         <div class="modal-content" style="border-radius:12px; overflow:hidden;">
             <div class="modal-header" style="background:#dc3545; color:#fff; border:none;">
-                <h5 class="modal-title"><i class="fas fa-exclamation-triangle me-2"></i> Excluir Aluno</h5>
+                <h5 class="modal-title"><i class="fas fa-exclamation-triangle me-2"></i> Inativar Aluno</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <form method="post" action="{% url 'dashboard:excluir_aluno' aluno.pk %}">
+            <form method="post" action="{% url 'dashboard:Inativar_aluno' aluno.pk %}">
                 {% csrf_token %}
                 <div class="modal-body p-4">
-                    <p style="font-size:14px;">Excluir <strong>{{ aluno.nome_completo }}</strong>?</p>
+                    <p style="font-size:14px;">Inativar <strong>{{ aluno.nome_completo }}</strong>?</p>
                     <small class="text-danger"><i class="fas fa-exclamation-circle me-1"></i>Ação irreversível.</small>
                 </div>
                 <div class="modal-footer" style="border:none; padding-top:0;">
                     <button type="button" class="uc-btn uc-btn--ghost uc-btn--sm" data-bs-dismiss="modal">Cancelar</button>
                     <button type="submit" class="uc-btn uc-btn--danger uc-btn--sm">
-                        <i class="fas fa-trash-alt me-1"></i> Excluir
+                        <i class="fas fa-trash-alt me-1"></i> Inativar
                     </button>
                 </div>
             </form>
@@ -264,14 +264,14 @@ old_modal_aluno = """\
 </div>"""
 
 new_modal_aluno = """\
-<div class="modal fade" id="modalExcluirAluno{{ aluno.pk }}" tabindex="-1" aria-hidden="true">
+<div class="modal fade" id="modalInativarAluno{{ aluno.pk }}" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-sm">
         <div class="modal-content" style="border-radius:12px; overflow:hidden;">
             <div class="modal-header" style="background:#dc3545; color:#fff; border:none;">
                 <h5 class="modal-title"><i class="fas fa-user-slash me-2"></i> Inativar Aluno</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <form method="post" action="{% url 'dashboard:excluir_aluno' aluno.pk %}">
+            <form method="post" action="{% url 'dashboard:Inativar_aluno' aluno.pk %}">
                 {% csrf_token %}
                 <div class="modal-body p-4">
                     <p style="font-size:14px;">Inativar <strong>{{ aluno.nome_completo }}</strong>?</p>
@@ -314,17 +314,17 @@ new_modal_aluno = """\
 
 if old_modal_aluno in content:
     content = content.replace(old_modal_aluno, new_modal_aluno)
-    print('✓ modalExcluirAluno/modalReativarAluno updated')
+    print('✓ modalInativarAluno/modalReativarAluno updated')
 else:
-    print('✗ modalExcluirAluno NOT found')
+    print('✗ modalInativarAluno NOT found')
 
 # ===================================================
-# STEP 7: Fix modalExcluirProf — replace with proper
+# STEP 7: Fix modalInativarProf — replace with proper
 #         "Inativar" modal + add new "Reativar" modal
 # ===================================================
 
 old_modal_prof = """\
-<div class="modal fade" id="modalExcluirProf{{ prof.pk }}" tabindex="-1" aria-hidden="true">
+<div class="modal fade" id="modalInativarProf{{ prof.pk }}" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content" style="border-radius:16px; overflow:hidden; border:none; box-shadow:0 20px 60px rgba(0,0,0,.18);">
             <div class="modal-header" style="background:linear-gradient(135deg,#b91c1c,#dc3545); color:#fff; border:none; padding:20px 24px;">
@@ -333,10 +333,10 @@ old_modal_prof = """\
                 </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <form method="post" action="{% url 'dashboard:excluir_professor' prof.pk %}">
+            <form method="post" action="{% url 'dashboard:Inativar_professor' prof.pk %}">
                 {% csrf_token %}
                 <div class="modal-body p-4">
-                    <p style="font-size:14px;">Excluir <strong>{{ prof.nome_completo }}</strong>?</p>
+                    <p style="font-size:14px;">Inativar <strong>{{ prof.nome_completo }}</strong>?</p>
                     {% if prof.disciplinas.count %}
                     <small class="text-warning"><i class="fas fa-exclamation-triangle me-1"></i>{{ prof.disciplinas.count }} disciplina{{ prof.disciplinas.count|pluralize }} vinculada{{ prof.disciplinas.count|pluralize }} será{{ prof.disciplinas.count|pluralize:"á,ão" }} removida{{ prof.disciplinas.count|pluralize }}.</small><br>
                     {% endif %}
@@ -345,7 +345,7 @@ old_modal_prof = """\
                 <div class="modal-footer" style="border:none; padding-top:0;">
                     <button type="button" class="uc-btn uc-btn--ghost uc-btn--sm" data-bs-dismiss="modal">Cancelar</button>
                     <button type="submit" class="uc-btn uc-btn--danger uc-btn--sm">
-                        <i class="fas fa-trash-alt me-1"></i> Excluir
+                        <i class="fas fa-trash-alt me-1"></i> Inativar
                     </button>
                 </div>
             </form>
@@ -354,14 +354,14 @@ old_modal_prof = """\
 </div>"""
 
 new_modal_prof = """\
-<div class="modal fade" id="modalExcluirProf{{ prof.pk }}" tabindex="-1" aria-hidden="true">
+<div class="modal fade" id="modalInativarProf{{ prof.pk }}" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-sm">
         <div class="modal-content" style="border-radius:12px; overflow:hidden;">
             <div class="modal-header" style="background:#dc3545; color:#fff; border:none;">
                 <h5 class="modal-title"><i class="fas fa-user-slash me-2"></i> Inativar Professor</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <form method="post" action="{% url 'dashboard:excluir_professor' prof.pk %}">
+            <form method="post" action="{% url 'dashboard:Inativar_professor' prof.pk %}">
                 {% csrf_token %}
                 <div class="modal-body p-4">
                     <p style="font-size:14px;">Inativar <strong>{{ prof.nome_completo }}</strong>?</p>
@@ -404,9 +404,9 @@ new_modal_prof = """\
 
 if old_modal_prof in content:
     content = content.replace(old_modal_prof, new_modal_prof)
-    print('✓ modalExcluirProf/modalReativarProf updated')
+    print('✓ modalInativarProf/modalReativarProf updated')
 else:
-    print('✗ modalExcluirProf NOT found')
+    print('✗ modalInativarProf NOT found')
 
 # ===================================================
 # STEP 8: Write fixed file (UTF-8 without BOM)

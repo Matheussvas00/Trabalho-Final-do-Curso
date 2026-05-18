@@ -211,7 +211,7 @@ def editar_aluno(request, aluno_id):
 
 @_diretor_required
 @require_POST
-def excluir_aluno(request, aluno_id):
+def Inativar_aluno(request, aluno_id):
     """Remove um aluno e seu usuário vinculado (por matrícula)."""
     aluno = get_object_or_404(Aluno, pk=aluno_id)
     nome = aluno.nome_completo
@@ -306,7 +306,7 @@ def editar_professor(request, professor_id):
 
 @_diretor_required
 @require_POST
-def excluir_professor(request, professor_id):
+def Inativar_professor(request, professor_id):
     """Remove um professor e seu usuário vinculado."""
     professor = get_object_or_404(Professor, pk=professor_id)
     nome = professor.nome_completo
@@ -364,7 +364,7 @@ def editar_curso(request, curso_id):
 
 @_diretor_required
 @require_POST
-def excluir_curso(request, curso_id):
+def Inativar_curso(request, curso_id):
     """Remove um curso."""
     curso = get_object_or_404(Curso, pk=curso_id)
     nome = curso.nome_curso
@@ -465,7 +465,7 @@ def editar_portaria(request, portaria_id):
 
 @_diretor_required
 @require_POST
-def excluir_portaria(request, portaria_id):
+def Inativar_portaria(request, portaria_id):
     """Diretor exclui uma portaria."""
     portaria = get_object_or_404(Atestado, pk=portaria_id)
     portaria.delete()
