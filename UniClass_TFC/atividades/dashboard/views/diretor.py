@@ -888,11 +888,17 @@ def gerenciar_alunos_diretor(request):
     if curso_diretor:
         ctx['alunos'] = Aluno.objects.filter(
             cursos=curso_diretor
-        ).select_related('id_aluno').order_by('nome_aluno', 'sobrenome_aluno')
+        ).select_related('id_aluno').prefetch_related(
+            'matriculas__codigo_disciplinafk'
+        ).order_by('nome_aluno', 'sobrenome_aluno')
         ctx['total_alunos'] = ctx['alunos'].count()
+        ctx['disciplinas'] = Disciplina.objects.filter(
+            curso_fk=curso_diretor
+        ).order_by('nome_disciplina')
     else:
         ctx['alunos'] = Aluno.objects.none()
         ctx['total_alunos'] = 0
+        ctx['disciplinas'] = Disciplina.objects.none()
 
     ctx['active_page'] = 'alunos'
     ctx['curso_diretor'] = curso_diretor
