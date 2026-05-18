@@ -25,7 +25,7 @@
             <a href="{% url 'dashboard:index' %}" class="uc-topbar__btn" title="Voltar ao Início">
                 <i class="fas fa-arrow-left"></i>
             </a>
-            <a href="#" class="uc-topbar__btn" title="Notificações">
+            <a href="{% url 'dashboard:notificacoes' %}" class="uc-topbar__btn" title="Notificações">
                 <i class="fas fa-bell"></i>
                 {% if notificacoes_nao_lidas %}<span class="uc-topbar__notif-dot"></span>{% endif %}
             </a>

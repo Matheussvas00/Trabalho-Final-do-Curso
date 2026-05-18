@@ -22,7 +22,7 @@
             <div class="uc-topbar__subtitle">{{ greeting }}, {{ display_name }}!</div>
         </div>
         <div class="uc-topbar__right">
-            <a href="#" class="uc-topbar__btn" title="Notificações">
+            <a href="{% url 'dashboard:notificacoes' %}" class="uc-topbar__btn" title="Notificações">
                 <i class="fas fa-bell"></i>
                 {% if notificacoes_nao_lidas %}<span class="uc-topbar__notif-dot"></span>{% endif %}
             </a>

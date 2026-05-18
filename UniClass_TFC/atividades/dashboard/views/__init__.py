@@ -51,6 +51,11 @@ from .administrador import (
     editar_disciplina,
     excluir_disciplina,
 )
+from .notificacoes import (
+    notificacoes,
+    marcar_lida,
+    marcar_todas_lidas,
+)
 from .diretor import (
     home_diretor,
     gerenciar_alunos,
@@ -119,4 +124,7 @@ __all__ = [
     'home_professor',
     'home_diretor',
     'home_admin',
+    'notificacoes',
+    'marcar_lida',
+    'marcar_todas_lidas',
 ]

@@ -82,4 +82,9 @@ urlpatterns = [
     path('aluno/respostas/<int:resposta_id>/editar/', views.editar_resposta, name='editar_resposta'),
     path('aluno/respostas/<int:resposta_id>/excluir/', views.excluir_resposta, name='excluir_resposta'),
     path('aluno/disciplinas/', views.minhas_disciplinas, name='minhas_disciplinas'),
+
+    # Notificações
+    path('notificacoes/', views.notificacoes, name='notificacoes'),
+    path('notificacoes/<int:notificacao_id>/lida/', views.marcar_lida, name='marcar_notificacao_lida'),
+    path('notificacoes/marcar-todas-lidas/', views.marcar_todas_lidas, name='marcar_todas_notificacoes_lidas'),
 ]

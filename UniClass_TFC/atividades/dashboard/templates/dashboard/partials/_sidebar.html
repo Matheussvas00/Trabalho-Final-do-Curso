@@ -94,7 +94,7 @@
         {% endif %}
 
         <span class="uc-sidebar__section-label">Geral</span>
-        <a href="#" class="uc-sidebar__link {% if active_page == 'notificacoes' %}uc-sidebar__link--active{% endif %}" data-tip="Notificações">
+        <a href="{% url 'dashboard:notificacoes' %}" class="uc-sidebar__link {% if active_page == 'notificacoes' %}uc-sidebar__link--active{% endif %}" data-tip="Notificações">
             <i class="fas fa-bell"></i><span>Notificações</span>
             {% if notificacoes_nao_lidas %}<em class="uc-sidebar__badge">{{ notificacoes_nao_lidas }}</em>{% endif %}
         </a>
