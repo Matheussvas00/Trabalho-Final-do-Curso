@@ -33,16 +33,27 @@
             {% endfor %}
         {% endif %}
 
+        <!-- Stats -->
+        <div class="uc-stats" style="margin-bottom:20px;">
+            <div class="uc-stat uc-stat--blue">
+                <div class="uc-stat__icon"><i class="fas fa-book-open"></i></div>
+                <div>
+                    <div class="uc-stat__num">{{ matriculas|length }}</div>
+                    <div class="uc-stat__label">Disciplinas Matriculadas</div>
+                </div>
+            </div>
+        </div>
+
         <div class="uc-card">
             <div class="uc-card__head">
                 <span class="uc-card__head-title">
                     <i class="fas fa-book-open" style="color:var(--uc-orange)"></i>
-                    Disciplinas Matriculadas
-                    <small style="color:#999; font-weight:400; margin-left:6px;">{{ disciplinas|length }}</small>
+                    Minhas Matrículas
+                    <small style="color:#999; font-weight:400; margin-left:6px;">{{ matriculas|length }}</small>
                 </span>
             </div>
             <div class="uc-card__body" style="padding:0;">
-                {% if disciplinas %}
+                {% if matriculas %}
                 <div class="uc-table-wrap">
                 <table class="uc-table">
                     <thead>
@@ -50,25 +61,29 @@
                             <th>Código</th>
                             <th>Disciplina</th>
                             <th>Curso</th>
-                            <th>Professores</th>
+                            <th>Professor(es)</th>
+                            <th style="text-align:center;">Matriculado em</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {% for d in disciplinas %}
+                        {% for m in matriculas %}
                         <tr>
                             <td>
-                                <code style="background:#f0f0f0; padding:2px 8px; border-radius:4px;">{{ d.codigo_disciplina }}</code>
+                                <code style="background:#f0f0f0; padding:2px 8px; border-radius:4px;">{{ m.codigo_disciplinafk.codigo_disciplina }}</code>
                             </td>
-                            <td><strong>{{ d.nome_disciplina }}</strong></td>
-                            <td>{{ d.curso_fk.nome_curso }}</td>
+                            <td><strong>{{ m.codigo_disciplinafk.nome_disciplina }}</strong></td>
+                            <td>{{ m.codigo_disciplinafk.curso_fk.nome_curso }}</td>
                             <td style="font-size:12px;">
-                                {% for pd in d.professores_disciplina.all %}
+                                {% for pd in m.codigo_disciplinafk.professores_disciplina.all %}
                                     <span style="display:inline-block; background:#e9ecef; padding:2px 8px; border-radius:4px; margin-right:4px; margin-bottom:2px;">
                                         {{ pd.id_professorfk.nome_completo }}
                                     </span>
                                 {% empty %}
                                     <span style="color:#999;">Sem professor atribuído</span>
                                 {% endfor %}
+                            </td>
+                            <td style="text-align:center; font-size:13px; color:#666;">
+                                {{ m.data_matricula|date:"d/m/Y" }}
                             </td>
                         </tr>
                         {% endfor %}

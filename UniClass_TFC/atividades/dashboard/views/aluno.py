@@ -8,7 +8,8 @@ from django.views.decorators.http import require_POST
 from django.db import transaction
 from django.utils import timezone
 from atividades.models import (
-    Aluno, Atividade, Portaria, RespostaAtividade, Disciplina, Notificacao, Historico
+    Aluno, Atividade, Portaria, RespostaAtividade, Disciplina, Notificacao, Historico,
+    AlunoDisciplina
 )
 from .common import base_context
 
@@ -459,15 +460,15 @@ def minhas_disciplinas(request):
     aluno = ctx.get('aluno')
 
     if aluno:
-        ctx['disciplinas'] = Disciplina.objects.filter(
-            alunos_matriculados__id_alunofk=aluno
+        ctx['matriculas'] = AlunoDisciplina.objects.filter(
+            id_alunofk=aluno
         ).select_related(
-            'curso_fk'
+            'codigo_disciplinafk__curso_fk'
         ).prefetch_related(
-            'professores_disciplina__id_professorfk'
-        ).order_by('nome_disciplina')
+            'codigo_disciplinafk__professores_disciplina__id_professorfk'
+        ).order_by('codigo_disciplinafk__nome_disciplina')
     else:
-        ctx['disciplinas'] = []
+        ctx['matriculas'] = []
 
     ctx['active_page'] = 'disciplinas'
     return render(request, 'dashboard/aluno_disciplinas.html', ctx)

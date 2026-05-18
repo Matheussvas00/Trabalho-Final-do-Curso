@@ -9,7 +9,7 @@ from django.db import transaction
 from django.utils import timezone
 from atividades.models import (
     Professor, Atividade, Portaria, RespostaAtividade,
-    Disciplina, ProfessorDisciplina, Notificacao, Historico
+    Disciplina, ProfessorDisciplina, AlunoDisciplina, Notificacao, Historico
 )
 from .common import base_context
 
@@ -155,11 +155,20 @@ def cadastrar_atividade(request):
             # data_limite_resposta vem da portaria — não pode ser alterada pelo professor
             data_limite_resposta = portaria.prazo_aluno_responder
 
-            # Verifica que a disciplina pertence à portaria E é lecionada pelo professor
+            # Matrícula do aluno da portaria nessa disciplina
+            aluno_matriculado = AlunoDisciplina.objects.filter(
+                id_alunofk=portaria.id_alunofk,
+                codigo_disciplinafk=codigo_disciplina
+            ).exists()
+
+            # Verifica que a disciplina pertence à portaria, é lecionada pelo professor
+            # e o aluno da portaria está matriculado nela
             if not portaria.disciplinas.filter(pk=codigo_disciplina).exists():
                 messages.error(request, "A disciplina selecionada não faz parte desta portaria.")
             elif codigo_disciplina not in [str(d) for d in disciplinas_ids]:
                 messages.error(request, "Você não está vinculado a esta disciplina.")
+            elif not aluno_matriculado:
+                messages.error(request, f"O aluno {portaria.id_alunofk.nome_completo} não está matriculado nessa disciplina.")
             else:
                 try:
                     with transaction.atomic():
@@ -208,11 +217,16 @@ def cadastrar_atividade(request):
 
     ctx['portarias'] = portarias
     # Serializa portarias com suas disciplinas para o JS
+    # Filtra: disciplinas lecionadas pelo professor E em que o aluno está matriculado
     portarias_data = {}
     for p in portarias:
-        # Disciplinas desta portaria que o professor leciona
+        aluno_disciplinas_ids = AlunoDisciplina.objects.filter(
+            id_alunofk=p.id_alunofk
+        ).values_list('codigo_disciplinafk', flat=True)
         discs = p.disciplinas.filter(
-            codigo_disciplina__in=disciplinas_ids
+            codigo_disciplina__in=disciplinas_ids,
+        ).filter(
+            codigo_disciplina__in=aluno_disciplinas_ids
         ).values('codigo_disciplina', 'nome_disciplina')
         portarias_data[str(p.pk)] = {
             'prazo': p.prazo_aluno_responder.strftime('%Y-%m-%d'),
