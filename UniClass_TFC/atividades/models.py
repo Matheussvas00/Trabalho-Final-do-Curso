@@ -683,6 +683,7 @@ class Historico(models.Model):
         ('atividade_editada', 'Atividade Editada'),
         ('atividade_excluida', 'Atividade Excluída'),
         ('resposta_enviada', 'Resposta Enviada'),
+        ('resposta_reenviada', 'Atividade Refeita e Reenviada'),
         ('resposta_editada', 'Resposta Editada'),
         ('resposta_aprovada_prof', 'Resposta Aprovada pelo Professor'),
         ('resposta_rejeitada_prof', 'Resposta Rejeitada pelo Professor'),

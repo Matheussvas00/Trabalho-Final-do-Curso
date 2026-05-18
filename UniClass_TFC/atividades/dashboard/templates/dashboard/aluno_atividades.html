@@ -60,6 +60,9 @@
                         <tr>
                             <td>
                                 <strong>{{ a.titulo }}</strong>
+                                {% if a.status == 'reprovada_professor' %}
+                                    <span class="uc-badge uc-badge--rejected" style="margin-left:6px; font-size:10px;">Rejeitada — Refazer</span>
+                                {% endif %}
                                 {% if a.descricao %}<br><small class="text-muted">{{ a.descricao|truncatewords:15 }}</small>{% endif %}
                             </td>
                             <td>{{ a.codigo_disciplinafk.nome_disciplina }}</td>
@@ -72,9 +75,15 @@
                                 </span>
                             </td>
                             <td style="text-align:center;">
+                                {% if a.status == 'reprovada_professor' %}
+                                <a href="{% url 'dashboard:visualizar_atividade' a.id_atividade %}" class="uc-btn uc-btn--orange uc-btn--sm">
+                                    <i class="fas fa-redo me-1"></i> Refazer
+                                </a>
+                                {% else %}
                                 <a href="{% url 'dashboard:visualizar_atividade' a.id_atividade %}" class="uc-btn uc-btn--orange uc-btn--sm">
                                     <i class="fas fa-reply me-1"></i> Responder
                                 </a>
+                                {% endif %}
                             </td>
                         </tr>
                         {% endfor %}

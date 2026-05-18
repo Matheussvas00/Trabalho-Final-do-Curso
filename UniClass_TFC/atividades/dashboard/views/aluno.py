@@ -255,10 +255,13 @@ def responder_atividade(request, atividade_id):
 
     try:
         with transaction.atomic():
+            is_reenvio = bool(resposta_existente)
             if resposta_existente:
                 # Reenvio após reprovação: atualiza a resposta existente
-                resposta_existente.arquivo = arquivo_path or resposta_existente.arquivo
-                resposta_existente.descricao_resposta = descricao or resposta_existente.descricao_resposta
+                if arquivo_path:
+                    resposta_existente.arquivo = arquivo_path
+                if descricao:
+                    resposta_existente.descricao_resposta = descricao
                 resposta_existente.data_envio = timezone.now()
                 resposta_existente.status = 'pendente'
                 resposta_existente.status_professor = 'pendente'
@@ -286,24 +289,39 @@ def responder_atividade(request, atividade_id):
                 portaria.save(update_fields=['status'])
             # Notifica o professor da atividade
             prof_usuario = atividade.id_professorfk.id_professor
-            Notificacao.objects.create(
-                id_usuariodestino=prof_usuario,
-                titulo='Nova Resposta Aguardando Avaliação',
-                mensagem=(
+            if is_reenvio:
+                notif_titulo = 'Atividade Refeita — Aguardando Nova Avaliação'
+                notif_msg = (
+                    f'O aluno {aluno.nome_completo} refez a atividade '
+                    f'"{atividade.titulo}" (Portaria nº {portaria.numero_portaria}) '
+                    f'após sua rejeição. Acesse o painel para reavaliar.'
+                )
+            else:
+                notif_titulo = 'Nova Resposta Aguardando Avaliação'
+                notif_msg = (
                     f'O aluno {aluno.nome_completo} enviou uma resposta para a atividade '
                     f'"{atividade.titulo}" (Portaria nº {portaria.numero_portaria}). '
                     f'Acesse o painel para avaliar.'
                 )
+            Notificacao.objects.create(
+                id_usuariodestino=prof_usuario,
+                titulo=notif_titulo,
+                mensagem=notif_msg,
             )
             # Registra no histórico
+            acao_historico = 'resposta_reenviada' if is_reenvio else 'resposta_enviada'
             Historico.objects.create(
                 id_usuario=request.user,
-                acao='resposta_enviada',
-                descricao=f'Resposta enviada para a atividade "{atividade.titulo}" (Portaria nº {portaria.numero_portaria}).'
+                acao=acao_historico,
+                descricao=f'Resposta {"reenviada" if is_reenvio else "enviada"} para a atividade "{atividade.titulo}" (Portaria nº {portaria.numero_portaria}).'
             )
 
-        messages.success(request,
-            f'Resposta enviada com sucesso! Aguarde a validação do professor {atividade.id_professorfk.nome_completo}.')
+        msg_sucesso = (
+            f'Atividade refeita com sucesso! Aguarde a nova avaliação do professor {atividade.id_professorfk.nome_completo}.'
+            if is_reenvio else
+            f'Resposta enviada com sucesso! Aguarde a validação do professor {atividade.id_professorfk.nome_completo}.'
+        )
+        messages.success(request, msg_sucesso)
     except ValueError as e:
         messages.error(request, f'Erro ao enviar resposta: {str(e)}')
         return redirect('dashboard:visualizar_atividade', atividade_id=atividade_id)

@@ -116,11 +116,15 @@
                                 {% endif %}
                             </td>
                             <td class="uc-td-actions">
-                                <a href="{% url 'dashboard:visualizar_resposta' r.id_resposta %}" class="uc-btn uc-btn--ghost uc-btn--sm">
+                                <a href="{% url 'dashboard:visualizar_resposta' r.id_resposta %}" class="uc-btn uc-btn--ghost uc-btn--sm" title="Ver detalhes">
                                     <i class="fas fa-eye"></i>
                                 </a>
-                                {% if r.status_professor == 'pendente' %}
-                                <a href="{% url 'dashboard:editar_resposta' r.id_resposta %}" class="uc-btn uc-btn--orange uc-btn--sm" style="margin-right:4px;">
+                                {% if r.status == 'rejeitada_prof' %}
+                                <a href="{% url 'dashboard:visualizar_atividade' r.id_atividade.id_atividade %}" class="uc-btn uc-btn--orange uc-btn--sm" title="Refazer atividade" style="margin-left:4px;">
+                                    <i class="fas fa-redo"></i>
+                                </a>
+                                {% elif r.status_professor == 'pendente' %}
+                                <a href="{% url 'dashboard:editar_resposta' r.id_resposta %}" class="uc-btn uc-btn--orange uc-btn--sm" title="Editar resposta" style="margin-left:4px;">
                                     <i class="fas fa-edit"></i>
                                 </a>
                                 <button type="button" class="uc-btn uc-btn--danger uc-btn--sm"
@@ -131,10 +135,16 @@
                             </td>
                         </tr>
                         {% if r.observacao_professor %}
-                        <tr style="background:#fffef0; border-bottom:1px solid #f0f0f0;">
-                            <td colspan="7" style="padding:6px 14px; font-size:12px; color:#856404;">
-                                <i class="fas fa-comment me-1"></i>
-                                <strong>Feedback do Professor:</strong> {{ r.observacao_professor }}
+                        <tr style="background:{% if r.status == 'rejeitada_prof' %}#f8d7da{% else %}#fffef0{% endif %}; border-bottom:1px solid #f0f0f0;">
+                            <td colspan="7" style="padding:8px 14px; font-size:12px; color:{% if r.status == 'rejeitada_prof' %}#721c24{% else %}#856404{% endif %};">
+                                <i class="fas fa-{% if r.status == 'rejeitada_prof' %}times-circle{% else %}comment{% endif %} me-1"></i>
+                                <strong>{% if r.status == 'rejeitada_prof' %}Motivo da Rejeição:{% else %}Feedback do Professor:{% endif %}</strong>
+                                {{ r.observacao_professor }}
+                                {% if r.status == 'rejeitada_prof' %}
+                                — <a href="{% url 'dashboard:visualizar_atividade' r.id_atividade.id_atividade %}" style="color:#721c24; font-weight:600;">
+                                    <i class="fas fa-redo me-1"></i>Clique aqui para refazer
+                                </a>
+                                {% endif %}
                             </td>
                         </tr>
                         {% endif %}
