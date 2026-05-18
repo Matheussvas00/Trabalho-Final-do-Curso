@@ -361,7 +361,7 @@
                     <div class="modal-footer border-0 justify-content-center pt-0 pb-3">
                         <button type="button" class="btn btn-sm text-white fw-semibold px-4"
                                 style="background:linear-gradient(135deg,#FF6B00,#D45400); border:none; border-radius:8px;"
-                                onclick="bootstrap.Modal.getOrCreateInstance(document.getElementById('modalEsqueceuSenha')).hide()">Entendido</button>
+                                onclick="fecharModalSenha()">Entendido</button>
                     </div>
                 </div>
             </div>
@@ -371,6 +371,18 @@
 </div>
 
 <script>
+    function fecharModalSenha() {
+        var modal = document.getElementById('modalEsqueceuSenha');
+        modal.classList.remove('show');
+        modal.style.display = 'none';
+        modal.setAttribute('aria-hidden', 'true');
+        modal.removeAttribute('aria-modal');
+        document.body.classList.remove('modal-open');
+        document.body.style.removeProperty('overflow');
+        document.body.style.removeProperty('padding-right');
+        document.querySelectorAll('.modal-backdrop').forEach(function(el) { el.remove(); });
+    }
+
     const toggleBtn = document.getElementById('toggleSenha');
     const eyeIcon  = document.getElementById('eyeIcon');
     if (toggleBtn) {
