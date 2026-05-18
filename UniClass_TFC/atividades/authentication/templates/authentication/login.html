@@ -339,30 +339,33 @@
             <small class="text-muted">
                 Esqueceu sua senha?
                 <a href="#" class="text-decoration-none" style="color:#FF6B00; font-weight:500;"
-                   data-bs-toggle="modal" data-bs-target="#modalEsqueceuSenha">Clique aqui</a>
+                   onclick="document.getElementById('overlayEsqueceuSenha').style.display='flex'; return false;">Clique aqui</a>
             </small>
         </div>
 
-        <!-- Modal: instrução para contatar diretor -->
-        <div class="modal fade" id="modalEsqueceuSenha" tabindex="-1" aria-hidden="true">
-            <div class="modal-dialog modal-dialog-centered modal-sm">
-                <div class="modal-content" style="border-radius:12px; overflow:hidden; text-align:center;">
-                    <div class="modal-header" style="background:linear-gradient(135deg,#1C1C2E,#0F2952); border:none; justify-content:center;">
-                        <i class="fas fa-key fa-2x" style="color:#FF6B00;"></i>
-                    </div>
-                    <div class="modal-body py-4 px-4">
-                        <h6 class="fw-bold mb-2">Redefinição de Senha</h6>
-                        <p style="font-size:14px; color:#555; margin:0;">
-                            Para redefinir sua senha, entre em contato com a
-                            <strong>Direção da faculdade</strong>.
-                            O diretor poderá gerar uma nova senha para sua conta pelo painel administrativo.
-                        </p>
-                    </div>
-                    <div class="modal-footer border-0 justify-content-center pt-0 pb-3">
-                        <button type="button" class="btn btn-sm text-white fw-semibold px-4"
-                                style="background:linear-gradient(135deg,#FF6B00,#D45400); border:none; border-radius:8px;"
-                                onclick="fecharModalSenha()">Entendido</button>
-                    </div>
+        <!-- Overlay: instrução para contatar diretor -->
+        <div id="overlayEsqueceuSenha"
+             style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5);
+                    z-index:9999; align-items:center; justify-content:center;">
+            <div style="background:#fff; border-radius:12px; overflow:hidden; text-align:center;
+                        width:90%; max-width:340px; box-shadow:0 20px 60px rgba(0,0,0,.3);">
+                <div style="background:linear-gradient(135deg,#1C1C2E,#0F2952); padding:20px;">
+                    <i class="fas fa-key fa-2x" style="color:#FF6B00;"></i>
+                </div>
+                <div style="padding:24px 24px 8px;">
+                    <h6 style="font-weight:700; margin-bottom:8px;">Redefinição de Senha</h6>
+                    <p style="font-size:14px; color:#555; margin:0;">
+                        Para redefinir sua senha, entre em contato com a
+                        <strong>Direção da faculdade</strong>.
+                        O diretor poderá gerar uma nova senha para sua conta pelo painel administrativo.
+                    </p>
+                </div>
+                <div style="padding:16px 24px 24px;">
+                    <button type="button"
+                            style="background:linear-gradient(135deg,#FF6B00,#D45400); border:none;
+                                   border-radius:8px; color:#fff; font-weight:600; padding:8px 32px;
+                                   font-size:14px; cursor:pointer;"
+                            onclick="document.getElementById('overlayEsqueceuSenha').style.display='none';">Entendido</button>
                 </div>
             </div>
         </div>
@@ -371,18 +374,6 @@
 </div>
 
 <script>
-    function fecharModalSenha() {
-        var modal = document.getElementById('modalEsqueceuSenha');
-        modal.classList.remove('show');
-        modal.style.display = 'none';
-        modal.setAttribute('aria-hidden', 'true');
-        modal.removeAttribute('aria-modal');
-        document.body.classList.remove('modal-open');
-        document.body.style.removeProperty('overflow');
-        document.body.style.removeProperty('padding-right');
-        document.querySelectorAll('.modal-backdrop').forEach(function(el) { el.remove(); });
-    }
-
     const toggleBtn = document.getElementById('toggleSenha');
     const eyeIcon  = document.getElementById('eyeIcon');
     if (toggleBtn) {
