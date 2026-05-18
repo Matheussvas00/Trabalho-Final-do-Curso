@@ -110,10 +110,10 @@
             <div class="uc-card__head">
                 <span class="uc-card__head-title">
                     <i class="fas fa-paper-plane" style="color:var(--uc-orange)"></i>
-                    Sua Resposta Anterior
+                    Sua Resposta
                 </span>
                 {% if resposta_existente.status == 'aprovada_dir' %}
-                    <span class="uc-badge uc-badge--success">Aprovada (Diretor)</span>
+                    <span class="uc-badge uc-badge--approved">Aprovada (Diretor)</span>
                 {% elif resposta_existente.status == 'aprovada_prof' %}
                     <span class="uc-badge" style="background:#d4edda;color:#155724;padding:3px 10px;border-radius:20px;font-size:11px;">Aprovada pelo Professor</span>
                 {% elif resposta_existente.status == 'rejeitada_prof' %}
@@ -140,35 +140,40 @@
                     Enviada em {{ resposta_existente.data_envio|date:"d/m/Y H:i" }}
                 </div>
 
-                {% if resposta_existente.status == 'rejeitada_prof' %}
-                <div style="margin-top:14px; padding:14px 16px; background:#f8d7da; border-radius:8px; border-left:4px solid #dc3545;">
-                    <strong style="font-size:12px; color:#721c24;"><i class="fas fa-times-circle me-1"></i>Resposta Rejeitada pelo Professor</strong>
-                    {% if resposta_existente.observacao_professor %}
-                    <p style="margin:6px 0 0; font-size:13px; color:#721c24;">
-                        <strong>Motivo:</strong> {{ resposta_existente.observacao_professor }}
-                    </p>
-                    {% endif %}
-                    <p style="margin:6px 0 0; font-size:12px; color:#856404;">
-                        <i class="fas fa-redo me-1"></i>Você pode enviar uma nova resposta abaixo.
-                    </p>
-                </div>
-                {% elif resposta_existente.observacao_professor %}
+                {% if resposta_existente.observacao_professor %}
                 <div style="margin-top:12px; padding:12px 16px; background:#fff3cd; border-radius:8px; border-left:4px solid #ffc107;">
                     <strong style="font-size:12px; color:#856404;">Feedback do Professor:</strong>
                     <p style="margin:4px 0 0; font-size:13px;">{{ resposta_existente.observacao_professor }}</p>
                 </div>
                 {% endif %}
 
-                {% if resposta_existente.status_professor == 'pendente' and resposta_existente.status != 'rejeitada_prof' %}
+                {% if resposta_existente.status == 'rejeitada_prof' %}
+                    {% if not atividade.prazo_vencido %}
+                    <div style="margin-top:16px; padding:14px 16px; background:#f8d7da; border-radius:8px; border-left:4px solid #dc3545; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px;">
+                        <div>
+                            <strong style="color:#721c24;"><i class="fas fa-times-circle me-1"></i>Atividade Rejeitada</strong>
+                            <p style="margin:4px 0 0; font-size:12px; color:#721c24;">Você pode revisar e enviar uma nova resposta.</p>
+                        </div>
+                        <a href="{% url 'dashboard:refazer_atividade' atividade.id_atividade %}" class="uc-btn uc-btn--orange uc-btn--sm">
+                            <i class="fas fa-redo me-1"></i> Refazer Atividade
+                        </a>
+                    </div>
+                    {% else %}
+                    <div style="margin-top:12px; padding:12px 16px; background:#f8d7da; border-radius:8px; font-size:13px; color:#721c24;">
+                        <i class="fas fa-exclamation-circle me-1"></i>
+                        Atividade rejeitada. Prazo encerrado em {{ atividade.data_limite_resposta|date:"d/m/Y" }}.
+                    </div>
+                    {% endif %}
+                {% elif resposta_existente.status == 'pendente' %}
                 <div style="margin-top:16px; display:flex; gap:8px;">
                     <a href="{% url 'dashboard:visualizar_resposta' resposta_existente.id_resposta %}" class="uc-btn uc-btn--ghost uc-btn--sm">
                         <i class="fas fa-eye me-1"></i> Ver detalhes
                     </a>
                     <a href="{% url 'dashboard:editar_resposta' resposta_existente.id_resposta %}" class="uc-btn uc-btn--orange uc-btn--sm">
-                        <i class="fas fa-edit me-1"></i> Editar resposta
+                        <i class="fas fa-edit me-1"></i> Editar
                     </a>
                 </div>
-                {% elif resposta_existente.status not in 'rejeitada_prof' %}
+                {% else %}
                 <div style="margin-top:12px;">
                     <a href="{% url 'dashboard:visualizar_resposta' resposta_existente.id_resposta %}" class="uc-btn uc-btn--ghost uc-btn--sm">
                         <i class="fas fa-eye me-1"></i> Ver detalhes
@@ -177,62 +182,6 @@
                 {% endif %}
             </div>
         </div>
-
-        {% if resposta_existente.status == 'rejeitada_prof' and not atividade.prazo_vencido %}
-        <!-- Formulário de reenvio após rejeição -->
-        <div class="uc-card">
-            <div class="uc-card__head">
-                <span class="uc-card__head-title">
-                    <i class="fas fa-redo" style="color:var(--uc-orange)"></i>
-                    Refazer Atividade
-                </span>
-                <span class="uc-badge" style="background:#fff3cd;color:#856404;padding:3px 10px;border-radius:20px;font-size:11px;">
-                    Nova tentativa
-                </span>
-            </div>
-            <div class="uc-card__body">
-                <div style="margin-bottom:16px; padding:12px 16px; background:#fff3cd; border-radius:8px; border-left:4px solid #ffc107; font-size:13px; color:#856404;">
-                    <i class="fas fa-info-circle me-1"></i>
-                    Revise o feedback do professor e envie uma nova resposta. Sua resposta anterior será substituída.
-                </div>
-                <form method="post" action="{% url 'dashboard:responder_atividade' atividade.id_atividade %}" enctype="multipart/form-data">
-                    {% csrf_token %}
-                    <div class="row g-3">
-                        <div class="col-12">
-                            <label class="form-label fw-semibold" style="font-size:13px;">Nova Resposta</label>
-                            <textarea name="descricao_resposta" class="form-control" rows="6"
-                                placeholder="Escreva sua nova resposta considerando o feedback recebido..."
-                                style="border-radius:8px;">{{ resposta_existente.descricao_resposta|default:'' }}</textarea>
-                        </div>
-                        <div class="col-12">
-                            <label class="form-label fw-semibold" style="font-size:13px;">Arquivo <small class="text-muted">(opcional)</small></label>
-                            {% if resposta_existente.arquivo %}
-                            <div style="margin-bottom:8px; padding:10px 14px; background:#e8f4fd; border:1px solid #bee5eb; border-radius:8px; font-size:13px;">
-                                <i class="fas fa-paperclip me-1" style="color:#0c5460;"></i>
-                                <strong style="color:#0c5460;">Arquivo anterior:</strong>
-                                <a href="/media/{{ resposta_existente.arquivo }}" target="_blank" class="ms-1">{{ resposta_existente.arquivo }}</a>
-                                <small class="text-muted ms-2">(envie um novo arquivo para substituir)</small>
-                            </div>
-                            {% endif %}
-                            <input type="file" name="arquivo" class="form-control" style="border-radius:8px;">
-                            <small class="text-muted">Formatos aceitos: PDF, DOC, DOCX, JPG, PNG. Máx. 10MB.</small>
-                        </div>
-                    </div>
-                    <div style="margin-top:20px; text-align:right;">
-                        <a href="{% url 'dashboard:minhas_respostas' %}" class="uc-btn uc-btn--ghost uc-btn--sm me-2">Cancelar</a>
-                        <button type="submit" class="uc-btn uc-btn--orange uc-btn--sm">
-                            <i class="fas fa-paper-plane me-1"></i> Enviar Nova Resposta
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-        {% elif resposta_existente.status == 'rejeitada_prof' and atividade.prazo_vencido %}
-        <div class="uc-alert uc-alert--danger">
-            <i class="fas fa-exclamation-circle"></i>
-            <span>Sua resposta foi rejeitada, mas o prazo para reenvio encerrou em {{ atividade.data_limite_resposta|date:"d/m/Y" }}.</span>
-        </div>
-        {% endif %}
 
         {% elif not atividade.prazo_vencido %}
 
