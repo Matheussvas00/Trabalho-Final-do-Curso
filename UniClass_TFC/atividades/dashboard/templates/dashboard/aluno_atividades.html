@@ -76,7 +76,7 @@
                             </td>
                             <td style="text-align:center;">
                                 {% if a.status == 'reprovada_professor' %}
-                                <a href="{% url 'dashboard:visualizar_atividade' a.id_atividade %}" class="uc-btn uc-btn--orange uc-btn--sm">
+                                <a href="{% url 'dashboard:refazer_atividade' a.id_atividade %}" class="uc-btn uc-btn--orange uc-btn--sm">
                                     <i class="fas fa-redo me-1"></i> Refazer
                                 </a>
                                 {% else %}

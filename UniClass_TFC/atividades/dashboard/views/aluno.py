@@ -331,8 +331,121 @@ def responder_atividade(request, atividade_id):
 
 
 # ══════════════════════════════════════════════════════════════
-#  MINHAS RESPOSTAS
+#  REFAZER ATIVIDADE REJEITADA PELO PROFESSOR
 # ══════════════════════════════════════════════════════════════
+@_aluno_required
+def refazer_atividade(request, atividade_id):
+    """Aluno refaz uma atividade que foi rejeitada pelo professor."""
+    aluno = Aluno.objects.get(id_aluno=request.user)
+    atividade = get_object_or_404(
+        Atividade.objects.select_related(
+            'codigo_disciplinafk',
+            'id_professorfk__id_professor',
+            'id_portariafk__id_alunofk',
+            'id_portariafk__id_diretorfk',
+        ),
+        pk=atividade_id
+    )
+
+    if atividade.id_portariafk.id_alunofk != aluno:
+        messages.error(request, 'Você não tem acesso a esta atividade.')
+        return redirect('dashboard:minhas_respostas')
+
+    # Busca a resposta rejeitada (deve existir e estar rejeitada pelo professor)
+    resposta = RespostaAtividade.objects.filter(
+        id_atividade=atividade,
+        id_alunofk=aluno,
+        status='rejeitada_prof',
+    ).first()
+
+    if not resposta:
+        messages.error(request, 'Não há resposta rejeitada para refazer nesta atividade.')
+        return redirect('dashboard:minhas_respostas')
+
+    if atividade.prazo_vencido:
+        messages.error(request, 'O prazo para refazer esta atividade encerrou.')
+        return redirect('dashboard:minhas_respostas')
+
+    ctx = _aluno_context(request)
+    ctx['atividade'] = atividade
+    ctx['resposta'] = resposta
+    ctx['active_page'] = 'atividades'
+
+    if request.method == 'GET':
+        return render(request, 'dashboard/aluno_refazer_atividade.html', ctx)
+
+    # ── POST: processa o reenvio ──────────────────────────────
+    arquivo_upload = request.FILES.get('arquivo')
+    descricao = request.POST.get('descricao_resposta', '').strip()
+
+    # Pelo menos um conteúdo é obrigatório (novo ou preexistente)
+    if not arquivo_upload and not descricao and not resposta.arquivo:
+        messages.error(request, 'Envie um arquivo ou escreva uma descrição para a resposta.')
+        return render(request, 'dashboard/aluno_refazer_atividade.html', ctx)
+
+    try:
+        with transaction.atomic():
+            if arquivo_upload:
+                from django.core.files.storage import default_storage
+                from django.core.files.base import ContentFile
+                arquivo_path = default_storage.save(
+                    f'respostas/{arquivo_upload.name}',
+                    ContentFile(arquivo_upload.read())
+                )
+                resposta.arquivo = arquivo_path
+
+            if descricao:
+                resposta.descricao_resposta = descricao
+
+            # Reseta todos os campos de validação para nova avaliação
+            resposta.data_envio = timezone.now()
+            resposta.status = 'pendente'
+            resposta.status_professor = 'pendente'
+            resposta.status_diretor = 'pendente'
+            resposta.observacao_professor = None
+            resposta.observacao_diretor = None
+            resposta.data_validacao_professor = None
+            resposta.data_validacao_diretor = None
+            resposta.save()
+
+            # Atualiza status da atividade sem disparar as validações do save()
+            Atividade.objects.filter(pk=atividade.pk).update(status='respondida')
+
+            portaria = atividade.id_portariafk
+
+            # Notifica o professor
+            Notificacao.objects.create(
+                id_usuariodestino=atividade.id_professorfk.id_professor,
+                titulo='Atividade Refeita — Aguardando Nova Avaliação',
+                mensagem=(
+                    f'O aluno {aluno.nome_completo} refez a atividade '
+                    f'"{atividade.titulo}" (Portaria nº {portaria.numero_portaria}) '
+                    f'após a rejeição. Acesse o painel para reavaliar.'
+                )
+            )
+
+            Historico.objects.create(
+                id_usuario=request.user,
+                acao='resposta_reenviada',
+                descricao=(
+                    f'Atividade "{atividade.titulo}" refeita e enviada para nova avaliação '
+                    f'(Portaria nº {portaria.numero_portaria}).'
+                )
+            )
+
+        messages.success(
+            request,
+            f'Atividade refeita e enviada com sucesso! '
+            f'Aguarde a nova avaliação do professor {atividade.id_professorfk.nome_completo}.'
+        )
+    except Exception as e:
+        messages.error(request, f'Erro ao enviar resposta: {str(e)}')
+        return render(request, 'dashboard/aluno_refazer_atividade.html', ctx)
+
+    return redirect('dashboard:minhas_respostas')
+
+
+
 @_aluno_required
 def minhas_respostas(request):
     """Lista todas as respostas enviadas pelo aluno."""

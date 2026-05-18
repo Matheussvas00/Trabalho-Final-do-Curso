@@ -14,6 +14,7 @@ from .aluno import (
     atividades_disponiveis,
     visualizar_atividade,
     responder_atividade,
+    refazer_atividade,
     minhas_respostas,
     visualizar_resposta,
     editar_resposta,

@@ -77,6 +77,7 @@ urlpatterns = [
     path('aluno/atividades/', views.atividades_disponiveis, name='atividades_disponiveis'),
     path('aluno/atividades/<int:atividade_id>/', views.visualizar_atividade, name='visualizar_atividade'),
     path('aluno/atividades/<int:atividade_id>/responder/', views.responder_atividade, name='responder_atividade'),
+    path('aluno/atividades/<int:atividade_id>/refazer/', views.refazer_atividade, name='refazer_atividade'),
     path('aluno/respostas/', views.minhas_respostas, name='minhas_respostas'),
     path('aluno/respostas/<int:resposta_id>/', views.visualizar_resposta, name='visualizar_resposta'),
     path('aluno/respostas/<int:resposta_id>/editar/', views.editar_resposta, name='editar_resposta'),

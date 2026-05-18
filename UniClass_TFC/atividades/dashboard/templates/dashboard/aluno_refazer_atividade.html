@@ -1,0 +1,207 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Refazer Atividade — {{ atividade.titulo }} | UniClass{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+{% endblock %}
+
+{% block body %}
+<body class="dashboard-body">
+
+{% include 'dashboard/partials/_sidebar.html' with active_page='atividades' %}
+
+<div class="uc-main" id="ucMain">
+
+    <header class="uc-topbar">
+        <button class="uc-topbar__toggle" onclick="ucToggleSidebar()"><i class="fas fa-bars"></i></button>
+        <div class="uc-topbar__title-wrap">
+            <div class="uc-topbar__title">Refazer Atividade</div>
+            <div class="uc-topbar__subtitle">{{ greeting }}, {{ display_name }}!</div>
+        </div>
+    </header>
+
+    <div class="uc-content">
+
+        {% if messages %}
+            {% for message in messages %}
+                <div class="uc-alert uc-alert--{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %}">
+                    <i class="fas fa-{% if message.tags == 'success' %}check-circle{% elif message.tags == 'error' %}exclamation-circle{% else %}info-circle{% endif %}"></i>
+                    <span>{{ message }}</span>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <div style="margin-bottom:16px;">
+            <a href="{% url 'dashboard:minhas_respostas' %}" style="color:#555; font-size:13px; text-decoration:none;">
+                <i class="fas fa-arrow-left me-1"></i> Voltar para minhas respostas
+            </a>
+        </div>
+
+        <!-- Detalhes da atividade -->
+        <div class="uc-card" style="margin-bottom:20px;">
+            <div class="uc-card__head">
+                <span class="uc-card__head-title">
+                    <i class="fas fa-tasks" style="color:var(--uc-orange)"></i>
+                    {{ atividade.titulo }}
+                </span>
+                <span class="uc-badge uc-badge--rejected">Rejeitada — Refazer</span>
+            </div>
+            <div class="uc-card__body">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <div style="background:#f8f9fa; border-radius:8px; padding:14px;">
+                            <div style="font-size:11px; color:#999; text-transform:uppercase; font-weight:600; margin-bottom:4px;">Disciplina</div>
+                            <div style="font-size:14px; font-weight:600;">{{ atividade.codigo_disciplinafk.nome_disciplina }}</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div style="background:#f8f9fa; border-radius:8px; padding:14px;">
+                            <div style="font-size:11px; color:#999; text-transform:uppercase; font-weight:600; margin-bottom:4px;">Professor</div>
+                            <div style="font-size:14px; font-weight:600;">{{ atividade.id_professorfk.nome_completo }}</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div style="background:#fff3cd; border-radius:8px; padding:14px;">
+                            <div style="font-size:11px; color:#999; text-transform:uppercase; font-weight:600; margin-bottom:4px;">Prazo de Entrega</div>
+                            <div style="font-size:14px; font-weight:600; color:#856404;">
+                                {{ atividade.data_limite_resposta|date:"d/m/Y" }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {% if atividade.descricao %}
+                <div style="margin-top:20px;">
+                    <div style="font-size:12px; color:#999; text-transform:uppercase; font-weight:600; margin-bottom:8px;">Enunciado</div>
+                    <div style="background:#fff; border:1px solid #e9ecef; border-radius:8px; padding:16px; font-size:14px; line-height:1.7;">
+                        {{ atividade.descricao|linebreaksbr }}
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if atividade.anexo %}
+                <div style="margin-top:16px; padding:12px 16px; background:#e8f4fd; border:1px solid #bee5eb; border-radius:8px;">
+                    <i class="fas fa-paperclip me-2" style="color:#0c5460;"></i>
+                    <strong style="color:#0c5460;">Arquivo do professor:</strong>
+                    <a href="/media/{{ atividade.anexo }}" target="_blank" class="ms-2">{{ atividade.anexo }}</a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Motivo da rejeição -->
+        <div class="uc-card" style="margin-bottom:20px; border-left:4px solid #dc3545;">
+            <div class="uc-card__head">
+                <span class="uc-card__head-title">
+                    <i class="fas fa-times-circle" style="color:#dc3545;"></i>
+                    Motivo da Rejeição
+                </span>
+                <small style="color:#999;">Avaliação em {{ resposta.data_validacao_professor|date:"d/m/Y H:i" }}</small>
+            </div>
+            <div class="uc-card__body">
+                {% if resposta.observacao_professor %}
+                <div style="background:#f8d7da; border-radius:8px; padding:14px; font-size:14px; color:#721c24;">
+                    {{ resposta.observacao_professor }}
+                </div>
+                {% else %}
+                <p style="color:#999; font-size:13px;">O professor não deixou observações.</p>
+                {% endif %}
+
+                {% if resposta.descricao_resposta or resposta.arquivo %}
+                <div style="margin-top:16px;">
+                    <div style="font-size:12px; color:#999; text-transform:uppercase; font-weight:600; margin-bottom:8px;">Sua resposta anterior</div>
+                    {% if resposta.descricao_resposta %}
+                    <div style="background:#f8f9fa; border-radius:8px; padding:12px; font-size:13px; color:#555; margin-bottom:8px;">
+                        {{ resposta.descricao_resposta|linebreaksbr }}
+                    </div>
+                    {% endif %}
+                    {% if resposta.arquivo %}
+                    <div style="padding:8px 14px; background:#e8f4fd; border-radius:8px; font-size:13px;">
+                        <i class="fas fa-paperclip me-1" style="color:#0c5460;"></i>
+                        <a href="/media/{{ resposta.arquivo }}" target="_blank">{{ resposta.arquivo }}</a>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Formulário de reenvio -->
+        <div class="uc-card">
+            <div class="uc-card__head">
+                <span class="uc-card__head-title">
+                    <i class="fas fa-redo" style="color:var(--uc-orange)"></i>
+                    Nova Resposta
+                </span>
+                <span class="uc-badge" style="background:#fff3cd;color:#856404;padding:3px 10px;border-radius:20px;font-size:11px;">
+                    Nova tentativa
+                </span>
+            </div>
+            <div class="uc-card__body">
+                <div style="margin-bottom:16px; padding:12px 16px; background:#fff3cd; border-radius:8px; border-left:4px solid #ffc107; font-size:13px; color:#856404;">
+                    <i class="fas fa-info-circle me-1"></i>
+                    Leia o motivo da rejeição acima e envie uma resposta revisada. O conteúdo anterior será substituído.
+                </div>
+
+                <form method="post" action="{% url 'dashboard:refazer_atividade' atividade.id_atividade %}" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="form-label fw-semibold" style="font-size:13px;">Nova Resposta</label>
+                            <textarea name="descricao_resposta" class="form-control" rows="7"
+                                placeholder="Escreva sua nova resposta levando em conta o feedback do professor..."
+                                style="border-radius:8px; border:2px solid #e0e0e0; font-size:14px;">{{ resposta.descricao_resposta|default:'' }}</textarea>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-semibold" style="font-size:13px;">
+                                Arquivo
+                                <small class="text-muted fw-normal">(opcional — substitui o anterior se enviado)</small>
+                            </label>
+                            {% if resposta.arquivo %}
+                            <div style="margin-bottom:8px; padding:10px 14px; background:#e8f4fd; border:1px solid #bee5eb; border-radius:8px; font-size:13px;">
+                                <i class="fas fa-paperclip me-1" style="color:#0c5460;"></i>
+                                <strong style="color:#0c5460;">Arquivo atual:</strong>
+                                <a href="/media/{{ resposta.arquivo }}" target="_blank" class="ms-1">{{ resposta.arquivo }}</a>
+                            </div>
+                            {% endif %}
+                            <input type="file" name="arquivo" class="form-control" style="border-radius:8px; border:2px solid #e0e0e0;">
+                            <small class="text-muted">Formatos aceitos: PDF, DOC, DOCX, JPG, PNG. Máx. 10MB.</small>
+                        </div>
+                    </div>
+                    <div style="margin-top:24px; display:flex; justify-content:flex-end; gap:10px;">
+                        <a href="{% url 'dashboard:minhas_respostas' %}" class="uc-btn uc-btn--ghost uc-btn--sm">
+                            Cancelar
+                        </a>
+                        <button type="submit" class="uc-btn uc-btn--orange uc-btn--sm">
+                            <i class="fas fa-paper-plane me-1"></i> Enviar Nova Resposta
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+</body>
+{% endblock %}
+
+{% block footer %}{% endblock %}
+
+{% block extra_js %}
+<script>
+    function ucToggleSidebar() {
+        document.getElementById('ucSidebar').classList.toggle('collapsed');
+        document.getElementById('ucMain').classList.toggle('expanded');
+        localStorage.setItem('uc_sb', document.getElementById('ucSidebar').classList.contains('collapsed'));
+    }
+    document.addEventListener('DOMContentLoaded', function () {
+        if (localStorage.getItem('uc_sb') === 'true') {
+            document.getElementById('ucSidebar').classList.add('collapsed');
+            document.getElementById('ucMain').classList.add('expanded');
+        }
+    });
+</script>
+{% endblock %}

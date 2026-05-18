@@ -97,7 +97,7 @@
 
                 {% if resposta.status == 'rejeitada_prof' %}
                 <div style="margin-top:12px; display:flex; gap:8px;">
-                    <a href="{% url 'dashboard:visualizar_atividade' resposta.id_atividade.id_atividade %}" class="uc-btn uc-btn--orange uc-btn--sm">
+                    <a href="{% url 'dashboard:refazer_atividade' resposta.id_atividade.id_atividade %}" class="uc-btn uc-btn--orange uc-btn--sm">
                         <i class="fas fa-redo me-1"></i> Refazer Atividade
                     </a>
                 </div>
@@ -160,7 +160,7 @@
                                 {% endif %}
                                 {% if resposta.status == 'rejeitada_prof' %}
                                 <div style="margin-top:8px;">
-                                    <a href="{% url 'dashboard:visualizar_atividade' resposta.id_atividade.id_atividade %}" class="uc-btn uc-btn--orange uc-btn--sm">
+                                    <a href="{% url 'dashboard:refazer_atividade' resposta.id_atividade.id_atividade %}" class="uc-btn uc-btn--orange uc-btn--sm">
                                         <i class="fas fa-redo me-1"></i> Refazer Atividade
                                     </a>
                                 </div>
