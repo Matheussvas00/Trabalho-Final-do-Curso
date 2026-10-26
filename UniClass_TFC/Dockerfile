@@ -13,4 +13,5 @@ COPY . .
 
 EXPOSE 8000
 
-CMD ["sh", "-c", "python manage.py migrate --no-input && python manage.py runserver 0.0.0.0:8000"]
+# --nostatic: deixa o WhiteNoise servir /static/ a partir de staticfiles/, como em produção
+CMD ["sh", "-c", "python manage.py migrate --no-input && python manage.py runserver --nostatic 0.0.0.0:8000"]

@@ -94,3 +94,17 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   });
 });
+
+// ─────────────────────────────────────────────────────────
+// ucToggleTheme — Alterna entre modo claro e escuro
+// O tema inicial é aplicado no <head> do base.html
+// ─────────────────────────────────────────────────────────
+function ucToggleTheme() {
+  var html = document.documentElement;
+  var tema = html.getAttribute("data-theme") === "dark" ? "light" : "dark";
+  html.setAttribute("data-theme", tema);
+  html.setAttribute("data-bs-theme", tema);
+  try {
+    localStorage.setItem("uc-theme", tema);
+  } catch (e) {}
+}

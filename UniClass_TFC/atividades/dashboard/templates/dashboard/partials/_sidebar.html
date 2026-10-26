@@ -108,6 +108,12 @@
     </nav>
 
     <div class="uc-sidebar__footer">
+        <button type="button" class="uc-sidebar__theme" onclick="ucToggleTheme()" title="Alternar modo claro/escuro">
+            <i class="fas fa-moon uc-theme-icon--moon"></i>
+            <i class="fas fa-sun uc-theme-icon--sun"></i>
+            <span class="uc-theme-label--dark">Modo escuro</span>
+            <span class="uc-theme-label--light">Modo claro</span>
+        </button>
         <a href="{% url 'authentication:logout' %}" class="uc-sidebar__logout" data-tip="Sair">
             <i class="fas fa-sign-out-alt"></i><span>Sair</span>
         </a>
