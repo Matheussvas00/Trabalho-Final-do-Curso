@@ -11,7 +11,7 @@ from atividades.models import (
     Aluno, Atividade, Portaria, RespostaAtividade, Disciplina, Notificacao, Historico,
     AlunoDisciplina
 )
-from .common import base_context
+from .common import base_context, validar_arquivo
 
 
 # ── helpers ────────────────────────────────────────────────────
@@ -238,12 +238,23 @@ def responder_atividade(request, atividade_id):
         messages.error(request, 'Você já respondeu esta atividade.')
         return redirect('dashboard:minhas_respostas')
 
+    # Bloqueia o envio depois da data limite da atividade
+    if atividade.prazo_vencido:
+        messages.error(request, 'Prazo encerrado. Não é possível enviar a resposta.')
+        return redirect('dashboard:visualizar_atividade', atividade_id=atividade_id)
+
     arquivo_upload = request.FILES.get('arquivo')
     descricao = request.POST.get('descricao_resposta', '').strip()
 
     if not arquivo_upload and not descricao:
         messages.error(request, 'Envie um arquivo ou descrição da resposta.')
         return redirect('dashboard:visualizar_atividade', atividade_id=atividade_id)
+
+    if arquivo_upload:
+        erro_arquivo = validar_arquivo(arquivo_upload)
+        if erro_arquivo:
+            messages.error(request, erro_arquivo)
+            return redirect('dashboard:visualizar_atividade', atividade_id=atividade_id)
 
     arquivo_path = None
     if arquivo_upload:
@@ -382,6 +393,12 @@ def refazer_atividade(request, atividade_id):
     if not arquivo_upload and not descricao and not resposta.arquivo:
         messages.error(request, 'Envie um arquivo ou escreva uma descrição para a resposta.')
         return render(request, 'dashboard/aluno_refazer_atividade.html', ctx)
+
+    if arquivo_upload:
+        erro_arquivo = validar_arquivo(arquivo_upload)
+        if erro_arquivo:
+            messages.error(request, erro_arquivo)
+            return render(request, 'dashboard/aluno_refazer_atividade.html', ctx)
 
     try:
         with transaction.atomic():
@@ -525,6 +542,12 @@ def editar_resposta(request, resposta_id):
     if not arquivo_upload and not descricao and not resposta.arquivo:
         messages.error(request, 'Envie um arquivo ou descrição da resposta.')
         return redirect('dashboard:editar_resposta', resposta_id=resposta_id)
+
+    if arquivo_upload:
+        erro_arquivo = validar_arquivo(arquivo_upload)
+        if erro_arquivo:
+            messages.error(request, erro_arquivo)
+            return redirect('dashboard:editar_resposta', resposta_id=resposta_id)
 
     if arquivo_upload:
         from django.core.files.storage import default_storage

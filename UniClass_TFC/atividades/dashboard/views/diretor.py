@@ -14,7 +14,7 @@ from atividades.models import (
     Disciplina, ProfessorDisciplina, AlunoDisciplina, RespostaAtividade, Usuario, Curso,
     Notificacao, Historico
 )
-from .common import base_context
+from .common import base_context, validar_arquivo, EXTENSOES_ATESTADO
 
 
 # ── helpers ────────────────────────────────────────────────────
@@ -572,6 +572,14 @@ def cadastrar_portaria(request):
     if not disciplinas_ids:
         return _erro('Selecione pelo menos uma disciplina para a portaria.')
 
+    # Atestado é obrigatório na abertura da portaria (RN007)
+    atestado = request.FILES.get('atestado')
+    if not atestado:
+        return _erro('O atestado é obrigatório para abrir a portaria.')
+    erro_arquivo = validar_arquivo(atestado, EXTENSOES_ATESTADO)
+    if erro_arquivo:
+        return _erro(erro_arquivo)
+
     if Portaria.objects.filter(numero_portaria=numero).exists():
         return _erro('Já existe uma portaria com esse número.')
 
@@ -612,9 +620,7 @@ def cadastrar_portaria(request):
                 prazo_aluno_responder=d_resp,
                 prazo_validacao_final=d_valid,
             )
-            atestado = request.FILES.get('atestado')
-            if atestado:
-                portaria.atestado = atestado
+            portaria.atestado = atestado
             portaria.save()
 
             valido, erro = portaria.validar_disciplinas(disciplinas)
@@ -695,9 +701,13 @@ def editar_portaria(request, portaria_id):
     if status and status in dict(Portaria.STATUS_CHOICES):
         portaria.status = status
 
-    # Atestado (arquivo) — opcional na edição
+    # Atestado (arquivo) — na edição, só é trocado se um novo for enviado
     atestado = request.FILES.get('atestado')
     if atestado:
+        erro_arquivo = validar_arquivo(atestado, EXTENSOES_ATESTADO)
+        if erro_arquivo:
+            messages.error(request, erro_arquivo)
+            return redirect('dashboard:gerenciar_portarias')
         portaria.atestado = atestado
 
     with transaction.atomic():

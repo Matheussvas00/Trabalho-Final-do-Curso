@@ -1,0 +1,22 @@
+# Banco MySQL local para desenvolvimento (isolado, não toca em nenhum outro banco)
+# Subir:   docker compose up -d
+# Parar:   docker compose down        (os dados ficam no volume)
+# Apagar:  docker compose down -v     (remove também os dados)
+services:
+  db:
+    image: mysql:8.0
+    container_name: uniclass-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: uniclass_tfc
+      MYSQL_USER: Matheussvas
+      MYSQL_PASSWORD: "553948"
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    ports:
+      - "33061:3306"
+    volumes:
+      - uniclass_mysql_data:/var/lib/mysql
+
+volumes:
+  uniclass_mysql_data:

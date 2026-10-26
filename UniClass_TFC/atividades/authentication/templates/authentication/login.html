@@ -338,36 +338,8 @@
         <div class="text-center mt-3">
             <small class="text-muted">
                 Esqueceu sua senha?
-                <a href="#" class="text-decoration-none" style="color:#FF6B00; font-weight:500;"
-                   onclick="document.getElementById('overlayEsqueceuSenha').style.display='flex'; return false;">Clique aqui</a>
+                <a href="{% url 'authentication:solicitar_reset' %}" class="text-decoration-none" style="color:#FF6B00; font-weight:500;">Clique aqui</a>
             </small>
-        </div>
-
-        <!-- Overlay: instrução para contatar diretor -->
-        <div id="overlayEsqueceuSenha"
-             style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5);
-                    z-index:9999; align-items:center; justify-content:center;">
-            <div style="background:#fff; border-radius:12px; overflow:hidden; text-align:center;
-                        width:90%; max-width:340px; box-shadow:0 20px 60px rgba(0,0,0,.3);">
-                <div style="background:linear-gradient(135deg,#1C1C2E,#0F2952); padding:20px;">
-                    <i class="fas fa-key fa-2x" style="color:#FF6B00;"></i>
-                </div>
-                <div style="padding:24px 24px 8px;">
-                    <h6 style="font-weight:700; margin-bottom:8px;">Redefinição de Senha</h6>
-                    <p style="font-size:14px; color:#555; margin:0;">
-                        Para redefinir sua senha, entre em contato com a
-                        <strong>Direção da faculdade</strong>.
-                        O diretor poderá gerar uma nova senha para sua conta pelo painel administrativo.
-                    </p>
-                </div>
-                <div style="padding:16px 24px 24px;">
-                    <button type="button"
-                            style="background:linear-gradient(135deg,#FF6B00,#D45400); border:none;
-                                   border-radius:8px; color:#fff; font-weight:600; padding:8px 32px;
-                                   font-size:14px; cursor:pointer;"
-                            onclick="document.getElementById('overlayEsqueceuSenha').style.display='none';">Entendido</button>
-                </div>
-            </div>
         </div>
 
     </div>

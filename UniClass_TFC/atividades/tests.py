@@ -339,14 +339,14 @@ class RespostaAtividadeTests(TestCase):
         resp = self._criar_resposta()
         resp.validar_professor(aprovada=True, observacao="Bom trabalho!")
         self.assertEqual(resp.status_professor, "aprovada")
-        self.assertEqual(resp.status, "aprovada_professor")
+        self.assertEqual(resp.status, "aprovada_prof")
         self.assertIsNotNone(resp.data_validacao_professor)
 
     def test_validar_professor_rejeitada(self):
         resp = self._criar_resposta()
         resp.validar_professor(aprovada=False, observacao="Refaça o exercício 3.")
         self.assertEqual(resp.status_professor, "rejeitada")
-        self.assertEqual(resp.status, "rejeitada_professor")
+        self.assertEqual(resp.status, "rejeitada_prof")
 
     def test_validar_diretor_sem_aprovacao_professor_falha(self):
         resp = self._criar_resposta()
@@ -358,14 +358,14 @@ class RespostaAtividadeTests(TestCase):
         resp.validar_professor(aprovada=True)
         resp.validar_diretor(aprovada=True, observacao="Aprovado!")
         self.assertEqual(resp.status_diretor, "aprovada")
-        self.assertEqual(resp.status, "aprovada_diretor")
+        self.assertEqual(resp.status, "aprovada_dir")
         self.assertIsNotNone(resp.data_validacao_diretor)
 
     def test_diretor_pode_rejeitar_apos_professor_aprovar(self):
         resp = self._criar_resposta()
         resp.validar_professor(aprovada=True)
         resp.validar_diretor(aprovada=False, observacao="Inconsistências.")
-        self.assertEqual(resp.status, "rejeitada_diretor")
+        self.assertEqual(resp.status, "rejeitada_dir")
 
     def test_aluno_errado_nao_pode_responder(self):
         outro = criar_aluno(

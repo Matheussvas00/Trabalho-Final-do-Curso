@@ -7,7 +7,10 @@ from django.contrib.auth import authenticate, login as auth_login, logout as aut
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.cache import never_cache
 from django.views.decorators.csrf import csrf_protect
-from atividades.models import Usuario, Aluno, Professor, Diretor
+from django.conf import settings
+from django.core.mail import send_mail
+from django.urls import reverse
+from atividades.models import Usuario, Aluno, Professor, Diretor, PasswordResetToken
 from .forms import LoginForm, CadastroUsuarioForm
 
 
@@ -150,11 +153,82 @@ def cadastro_view(request):
     return render(request, 'authentication/cadastro.html', context)
 
 
+@csrf_protect
+@never_cache
 def solicitar_reset_view(request):
-    """Mantida apenas para compatibilidade de URL — redireciona para o login."""
-    return redirect('authentication:login')
+    """
+    Recuperação de senha — etapa 1 (RF002, fluxo "Esqueceu a senha").
+    O usuário informa o e-mail e recebe um link válido por 60 minutos.
+    """
+    if request.user.is_authenticated:
+        return redirect('dashboard:index')
+
+    if request.method == 'POST':
+        email = request.POST.get('email', '').strip().lower()
+        if not email:
+            messages.error(request, 'Informe o e-mail cadastrado.')
+            return render(request, 'authentication/solicitar_reset.html', {'title': 'Recuperar senha - UniClass'})
+
+        usuario = Usuario.objects.filter(email=email).first()
+        if usuario:
+            token = PasswordResetToken.criar_para(usuario)
+            link = request.build_absolute_uri(reverse('authentication:confirmar_reset', args=[token]))
+            mensagem = (
+                'Olá,\n\n'
+                'Recebemos um pedido para redefinir a sua senha no UniClass.\n'
+                'Para criar uma nova senha, acesse o link abaixo '
+                f'(válido por {PasswordResetToken.EXPIRACAO_MINUTOS} minutos):\n\n'
+                f'{link}\n\n'
+                'Se você não fez esse pedido, ignore este e-mail.\n\n'
+                'UniClass — Sistema de Atividades Domiciliares'
+            )
+            try:
+                send_mail(
+                    'UniClass — Redefinição de senha',
+                    mensagem,
+                    getattr(settings, 'DEFAULT_FROM_EMAIL', None),
+                    [usuario.email],
+                    fail_silently=False,
+                )
+            except Exception:
+                messages.error(request, 'Não foi possível enviar o e-mail agora. Tente novamente em alguns minutos.')
+                return render(request, 'authentication/solicitar_reset.html', {'title': 'Recuperar senha - UniClass'})
+
+        # Mesma mensagem para e-mail existente ou não (evita descobrir e-mails cadastrados)
+        messages.success(
+            request,
+            'Se o e-mail estiver cadastrado, você receberá um link para criar uma nova senha.'
+        )
+        return redirect('authentication:login')
+
+    return render(request, 'authentication/solicitar_reset.html', {'title': 'Recuperar senha - UniClass'})
 
 
+@csrf_protect
+@never_cache
 def confirmar_reset_view(request, token):
-    """Mantida apenas para compatibilidade de URL — redireciona para o login."""
-    return redirect('authentication:login')
+    """
+    Recuperação de senha — etapa 2: o usuário abre o link recebido e define a nova senha.
+    """
+    registro = PasswordResetToken.verificar(token)
+    if registro is None:
+        messages.error(request, 'Link inválido ou expirado. Solicite um novo link de redefinição.')
+        return redirect('authentication:solicitar_reset')
+
+    if request.method == 'POST':
+        senha = request.POST.get('senha', '')
+        confirmar = request.POST.get('confirmar_senha', '')
+        if len(senha) < 8:
+            messages.error(request, 'A nova senha deve ter pelo menos 8 caracteres.')
+        elif senha != confirmar:
+            messages.error(request, 'As senhas não coincidem.')
+        else:
+            usuario = registro.usuario
+            usuario.set_password(senha)
+            usuario.save(update_fields=['senha'])
+            registro.usado = True
+            registro.save(update_fields=['usado'])
+            messages.success(request, 'Senha redefinida com sucesso! Faça o login com a nova senha.')
+            return redirect('authentication:login')
+
+    return render(request, 'authentication/confirmar_reset.html', {'title': 'Nova senha - UniClass'})

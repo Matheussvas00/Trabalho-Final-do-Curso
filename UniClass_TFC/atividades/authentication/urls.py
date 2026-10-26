@@ -11,4 +11,6 @@ urlpatterns = [
     path('login/', views.login_view, name='login'),
     path('logout/', views.logout_view, name='logout'),
     path('cadastro/', views.cadastro_view, name='cadastro'),
+    path('senha/esqueci/', views.solicitar_reset_view, name='solicitar_reset'),
+    path('senha/redefinir/<str:token>/', views.confirmar_reset_view, name='confirmar_reset'),
 ]
