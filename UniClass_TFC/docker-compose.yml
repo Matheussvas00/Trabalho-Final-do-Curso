@@ -1,5 +1,6 @@
-# Banco MySQL local para desenvolvimento (isolado, não toca em nenhum outro banco)
-# Subir:   docker compose up -d
+# Ambiente local de desenvolvimento (isolado, não toca em nenhum outro banco)
+# Subir:   docker compose up -d --build   → http://localhost:8000
+# Logs:    docker compose logs -f web
 # Parar:   docker compose down        (os dados ficam no volume)
 # Apagar:  docker compose down -v     (remove também os dados)
 services:
@@ -17,6 +18,32 @@ services:
       - "33061:3306"
     volumes:
       - uniclass_mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-proot"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+  web:
+    build: .
+    container_name: uniclass-web
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DEBUG: "True"
+      DB_HOST: db
+      DB_PORT: "3306"
+      DB_NAME: uniclass_tfc
+      DB_USER: Matheussvas
+      DB_PASSWORD: "553948"
+      EMAIL_BACKEND: django.core.mail.backends.console.EmailBackend
+      USE_S3: "False"
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
 
 volumes:
   uniclass_mysql_data:

@@ -1,0 +1,14 @@
+.git
+.github
+.venv
+venv
+env
+__pycache__
+*.py[cod]
+.env
+.env.*
+media
+staticfiles
+*.sql
+docker-compose.yml
+Dockerfile

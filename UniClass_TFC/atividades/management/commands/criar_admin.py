@@ -3,8 +3,8 @@ Comando de gerenciamento: cria o usuário administrador padrão do sistema UniCl
 
 Uso:
     python manage.py criar_admin
-    python manage.py criar_admin --email admin@uniclass.edu.br --senha Senha@1234
-    python manage.py criar_admin --email admin@uniclass.edu.br --nome Admin --sobrenome Sistema --senha Senha@1234
+    python manage.py criar_admin --email admin@unirv.edu.br --senha Senha@1234
+    python manage.py criar_admin --email admin@unirv.edu.br --nome Admin --sobrenome Sistema --senha Senha@1234
 """
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
@@ -17,8 +17,8 @@ class Command(BaseCommand):
         parser.add_argument(
             '--email',
             type=str,
-            default='admin@uniclass.edu.br',
-            help='E-mail do administrador (padrão: admin@uniclass.edu.br)',
+            default='admin@unirv.edu.br',
+            help='E-mail do administrador (padrão: admin@unirv.edu.br)',
         )
         parser.add_argument(
             '--nome',
