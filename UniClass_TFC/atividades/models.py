@@ -102,6 +102,11 @@ class Aluno(models.Model):
     def nome_completo(self):
         return f"{self.nome_aluno} {self.sobrenome_aluno}"
 
+    @property
+    def disciplinas(self):
+        """Disciplinas em que o aluno está matriculado (usado nos templates)."""
+        return Disciplina.objects.filter(alunos_matriculados__id_alunofk=self)
+
 
 class Professor(models.Model):
     """Informações específicas de professores"""
@@ -133,6 +138,11 @@ class Professor(models.Model):
     @property
     def nome_completo(self):
         return f"{self.nome_professor} {self.sobrenome_professor}"
+
+    @property
+    def disciplinas(self):
+        """Disciplinas lecionadas pelo professor (usado nos templates)."""
+        return self.disciplinas_lecionadas.all()
 
 
 class Diretor(models.Model):
@@ -645,8 +655,6 @@ class RespostaAtividade(models.Model):
             self.save()
 
 
-
-
 class Notificacao(models.Model):
     """Notificações enviadas aos usuários"""
     id_notificacao = models.AutoField(primary_key=True)
@@ -767,3 +775,24 @@ class PasswordResetToken(models.Model):
         except cls.DoesNotExist:
             pass
         return None
+
+
+class ArquivoArmazenado(models.Model):
+    """Conteúdo dos arquivos enviados (atestados, respostas e anexos).
+
+    Na Vercel o sistema de arquivos do servidor é somente leitura e temporário,
+    por isso os arquivos enviados são guardados no próprio banco de dados.
+    """
+    nome = models.CharField(max_length=255, unique=True)
+    conteudo = models.BinaryField()
+    tipo = models.CharField(max_length=100, blank=True, default='')
+    tamanho = models.PositiveIntegerField(default=0)
+    criado_em = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'arquivo_armazenado'
+        verbose_name = 'Arquivo armazenado'
+        verbose_name_plural = 'Arquivos armazenados'
+
+    def __str__(self):
+        return self.nome

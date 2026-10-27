@@ -10,7 +10,7 @@ from django.views.decorators.http import require_POST
 from django.contrib.auth.decorators import login_required
 
 from atividades.models import (
-    Admin, Diretor, Curso, Usuario, Professor, Aluno, Disciplina, ProfessorDisciplina
+    Admin, Diretor, Curso, Usuario, Professor, Aluno, Disciplina
 )
 from .common import base_context
 

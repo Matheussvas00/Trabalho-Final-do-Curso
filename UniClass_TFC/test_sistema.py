@@ -5,44 +5,47 @@ django.setup()
 
 from django.test import Client
 from atividades.models import (
-    Usuario, Aluno, Professor, Diretor, Atividade,
-    RespostaAtividade, Portaria, Notificacao, Historico, Disciplina
+    Usuario, Atividade,
+    RespostaAtividade, Portaria, Notificacao, Historico
 )
 
 OK = "[OK]"
 FAIL = "[FAIL]"
 
+
 def check(cond, msg):
     print(f"  {OK if cond else FAIL} {msg}")
     return cond
 
+
 def make_client():
     return Client(SERVER_NAME='127.0.0.1')
 
-print("\n" + "="*60)
+
+print("\n" + "=" * 60)
 print("  TESTE COMPLETO — UNICLASS")
-print("="*60)
+print("=" * 60)
 
 # ─── ESTADO DO BANCO ───────────────────────────────────────
 print("\n[1] ESTADO DO BANCO DE DADOS")
 usuarios = Usuario.objects.all()
-check(usuarios.filter(tipo_usuario='admin').exists(), f"Admin existe")
-check(usuarios.filter(tipo_usuario='diretor').exists(), f"Diretor existe")
-check(usuarios.filter(tipo_usuario='professor').exists(), f"Professor existe")
-check(usuarios.filter(tipo_usuario='aluno').exists(), f"Aluno(s) existe(m)")
+check(usuarios.filter(tipo_usuario='admin').exists(), "Admin existe")
+check(usuarios.filter(tipo_usuario='diretor').exists(), "Diretor existe")
+check(usuarios.filter(tipo_usuario='professor').exists(), "Professor existe")
+check(usuarios.filter(tipo_usuario='aluno').exists(), "Aluno(s) existe(m)")
 
 atividades = Atividade.objects.all()
 check(atividades.exists(), f"Atividades cadastradas: {atividades.count()}")
 for a in atividades:
-    check(a.status in ['aguardando_resposta','pendente','concluida','inativa'],
+    check(a.status in ['aguardando_resposta', 'pendente', 'concluida', 'inativa'],
           f"Status da atividade '{a.titulo}': {a.status}")
 
 respostas = RespostaAtividade.objects.all()
 check(respostas.exists(), f"Respostas cadastradas: {respostas.count()}")
 for r in respostas:
-    status_validos_prof = ['pendente','aprovada','rejeitada']
-    status_validos_dir  = ['pendente','aprovada','rejeitada']
-    status_validos_geral = ['pendente','aprovada','rejeitada','aprovada_diretor','rejeitada_diretor']
+    status_validos_prof = ['pendente', 'aprovada', 'rejeitada']
+    status_validos_dir  = ['pendente', 'aprovada', 'rejeitada']
+    status_validos_geral = ['pendente', 'aprovada', 'rejeitada', 'aprovada_diretor', 'rejeitada_diretor']
     check(r.status_professor in status_validos_prof,
           f"Resposta '{r.id_atividade.titulo}' status_professor={r.status_professor}")
     check(r.status_diretor in status_validos_dir,
@@ -53,7 +56,7 @@ for r in respostas:
 portarias = Portaria.objects.all()
 check(portarias.exists(), f"Portarias cadastradas: {portarias.count()}")
 for p in portarias:
-    check(p.status in ['aguardando_atividades','em_andamento','concluida','inativa'],
+    check(p.status in ['aguardando_atividades', 'em_andamento', 'concluida', 'inativa'],
           f"Portaria {p.numero_portaria} status={p.status}")
 
 notifs = Notificacao.objects.all()
@@ -75,7 +78,7 @@ for email, senha, tipo in credenciais:
     c = make_client()
     resp = c.post('/login/', {'email': email, 'senha': senha})
     ok = resp.status_code in [200, 302]
-    redirect = resp.get('Location','')
+    redirect = resp.get('Location', '')
     logged = '/dashboard' in redirect or resp.status_code == 302
     check(logged, f"Login {tipo} ({email}) → {redirect or resp.status_code}")
     clients[tipo] = c
@@ -155,9 +158,13 @@ r_inv = cd2.post('/dashboard/gerenciar/alunos/cadastrar/', {
     'email': 'invalido@gmail.com', 'senha': 'Senha@1234',
     'disciplinas': []
 }, follow=True)
+
+
 def get_messages(resp):
     from django.contrib.messages import get_messages as _gm
     return [str(m) for m in _gm(resp.wsgi_request)]
+
+
 msgs_inv = get_messages(r_inv)
 check(any('academico' in m.lower() or 'dom' in m.lower() for m in msgs_inv),
       f"Rejeita email @gmail.com: {msgs_inv}")
@@ -182,11 +189,11 @@ for r in RespostaAtividade.objects.all():
     # Lógica: se prof=aprovada e dir=aprovada -> geral=aprovada_diretor
     if r.status_professor == 'aprovada' and r.status_diretor == 'aprovada':
         check(r.status == 'aprovada_diretor',
-              f"Fluxo correto: prof aprovada + dir aprovada → geral=aprovada_diretor")
+              "Fluxo correto: prof aprovada + dir aprovada → geral=aprovada_diretor")
     elif r.status_professor == 'rejeitada':
-        check(r.status in ['rejeitada','rejeitada_diretor'],
-              f"Fluxo correto: prof rejeitada → geral rejeitada")
+        check(r.status in ['rejeitada', 'rejeitada_diretor'],
+              "Fluxo correto: prof rejeitada → geral rejeitada")
 
-print("\n" + "="*60)
+print("\n" + "=" * 60)
 print("  FIM DOS TESTES")
-print("="*60 + "\n")
+print("=" * 60 + "\n")

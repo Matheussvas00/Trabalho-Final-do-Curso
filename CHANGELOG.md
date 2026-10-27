@@ -82,8 +82,6 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/).
   porque `curso_fk` (NOT NULL) não era enviado pelo formulário.
   Diretores agora são criados exclusivamente via painel do Admin.
 - `elif tipo_usuario == 'admin'` órfão removido do `cadastro_view`
-- S3 configurado apenas para arquivos de media (não estáticos),
-  evitando conflito com whitenoise
 
 ### Adicionado
 - `whitenoise.middleware.WhiteNoiseMiddleware` no MIDDLEWARE (produção)
@@ -92,4 +90,4 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/).
 - `Procfile` para Railway (gunicorn + migrate + collectstatic)
 - `runtime.txt` (python-3.13.0)
 - `nixpacks.toml` com `libmysqlclient` para build no Railway
-- `.env.example` completo com variáveis Railway, S3 e SMTP
+- `.env.example` completo com variáveis de produção e SMTP

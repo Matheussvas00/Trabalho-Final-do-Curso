@@ -33,12 +33,20 @@ SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-eqm98@ihtwlj%u#^*bqs!0(3^n
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG', 'True') == 'True'
 
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '').split(',') if os.getenv('ALLOWED_HOSTS') else ['localhost', '127.0.0.1']
+ALLOWED_HOSTS = [h.strip() for h in os.getenv('ALLOWED_HOSTS', '').split(',') if h.strip()] or ['localhost', '127.0.0.1']
 
-# Railway e outros servidores de produção
+# Vercel: aceita os domínios *.vercel.app do projeto automaticamente
+if os.getenv('VERCEL'):
+    ALLOWED_HOSTS.append('.vercel.app')
+    for _var in ('VERCEL_URL', 'VERCEL_BRANCH_URL', 'VERCEL_PROJECT_PRODUCTION_URL'):
+        if os.getenv(_var):
+            ALLOWED_HOSTS.append(os.getenv(_var))
+
 CSRF_TRUSTED_ORIGINS = [
-    f"https://{h}" for h in os.getenv('ALLOWED_HOSTS', '').split(',') if h.strip()
+    f"https://{h.lstrip('.')}" for h in ALLOWED_HOSTS if h not in ('localhost', '127.0.0.1') and not h.startswith('.')
 ] or ['http://localhost:8000']
+if os.getenv('VERCEL'):
+    CSRF_TRUSTED_ORIGINS.append('https://*.vercel.app')
 
 
 # Application definition
@@ -80,6 +88,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'atividades.context_processors.limites_upload',
             ],
         },
     },
@@ -103,8 +112,21 @@ DATABASES = {
             'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
             'charset': 'utf8mb4',
         },
+        'CONN_MAX_AGE': int(os.getenv('DB_CONN_MAX_AGE', '0')),
     }
 }
+
+# Banco MySQL online (Vercel): conexão criptografada (SSL).
+# DB_SSL_CA recebe o conteúdo do certificado CA do provedor (ex.: ca.pem do Aiven);
+# sem ele, DB_SSL=True criptografa a conexão sem validar o certificado.
+if os.getenv('DB_SSL_CA'):
+    import tempfile
+    _ca = os.path.join(tempfile.gettempdir(), 'uniclass_db_ca.pem')
+    with open(_ca, 'w') as _f:
+        _f.write(os.getenv('DB_SSL_CA').replace('\\n', '\n'))
+    DATABASES['default']['OPTIONS']['ssl'] = {'ca': _ca, 'check_hostname': False}
+elif os.getenv('DB_SSL', 'False') == 'True':
+    DATABASES['default']['OPTIONS']['ssl'] = {'check_hostname': False}
 
 
 # Password validation
@@ -144,11 +166,17 @@ USE_TZ = True
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_DIRS = [BASE_DIR / 'static'] if (BASE_DIR / 'static').exists() else []
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+# Arquivos enviados pelos usuários: guardados no banco de dados
+# (a Vercel não permite gravar na pasta media/ — ver atividades/storage.py)
+STORAGES = {
+    'default': {'BACKEND': 'atividades.storage.BancoDeDadosStorage'},
+    'staticfiles': {'BACKEND': 'django.contrib.staticfiles.storage.StaticFilesStorage'},
+}
 
 # Media files (User uploads)
 MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
+MEDIA_ROOT = BASE_DIR / 'media'  # usada só para arquivos antigos, anteriores ao armazenamento no banco
 
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
@@ -169,23 +197,6 @@ LOGIN_URL = 'authentication:login'
 LOGIN_REDIRECT_URL = 'dashboard:index'
 LOGOUT_REDIRECT_URL = 'login'
 
-# AWS S3 Configuration (Opcional - para produção)
-USE_S3 = os.getenv('USE_S3', 'False') == 'True'
-
-if USE_S3:
-    AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID')
-    AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY')
-    AWS_STORAGE_BUCKET_NAME = os.getenv('AWS_STORAGE_BUCKET_NAME')
-    AWS_S3_REGION_NAME = os.getenv('AWS_S3_REGION_NAME', 'us-east-1')
-    AWS_S3_CUSTOM_DOMAIN = f'{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com'
-    AWS_S3_OBJECT_PARAMETERS = {'CacheControl': 'max-age=86400'}
-    AWS_DEFAULT_ACL = 'public-read'
-
-    # Apenas media no S3 — estáticos continuam no whitenoise
-    MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/media/'
-    DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
-
-
 # ── Email ──────────────────────────────────────────────────────────────
 # Backend SMTP — preencha EMAIL_HOST_USER e EMAIL_HOST_PASSWORD
 # com a conta Google e a Senha de App gerada em:
@@ -204,6 +215,8 @@ DEFAULT_FROM_EMAIL  = os.getenv('DEFAULT_FROM_EMAIL', 'UniClass <matheus.s.vasco
 
 # ── Segurança HTTPS (ativa automaticamente em produção quando DEBUG=False) ─────
 if not DEBUG:
+    # A Vercel entrega a requisição por proxy; sem isto o redirecionamento HTTPS entra em loop
+    SECURE_PROXY_SSL_HEADER    = ('HTTP_X_FORWARDED_PROTO', 'https')
     SECURE_HSTS_SECONDS        = 31536000  # 1 ano
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD        = True

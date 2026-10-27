@@ -39,7 +39,6 @@ services:
       DB_USER: Matheussvas
       DB_PASSWORD: "553948"
       EMAIL_BACKEND: django.core.mail.backends.console.EmailBackend
-      USE_S3: "False"
     ports:
       - "8000:8000"
     volumes:

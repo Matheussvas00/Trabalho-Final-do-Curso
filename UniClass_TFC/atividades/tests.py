@@ -5,6 +5,9 @@ Execute com: python manage.py test atividades
 """
 
 from django.test import TestCase
+from django.core import mail
+from django.core.files.uploadedfile import SimpleUploadedFile
+from django.urls import reverse
 from django.db import IntegrityError
 from datetime import date, timedelta
 
@@ -12,7 +15,7 @@ from atividades.models import (
     Usuario, Curso, Aluno, Professor, Diretor,
     Disciplina, ProfessorDisciplina, AlunoDisciplina,
     Portaria, PortariaDisciplina, Atividade, RespostaAtividade,
-    PasswordResetToken,
+    PasswordResetToken, Notificacao, ArquivoArmazenado,
 )
 from atividades.authentication.backends import (
     UniClassAuthBackend,
@@ -28,11 +31,13 @@ from atividades.authentication.backends import (
 def criar_curso(nome="Engenharia de Software"):
     return Curso.objects.create(nome_curso=nome)
 
+
 def criar_usuario(email="teste@unirv.edu.br", tipo="professor", senha="Senha@123"):
     u = Usuario(email=email, tipo_usuario=tipo)
     u.set_password(senha)
     u.save()
     return u
+
 
 def criar_diretor(curso, nome="Carlos", sobrenome="Silva", email="diretor@unirv.edu.br"):
     u = criar_usuario(email=email, tipo="diretor")
@@ -40,6 +45,7 @@ def criar_diretor(curso, nome="Carlos", sobrenome="Silva", email="diretor@unirv.
         id_diretor=u, nome_diretor=nome, sobrenome_diretor=sobrenome,
         curso_diretor=curso.nome_curso, curso_fk=curso,
     )
+
 
 def criar_professor(curso=None, nome="Ana", sobrenome="Costa", email="professor@unirv.edu.br"):
     u = criar_usuario(email=email, tipo="professor")
@@ -51,6 +57,7 @@ def criar_professor(curso=None, nome="Ana", sobrenome="Costa", email="professor@
         p.cursos.add(curso)
     return p
 
+
 def criar_aluno(curso, nome="Lucas", sobrenome="Rocha",
                 email="aluno@academico.unirv.edu.br", matricula="20210001"):
     u = criar_usuario(email=email, tipo="aluno")
@@ -61,10 +68,12 @@ def criar_aluno(curso, nome="Lucas", sobrenome="Rocha",
     a.cursos.add(curso)
     return a
 
+
 def criar_disciplina(curso, codigo="ES001", nome="Engenharia de Requisitos"):
     return Disciplina.objects.create(
         codigo_disciplina=codigo, nome_disciplina=nome, curso_fk=curso,
     )
+
 
 def criar_portaria(diretor, aluno, disciplinas=None, num="PORT-001"):
     hoje = date.today()
@@ -79,6 +88,7 @@ def criar_portaria(diretor, aluno, disciplinas=None, num="PORT-001"):
         for d in disciplinas:
             PortariaDisciplina.objects.create(id_portariafk=p, codigo_disciplinafk=d)
     return p
+
 
 def criar_atividade(portaria, disciplina, professor, titulo="Atividade 1"):
     return Atividade.objects.create(
@@ -521,3 +531,124 @@ class CursoTests(TestCase):
     def test_str_curso_retorna_nome(self):
         c = criar_curso("Sistemas de Informação")
         self.assertEqual(str(c), "Sistemas de Informação")
+
+
+# =========================================================
+# TESTES — FLUXOS PELAS TELAS (views)
+# =========================================================
+
+class FluxoTelasTests(TestCase):
+    """Testa os fluxos principais passando pelas views, como o usuário faria."""
+
+    def setUp(self):
+        self.curso = criar_curso()
+        self.diretor = criar_diretor(self.curso)
+        self.aluno = criar_aluno(self.curso)
+        self.disciplina = criar_disciplina(self.curso)
+        self.professor = criar_professor(self.curso, email="prof.fluxo@unirv.edu.br")
+        AlunoDisciplina.objects.create(id_alunofk=self.aluno, codigo_disciplinafk=self.disciplina)
+        ProfessorDisciplina.objects.create(id_professorfk=self.professor, codigo_disciplinafk=self.disciplina)
+        self.portaria = criar_portaria(self.diretor, self.aluno, disciplinas=[self.disciplina], num="PORT-FLX")
+        self.atividade = criar_atividade(self.portaria, self.disciplina, self.professor)
+
+    def _entrar(self, perfil):
+        """Faz o login pela própria tela de login."""
+        self.client.post(reverse('authentication:login'), {'email': perfil.email, 'senha': 'Senha@123'})
+        self.assertIn('_auth_user_id', self.client.session)
+
+    def _arquivo(self, nome="resposta.pdf", tamanho=1024):
+        return SimpleUploadedFile(nome, b"x" * tamanho, content_type="application/octet-stream")
+
+    def test_login_valido_redireciona_para_painel(self):
+        resp = self.client.post(reverse('authentication:login'),
+                                {'email': 'aluno@academico.unirv.edu.br', 'senha': 'Senha@123'})
+        self.assertRedirects(resp, reverse('dashboard:index'), fetch_redirect_response=False)
+
+    def test_login_com_senha_errada_continua_na_tela(self):
+        resp = self.client.post(reverse('authentication:login'),
+                                {'email': 'aluno@academico.unirv.edu.br', 'senha': 'errada123'})
+        self.assertEqual(resp.status_code, 200)
+        self.assertNotIn('_auth_user_id', self.client.session)
+
+    def test_portaria_sem_atestado_nao_e_criada(self):
+        self._entrar(self.diretor.id_diretor)
+        hoje = date.today()
+        self.client.post(reverse('dashboard:cadastrar_portaria'), {
+            'id_alunofk': self.aluno.pk, 'numero_portaria': 'PORT-SEM-ATESTADO',
+            'motivo_portaria': 'Afastamento', 'disciplinas': [self.disciplina.pk],
+            'prazo_professor_criar_atividades': hoje + timedelta(days=3),
+            'prazo_aluno_responder': hoje + timedelta(days=10),
+            'prazo_validacao_final': hoje + timedelta(days=15),
+        })
+        self.assertFalse(Portaria.objects.filter(numero_portaria='PORT-SEM-ATESTADO').exists())
+
+    def test_portaria_com_atestado_e_criada(self):
+        self._entrar(self.diretor.id_diretor)
+        hoje = date.today()
+        self.client.post(reverse('dashboard:cadastrar_portaria'), {
+            'id_alunofk': self.aluno.pk, 'numero_portaria': 'PORT-COM-ATESTADO',
+            'motivo_portaria': 'Afastamento', 'disciplinas': [self.disciplina.pk],
+            'prazo_professor_criar_atividades': hoje + timedelta(days=3),
+            'prazo_aluno_responder': hoje + timedelta(days=10),
+            'prazo_validacao_final': hoje + timedelta(days=15),
+            'atestado': self._arquivo('atestado.pdf'),
+        })
+        self.assertTrue(Portaria.objects.filter(numero_portaria='PORT-COM-ATESTADO').exists())
+
+    def test_resposta_valida_e_gravada_e_professor_e_notificado(self):
+        self._entrar(self.aluno.id_aluno)
+        self.client.post(reverse('dashboard:responder_atividade', args=[self.atividade.pk]),
+                         {'descricao_resposta': 'Minha resposta', 'arquivo': self._arquivo()})
+        self.assertTrue(RespostaAtividade.objects.filter(id_atividade=self.atividade).exists())
+        self.atividade.refresh_from_db()
+        self.assertEqual(self.atividade.status, 'respondida')
+        self.assertTrue(Notificacao.objects.filter(id_usuariodestino=self.professor.id_professor).exists())
+
+    def test_resposta_com_formato_invalido_e_recusada(self):
+        self._entrar(self.aluno.id_aluno)
+        self.client.post(reverse('dashboard:responder_atividade', args=[self.atividade.pk]),
+                         {'descricao_resposta': 'Minha resposta', 'arquivo': self._arquivo('virus.exe')})
+        self.assertFalse(RespostaAtividade.objects.filter(id_atividade=self.atividade).exists())
+
+    def test_resposta_maior_que_10mb_e_recusada(self):
+        self._entrar(self.aluno.id_aluno)
+        grande = self._arquivo('grande.pdf', 10 * 1024 * 1024 + 1)
+        self.client.post(reverse('dashboard:responder_atividade', args=[self.atividade.pk]),
+                         {'descricao_resposta': 'Minha resposta', 'arquivo': grande})
+        self.assertFalse(RespostaAtividade.objects.filter(id_atividade=self.atividade).exists())
+
+    def test_resposta_depois_do_prazo_e_bloqueada(self):
+        Atividade.objects.filter(pk=self.atividade.pk).update(data_limite_resposta=date.today() - timedelta(days=1))
+        self._entrar(self.aluno.id_aluno)
+        self.client.post(reverse('dashboard:responder_atividade', args=[self.atividade.pk]),
+                         {'descricao_resposta': 'Atrasada', 'arquivo': self._arquivo()})
+        self.assertFalse(RespostaAtividade.objects.filter(id_atividade=self.atividade).exists())
+
+    def test_recuperacao_de_senha_envia_email_com_link(self):
+        self.client.post(reverse('authentication:solicitar_reset'), {'email': 'aluno@academico.unirv.edu.br'})
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertIn('/senha/redefinir/', mail.outbox[0].body)
+
+    def test_redefinicao_de_senha_com_token_valido_troca_a_senha(self):
+        token = PasswordResetToken.criar_para(self.aluno.id_aluno)
+        self.client.post(reverse('authentication:confirmar_reset', args=[token]),
+                         {'senha': 'NovaSenha@2026', 'confirmar_senha': 'NovaSenha@2026'})
+        self.aluno.id_aluno.refresh_from_db()
+        self.assertTrue(self.aluno.id_aluno.check_password('NovaSenha@2026'))
+
+    def test_disciplinas_do_aluno_e_do_professor(self):
+        self.assertIn(self.disciplina, self.aluno.disciplinas)
+        self.assertIn(self.disciplina, self.professor.disciplinas)
+
+    def test_arquivo_da_resposta_fica_no_banco_e_so_abre_com_login(self):
+        self._entrar(self.aluno.id_aluno)
+        self.client.post(reverse('dashboard:responder_atividade', args=[self.atividade.pk]),
+                         {'descricao_resposta': 'Minha resposta', 'arquivo': self._arquivo('trabalho.pdf', 2048)})
+        resposta = RespostaAtividade.objects.get(id_atividade=self.atividade)
+        arquivo = ArquivoArmazenado.objects.get(nome=resposta.arquivo)
+        self.assertEqual(arquivo.tamanho, 2048)
+        abrir = self.client.get('/media/' + resposta.arquivo)
+        self.assertEqual(abrir.status_code, 200)
+        self.assertEqual(abrir.content, b"x" * 2048)
+        self.client.logout()
+        self.assertEqual(self.client.get('/media/' + resposta.arquivo).status_code, 302)

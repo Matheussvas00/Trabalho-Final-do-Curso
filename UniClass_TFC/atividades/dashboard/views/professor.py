@@ -475,6 +475,7 @@ def disciplinas_professor(request):
 
 from django.http import JsonResponse
 
+
 @login_required(login_url='authentication:login')
 def api_disciplinas_portaria_professor(request, portaria_id):
     """Retorna as disciplinas de uma portaria que o professor leciona (JSON)."""

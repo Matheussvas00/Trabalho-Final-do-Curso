@@ -16,13 +16,12 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
-from django.conf import settings
-from django.conf.urls.static import static
+
+from atividades.arquivos import servir_arquivo
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    # arquivos enviados (guardados no banco de dados — ver atividades/storage.py)
+    path('media/<path:nome>', servir_arquivo, name='servir_arquivo'),
     path('', include('atividades.urls')),
 ]
-
-if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

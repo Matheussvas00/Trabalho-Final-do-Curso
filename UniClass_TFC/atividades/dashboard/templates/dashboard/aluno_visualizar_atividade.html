@@ -179,7 +179,7 @@
                                     </div>
                                     {% endif %}
                                     <input type="file" name="arquivo" accept=".pdf,.docx,.jpg,.jpeg,.png" class="form-control" style="border-radius:8px;">
-                                    <small class="text-muted">Formatos aceitos: PDF, DOC, DOCX, JPG, PNG. Máx. 10MB.</small>
+                                    <small class="text-muted">Formatos aceitos: PDF, DOC, DOCX, JPG, PNG. Máx. {{ arquivo_max_mb }} MB.</small>
                                 </div>
                             </div>
                             <div style="margin-top:16px; text-align:right;">
@@ -236,7 +236,7 @@
                         <div class="col-12">
                             <label class="form-label fw-semibold" style="font-size:13px;">Arquivo <small class="text-muted">(opcional)</small></label>
                             <input type="file" name="arquivo" accept=".pdf,.docx,.jpg,.jpeg,.png" class="form-control" style="border-radius:8px;">
-                            <small class="text-muted">Formatos aceitos: PDF, DOC, DOCX, JPG, PNG. Máx. 10MB.</small>
+                            <small class="text-muted">Formatos aceitos: PDF, DOC, DOCX, JPG, PNG. Máx. {{ arquivo_max_mb }} MB.</small>
                         </div>
                     </div>
                     <div style="margin-top:20px; text-align:right;">

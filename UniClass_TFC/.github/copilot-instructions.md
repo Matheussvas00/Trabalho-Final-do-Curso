@@ -8,7 +8,7 @@ Sistema web Django 6.0 para gerenciamento de **atividades domiciliares** para al
 
 - Python 3.13.2 + Django 6.0.1
 - MySQL 5.6 (via PyMySQL com patches de compatibilidade)
-- Preparado para deploy em AWS
+- Preparado para deploy na Vercel
 
 ## Arquitetura do Sistema
 
@@ -129,11 +129,6 @@ SECRET_KEY=...            # Mudar em produção!
 DEBUG=True               # False em produção
 ALLOWED_HOSTS=           # Configurar em produção
 
-# AWS (Produção)
-AWS_ACCESS_KEY_ID=
-AWS_SECRET_ACCESS_KEY=
-AWS_STORAGE_BUCKET_NAME=
-USE_S3=False             # True em produção
 ```
 
 ## Padrões do Projeto
@@ -155,20 +150,20 @@ USE_S3=False             # True em produção
 - Choices: TODAS_MAIÚSCULAS_CHOICES em models
 - Properties: Para campos calculados (`@property`)
 
-## Preparação para AWS
+## Preparação para a Vercel
 
 ### Arquivos Importantes
 
 - [`.env.production`](.env.production) - Template para produção
-- [`settings.py`](UniCLass/settings.py) - Configuração S3 condicional
+- [`settings.py`](UniCLass/settings.py) - Configurações lidas das variáveis de ambiente
 
 ### Deploy Checklist
 
 1. ✅ `DEBUG=False`
 2. ✅ `ALLOWED_HOSTS` configurado
 3. ✅ Nova `SECRET_KEY` (nunca commitada)
-4. ✅ Migrar para RDS (MySQL 8+) ou manter 5.6 com patches
-5. ✅ S3 para static/media: `USE_S3=True`
+4. ✅ Banco MySQL 8+ (ou 5.6 com patches) acessível pela Vercel
+5. ✅ Variáveis de ambiente cadastradas no painel da Vercel
 6. ✅ `collectstatic` executado
 7. ✅ Gunicorn como WSGI server
 

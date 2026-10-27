@@ -10,7 +10,7 @@ from django.views.decorators.csrf import csrf_protect
 from django.conf import settings
 from django.core.mail import send_mail
 from django.urls import reverse
-from atividades.models import Usuario, Aluno, Professor, Diretor, PasswordResetToken
+from atividades.models import Usuario, Aluno, Professor, PasswordResetToken
 from .forms import LoginForm, CadastroUsuarioForm
 
 

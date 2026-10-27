@@ -8,7 +8,7 @@ from django.views.decorators.http import require_POST
 from django.db import transaction
 from django.utils import timezone
 from atividades.models import (
-    Aluno, Atividade, Portaria, RespostaAtividade, Disciplina, Notificacao, Historico,
+    Aluno, Atividade, Portaria, RespostaAtividade, Notificacao, Historico,
     AlunoDisciplina
 )
 from .common import base_context, validar_arquivo
@@ -460,7 +460,6 @@ def refazer_atividade(request, atividade_id):
         return render(request, 'dashboard/aluno_refazer_atividade.html', ctx)
 
     return redirect('dashboard:minhas_respostas')
-
 
 
 @_aluno_required

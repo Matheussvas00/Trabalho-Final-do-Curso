@@ -1,6 +1,8 @@
 """
 Utilitários compartilhados entre as views do dashboard
 """
+import os
+
 from django.utils import timezone
 from atividades.models import Notificacao
 
@@ -32,7 +34,10 @@ def base_context(request):
 
 
 # ── Validação de arquivos enviados (RNF010) ─────────────────────
-TAMANHO_MAXIMO_ARQUIVO = 10 * 1024 * 1024  # 10 MB
+# Na Vercel o corpo da requisição tem limite de 4,5 MB, por isso lá o padrão é 4 MB.
+# O valor pode ser ajustado pela variável de ambiente ARQUIVO_TAMANHO_MAXIMO_MB.
+TAMANHO_MAXIMO_MB = int(os.getenv('ARQUIVO_TAMANHO_MAXIMO_MB', '4' if os.getenv('VERCEL') else '10'))
+TAMANHO_MAXIMO_ARQUIVO = TAMANHO_MAXIMO_MB * 1024 * 1024
 EXTENSOES_RESPOSTA = ('.pdf', '.docx', '.jpg', '.jpeg', '.png')
 EXTENSOES_ATESTADO = ('.pdf', '.jpg', '.jpeg', '.png')
 
@@ -45,5 +50,5 @@ def validar_arquivo(arquivo, extensoes=EXTENSOES_RESPOSTA):
             return 'Formato não suportado. Use PDF, JPG ou PNG.'
         return 'Formato não suportado. Use PDF, DOCX, JPG ou PNG.'
     if arquivo.size > TAMANHO_MAXIMO_ARQUIVO:
-        return 'Arquivo muito grande. Limite máximo: 10 MB.'
+        return f'Arquivo muito grande. Limite máximo: {TAMANHO_MAXIMO_MB} MB.'
     return None

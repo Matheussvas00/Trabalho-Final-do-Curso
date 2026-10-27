@@ -100,7 +100,7 @@
                             </div>
                             {% endif %}
                             <input type="file" name="arquivo" accept=".pdf,.docx,.jpg,.jpeg,.png" class="form-control" style="border-radius:8px; border:2px solid #e0e0e0;">
-                            <small class="text-muted">Formatos aceitos: PDF, DOC, DOCX, JPG, PNG. Máx. 10MB.</small>
+                            <small class="text-muted">Formatos aceitos: PDF, DOC, DOCX, JPG, PNG. Máx. {{ arquivo_max_mb }} MB.</small>
                         </div>
                     </div>
                     <div style="margin-top:24px; display:flex; justify-content:flex-end; gap:10px;">

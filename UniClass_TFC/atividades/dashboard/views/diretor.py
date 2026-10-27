@@ -8,9 +8,8 @@ from django.contrib import messages
 from django.views.decorators.http import require_POST
 from django.db import transaction, IntegrityError
 from django.http import JsonResponse
-from datetime import date
 from atividades.models import (
-    Aluno, Professor, Diretor, Atividade, Portaria, PortariaDisciplina,
+    Aluno, Professor, Diretor, Portaria, PortariaDisciplina,
     Disciplina, ProfessorDisciplina, AlunoDisciplina, RespostaAtividade, Usuario, Curso,
     Notificacao, Historico
 )
@@ -593,7 +592,7 @@ def cadastrar_portaria(request):
     from datetime import datetime
     try:
         d_criar = datetime.strptime(prazo_criar, '%Y-%m-%d').date()
-        d_resp  = datetime.strptime(prazo_resp,  '%Y-%m-%d').date()
+        d_resp  = datetime.strptime(prazo_resp, '%Y-%m-%d').date()
         d_valid = datetime.strptime(prazo_valid, '%Y-%m-%d').date()
     except ValueError:
         return _erro('Datas inválidas. Use o formato correto.')

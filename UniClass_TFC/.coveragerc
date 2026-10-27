@@ -1,0 +1,11 @@
+[run]
+source = atividades
+omit =
+    */migrations/*
+    */tests.py
+    */*_backup.py
+    */management/*
+    atividades/dashboard/views.py
+
+[report]
+show_missing = False
