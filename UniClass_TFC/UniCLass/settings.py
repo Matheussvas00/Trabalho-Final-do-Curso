@@ -112,7 +112,10 @@ DATABASES = {
             'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
             'charset': 'utf8mb4',
         },
-        'CONN_MAX_AGE': int(os.getenv('DB_CONN_MAX_AGE', '0')),
+        # Na Vercel a conexão com o banco é reaproveitada entre as requisições (60 s),
+        # em vez de abrir uma conexão criptografada nova a cada clique.
+        'CONN_MAX_AGE': int(os.getenv('DB_CONN_MAX_AGE', '60' if os.getenv('VERCEL') else '0')),
+        'CONN_HEALTH_CHECKS': True,
     }
 }
 

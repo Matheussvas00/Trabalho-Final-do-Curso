@@ -882,7 +882,7 @@
                 <p class="fw-semibold mb-2" style="font-size:13px; color:#555;">Decisão:</p>
 
                 <!-- APROVAR -->
-                <form method="post" action="{% url 'dashboard:validar_resposta_diretor' r.id_resposta %}" class="mb-3">
+                <form method="post" action="{% url 'dashboard:validar_resposta_diretor' r.id_resposta %}" onsubmit="this.querySelector('[type=submit]').disabled = true;" class="mb-3">
                     {% csrf_token %}
                     <input type="hidden" name="acao" value="aprovar">
                     <div class="mb-2">
@@ -896,7 +896,7 @@
                 </form>
 
                 <!-- REJEITAR -->
-                <form method="post" action="{% url 'dashboard:validar_resposta_diretor' r.id_resposta %}">
+                <form method="post" action="{% url 'dashboard:validar_resposta_diretor' r.id_resposta %}" onsubmit="this.querySelector('[type=submit]').disabled = true;">
                     {% csrf_token %}
                     <input type="hidden" name="acao" value="rejeitar">
                     <div class="mb-2">

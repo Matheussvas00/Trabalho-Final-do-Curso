@@ -818,18 +818,18 @@ def gerenciar_validacoes(request):
 @require_POST
 def validar_resposta_diretor(request, resposta_id):
     """Diretor valida uma resposta já pré-aprovada pelo professor."""
-    resposta = get_object_or_404(
-        RespostaAtividade,
-        pk=resposta_id,
-        status_professor='aprovada',
-        status_diretor='pendente'
-    )
+    resposta = get_object_or_404(RespostaAtividade, pk=resposta_id)
 
     diretor = Diretor.objects.get(id_diretor=request.user)
 
     # Verifica se a portaria pertence a este diretor
     if resposta.id_atividade.id_portariafk.id_diretorfk != diretor:
         messages.error(request, 'Você não tem permissão para validar esta resposta.')
+        return redirect('dashboard:gerenciar_validacoes')
+
+    # Resposta já validada (ex.: clique duplo no botão ou formulário reenviado)
+    if resposta.status_professor != 'aprovada' or resposta.status_diretor != 'pendente':
+        messages.info(request, 'Esta resposta já foi validada.')
         return redirect('dashboard:gerenciar_validacoes')
 
     acao = request.POST.get('acao', '').strip()
@@ -841,7 +841,8 @@ def validar_resposta_diretor(request, resposta_id):
 
     try:
         if acao == 'aprovar':
-            resposta.validar_diretor(aprovada=True, observacao=observacao)
+            with transaction.atomic():
+                resposta.validar_diretor(aprovada=True, observacao=observacao)
             # Notifica o aluno
             Notificacao.objects.create(
                 id_usuariodestino=resposta.id_alunofk.id_aluno,
@@ -859,7 +860,8 @@ def validar_resposta_diretor(request, resposta_id):
                 descricao=f'Resposta #{resposta.pk} do aluno {resposta.id_alunofk.nome_completo} aprovada para a atividade "{resposta.id_atividade.titulo}".'
             )
         else:
-            resposta.validar_diretor(aprovada=False, observacao=observacao)
+            with transaction.atomic():
+                resposta.validar_diretor(aprovada=False, observacao=observacao)
             # Notifica o aluno
             Notificacao.objects.create(
                 id_usuariodestino=resposta.id_alunofk.id_aluno,
