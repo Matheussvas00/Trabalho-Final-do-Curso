@@ -1,6 +1,8 @@
 """
 Views de autenticação do UniClass
 """
+import logging
+
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.contrib.auth import authenticate, login as auth_login, logout as auth_logout
@@ -8,10 +10,29 @@ from django.contrib.auth.decorators import login_required
 from django.views.decorators.cache import never_cache
 from django.views.decorators.csrf import csrf_protect
 from django.conf import settings
-from django.core.mail import send_mail
+from django.core.mail import send_mail, get_connection
 from django.urls import reverse
 from atividades.models import Usuario, Aluno, Professor, PasswordResetToken
 from .forms import LoginForm, CadastroUsuarioForm
+
+logger = logging.getLogger(__name__)
+
+
+def _enviar_email(assunto, mensagem, destinatario):
+    """Envia o e-mail pela porta configurada (587, STARTTLS).
+
+    Se essa porta não responder, tenta de novo pela porta 465 (SSL),
+    que é a outra porta aceita pelo Gmail.
+    """
+    remetente = getattr(settings, 'DEFAULT_FROM_EMAIL', None)
+    try:
+        send_mail(assunto, mensagem, remetente, [destinatario], fail_silently=False)
+    except (OSError, TimeoutError) as erro:
+        if settings.EMAIL_BACKEND != 'django.core.mail.backends.smtp.EmailBackend':
+            raise
+        logger.warning('Falha no envio pela porta %s (%r); tentando a porta 465.', settings.EMAIL_PORT, erro)
+        conexao = get_connection(port=465, use_tls=False, use_ssl=True)
+        send_mail(assunto, mensagem, remetente, [destinatario], fail_silently=False, connection=conexao)
 
 
 @csrf_protect
@@ -183,14 +204,10 @@ def solicitar_reset_view(request):
                 'UniClass — Sistema de Atividades Domiciliares'
             )
             try:
-                send_mail(
-                    'UniClass — Redefinição de senha',
-                    mensagem,
-                    getattr(settings, 'DEFAULT_FROM_EMAIL', None),
-                    [usuario.email],
-                    fail_silently=False,
-                )
+                _enviar_email('UniClass — Redefinição de senha', mensagem, usuario.email)
             except Exception:
+                # o erro aparece nos logs da Vercel (Logs → Runtime Logs)
+                logger.exception('Erro ao enviar o e-mail de redefinição de senha para %s', usuario.email)
                 messages.error(request, 'Não foi possível enviar o e-mail agora. Tente novamente em alguns minutos.')
                 return render(request, 'authentication/solicitar_reset.html', {'title': 'Recuperar senha - UniClass'})
 

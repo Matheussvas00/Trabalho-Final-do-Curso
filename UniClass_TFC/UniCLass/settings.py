@@ -213,7 +213,9 @@ EMAIL_HOST          = os.getenv('EMAIL_HOST', 'smtp.gmail.com')
 EMAIL_PORT          = int(os.getenv('EMAIL_PORT', '587'))
 EMAIL_USE_TLS       = os.getenv('EMAIL_USE_TLS', 'True') == 'True'
 EMAIL_HOST_USER     = os.getenv('EMAIL_HOST_USER', 'matheus.s.vasconcelos@academico.unirv.edu.br')
-EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')   # ← cole aqui a Senha de App (16 chars)
+# a Senha de App do Google aparece com espaços ("abcd efgh ijkl mnop"); os espaços são removidos
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '').replace(' ', '').strip()
+EMAIL_TIMEOUT       = int(os.getenv('EMAIL_TIMEOUT', '10'))  # segundos; evita a tela ficar presa se o servidor não responder
 DEFAULT_FROM_EMAIL  = os.getenv('DEFAULT_FROM_EMAIL', 'UniClass <matheus.s.vasconcelos@academico.unirv.edu.br>')
 
 # ── Segurança HTTPS (ativa automaticamente em produção quando DEBUG=False) ─────
