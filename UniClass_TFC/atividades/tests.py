@@ -12,7 +12,7 @@ from django.db import IntegrityError
 from datetime import date, timedelta
 
 from atividades.models import (
-    Usuario, Curso, Aluno, Professor, Diretor,
+    Usuario, Curso, Aluno, Professor, Diretor, Admin,
     Disciplina, ProfessorDisciplina, AlunoDisciplina,
     Portaria, PortariaDisciplina, Atividade, RespostaAtividade,
     PasswordResetToken, Notificacao, ArquivoArmazenado, Historico,
@@ -734,3 +734,55 @@ class HistoricoFiltrosTests(FluxoTelasTests.__base__):
         self.assertEqual(antigo.id_professorfk, self.professor)
         self.assertEqual(portaria_txt.id_portariafk, self.portaria)
         self.assertEqual(portaria_txt.id_alunofk, self.aluno)
+
+
+# =========================================================
+# TESTES — UM DIRETOR POR CURSO
+# =========================================================
+
+class UmDiretorPorCursoTests(FluxoTelasTests.__base__):
+    """Cada curso pode ter apenas um diretor ativo."""
+
+    def setUp(self):
+        self.curso = criar_curso()
+        self.outro_curso = criar_curso("Agronomia")
+        self.diretor = criar_diretor(self.curso)
+        admin_user = criar_usuario(email="admin@unirv.edu.br", tipo="admin")
+        Admin.objects.create(id_admin=admin_user, nome_admin="Admin", sobrenome_admin="Sistema")
+        self.client.post(reverse('authentication:login'), {'email': 'admin@unirv.edu.br', 'senha': 'Senha@123'})
+
+    def _cadastrar(self, curso, email="novo.diretor@unirv.edu.br"):
+        return self.client.post(reverse('dashboard:cadastrar_diretor'), {
+            'nome_diretor': 'Ricardo', 'sobrenome_diretor': 'Franci', 'email': email,
+            'senha': 'Senha@1234', 'curso_fk': curso.pk,
+        })
+
+    def test_nao_cadastra_segundo_diretor_no_mesmo_curso(self):
+        self._cadastrar(self.curso)
+        self.assertEqual(Diretor.objects.filter(curso_fk=self.curso).count(), 1)
+        self.assertFalse(Usuario.objects.filter(email="novo.diretor@unirv.edu.br").exists())
+
+    def test_cadastra_diretor_em_curso_sem_diretor(self):
+        self._cadastrar(self.outro_curso)
+        self.assertTrue(Diretor.objects.filter(curso_fk=self.outro_curso, nome_diretor='Ricardo').exists())
+
+    def test_nao_move_diretor_para_curso_que_ja_tem_diretor(self):
+        self._cadastrar(self.outro_curso)
+        ricardo = Diretor.objects.get(nome_diretor='Ricardo')
+        self.client.post(reverse('dashboard:editar_diretor', args=[ricardo.pk]), {
+            'nome_diretor': 'Ricardo', 'sobrenome_diretor': 'Franci', 'curso_fk': self.curso.pk,
+        })
+        ricardo.refresh_from_db()
+        self.assertEqual(ricardo.curso_fk, self.outro_curso)
+
+    def test_inativado_libera_o_curso_e_nao_reativa_se_ocupado(self):
+        self.client.post(reverse('dashboard:Inativar_diretor', args=[self.diretor.pk]))
+        self._cadastrar(self.curso)
+        self.assertTrue(Diretor.objects.filter(curso_fk=self.curso, nome_diretor='Ricardo', ativo=True).exists())
+        self.client.post(reverse('dashboard:reativar_diretor', args=[self.diretor.pk]))
+        self.diretor.refresh_from_db()
+        self.assertFalse(self.diretor.ativo)
+
+    def test_modelo_bloqueia_segundo_diretor_ativo(self):
+        with self.assertRaises(ValueError):
+            criar_diretor(self.curso, nome="Outro", email="outro.diretor@unirv.edu.br")

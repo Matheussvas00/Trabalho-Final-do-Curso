@@ -8,6 +8,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.views.decorators.http import require_POST
 from django.contrib.auth.decorators import login_required
+from django.db import transaction
 
 from atividades.models import (
     Admin, Diretor, Curso, Usuario, Professor, Aluno, Disciplina
@@ -69,7 +70,12 @@ def gerenciar_diretores(request):
     ctx['diretores'] = Diretor.objects.select_related(
         'id_diretor', 'curso_fk'
     ).order_by('nome_diretor')
-    ctx['cursos'] = Curso.objects.all().order_by('nome_curso')
+    # Cada curso tem um único diretor ativo: o formulário mostra quem já ocupa cada curso
+    diretores_ativos = {d.curso_fk_id: d for d in Diretor.objects.filter(ativo=True).order_by('nome_diretor')}
+    cursos = list(Curso.objects.all().order_by('nome_curso'))
+    for curso in cursos:
+        curso.diretor_ativo = diretores_ativos.get(curso.pk)
+    ctx['cursos'] = cursos
     ctx['active_page'] = 'diretores'
     return render(request, 'dashboard/gerenciar_diretores.html', ctx)
 
@@ -102,17 +108,27 @@ def cadastrar_diretor(request):
         messages.error(request, 'Curso não encontrado.')
         return redirect('dashboard:gerenciar_diretores')
 
-    usuario = Usuario(email=email, tipo_usuario='diretor')
-    usuario.set_password(senha)
-    usuario.save()
+    atual = Diretor.diretor_ativo_do_curso(curso_obj)
+    if atual:
+        messages.error(
+            request,
+            f'O curso {curso_obj.nome_curso} já tem um diretor ativo ({atual.nome_completo}). '
+            f'Cada curso pode ter apenas um diretor: inative o diretor atual antes de cadastrar outro.'
+        )
+        return redirect('dashboard:gerenciar_diretores')
 
-    Diretor.objects.create(
-        id_diretor=usuario,
-        nome_diretor=nome,
-        sobrenome_diretor=sobrenome,
-        curso_diretor=curso_obj.nome_curso,
-        curso_fk=curso_obj,
-    )
+    with transaction.atomic():
+        usuario = Usuario(email=email, tipo_usuario='diretor')
+        usuario.set_password(senha)
+        usuario.save()
+
+        Diretor.objects.create(
+            id_diretor=usuario,
+            nome_diretor=nome,
+            sobrenome_diretor=sobrenome,
+            curso_diretor=curso_obj.nome_curso,
+            curso_fk=curso_obj,
+        )
 
     messages.success(request, f'Diretor {nome} {sobrenome} cadastrado com sucesso no curso {curso_obj.nome_curso}.')
     return redirect('dashboard:gerenciar_diretores')
@@ -139,6 +155,16 @@ def editar_diretor(request, diretor_id):
     except Curso.DoesNotExist:
         messages.error(request, 'Curso não encontrado.')
         return redirect('dashboard:gerenciar_diretores')
+
+    if diretor.ativo:
+        outro = Diretor.diretor_ativo_do_curso(curso_obj, excluir_pk=diretor.pk)
+        if outro:
+            messages.error(
+                request,
+                f'O curso {curso_obj.nome_curso} já tem um diretor ativo ({outro.nome_completo}). '
+                f'Cada curso pode ter apenas um diretor.'
+            )
+            return redirect('dashboard:gerenciar_diretores')
 
     # Alterar senha se fornecida
     nova_senha = request.POST.get('nova_senha', '').strip()
@@ -191,6 +217,15 @@ def reativar_diretor(request, diretor_id):
     """Reativa um diretor previamente inativado, restaurando o acesso ao sistema."""
     diretor = get_object_or_404(Diretor, pk=diretor_id)
     nome = diretor.nome_completo
+
+    outro = Diretor.diretor_ativo_do_curso(diretor.curso_fk, excluir_pk=diretor.pk)
+    if outro:
+        messages.error(
+            request,
+            f'Não é possível reativar {nome}: o curso {diretor.curso_fk.nome_curso} já tem um diretor ativo '
+            f'({outro.nome_completo}). Inative o diretor atual ou mude o curso de {nome} antes.'
+        )
+        return redirect('dashboard:gerenciar_diretores')
 
     diretor.ativo = True
     diretor.save(update_fields=['ativo'])

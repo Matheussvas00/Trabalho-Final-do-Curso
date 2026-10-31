@@ -180,10 +180,25 @@ class Diretor(models.Model):
         return f"{self.nome_diretor} {self.sobrenome_diretor}"
 
     def save(self, *args, **kwargs):
-        """Valida que diretor tem curso vinculado antes de salvar"""
+        """Valida que o diretor tem curso vinculado e que o curso não tem outro diretor ativo"""
         if not self.curso_fk:
             raise ValueError("Diretor deve estar vinculado a um curso")
+        if self.ativo:
+            outro = self.diretor_ativo_do_curso(self.curso_fk, excluir_pk=self.pk)
+            if outro:
+                raise ValueError(
+                    f"O curso {self.curso_fk.nome_curso} já tem um diretor ativo: {outro.nome_completo}. "
+                    f"Cada curso pode ter apenas um diretor."
+                )
         super().save(*args, **kwargs)
+
+    @classmethod
+    def diretor_ativo_do_curso(cls, curso, excluir_pk=None):
+        """Retorna o diretor ativo do curso (ou None), ignorando o diretor informado."""
+        qs = cls.objects.filter(curso_fk=curso, ativo=True)
+        if excluir_pk is not None:
+            qs = qs.exclude(pk=excluir_pk)
+        return qs.first()
 
 
 class Admin(models.Model):
