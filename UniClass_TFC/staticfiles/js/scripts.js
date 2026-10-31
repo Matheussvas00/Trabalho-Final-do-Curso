@@ -108,3 +108,132 @@ function ucToggleTheme() {
     localStorage.setItem("uc-theme", tema);
   } catch (e) {}
 }
+
+// ─────────────────────────────────────────────────────────
+// ucDiscPicker — lista de disciplinas com busca, contador e
+// "marcar/desmarcar todas" (modais de aluno, professor e portaria)
+// ─────────────────────────────────────────────────────────
+(function () {
+  function normalizar(texto) {
+    return (texto || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+  }
+
+  function remover(lista) {
+    if (!lista) return;
+    if (lista._ucBar) { lista._ucBar.remove(); lista._ucBar = null; }
+    if (lista._ucChange) { lista.removeEventListener("change", lista._ucChange); lista._ucChange = null; }
+    var vazio = lista.querySelector(".uc-disc-picker__vazio");
+    if (vazio) vazio.remove();
+  }
+
+  function ucDiscPicker(lista) {
+    if (!lista) return;
+    remover(lista);
+    lista.style.display = "";
+    var opcoes = Array.prototype.slice.call(lista.querySelectorAll(".uc-disc-opt"));
+    if (!opcoes.length) return;
+
+    var barra = document.createElement("div");
+    barra.className = "uc-disc-picker__bar";
+
+    var busca = null;
+    if (opcoes.length > 6) {
+      var caixa = document.createElement("div");
+      caixa.className = "uc-disc-picker__busca";
+      caixa.innerHTML = '<i class="fas fa-search"></i>';
+      busca = document.createElement("input");
+      busca.type = "search";
+      busca.placeholder = "Buscar disciplina...";
+      busca.setAttribute("aria-label", "Buscar disciplina");
+      caixa.appendChild(busca);
+      barra.appendChild(caixa);
+    }
+
+    var acoes = document.createElement("div");
+    acoes.className = "uc-disc-picker__acoes";
+    var contador = document.createElement("span");
+    contador.className = "uc-disc-picker__count";
+    var todas = document.createElement("button");
+    todas.type = "button";
+    todas.className = "uc-disc-picker__link";
+    todas.textContent = "Marcar todas";
+    var nenhuma = document.createElement("button");
+    nenhuma.type = "button";
+    nenhuma.className = "uc-disc-picker__link";
+    nenhuma.textContent = "Desmarcar";
+    acoes.appendChild(contador);
+    acoes.appendChild(todas);
+    acoes.appendChild(nenhuma);
+    barra.appendChild(acoes);
+
+    lista.parentNode.insertBefore(barra, lista);
+    lista._ucBar = barra;
+
+    var vazio = document.createElement("div");
+    vazio.className = "uc-disc-picker__vazio";
+    vazio.textContent = "Nenhuma disciplina encontrada.";
+    vazio.hidden = true;
+    lista.appendChild(vazio);
+
+    function atualizar() {
+      var marcadas = lista.querySelectorAll(".uc-disc-opt__input:checked").length;
+      contador.textContent = marcadas + " de " + opcoes.length + (marcadas === 1 ? " selecionada" : " selecionadas");
+    }
+
+    function marcar(valor) {
+      opcoes.forEach(function (opcao) {
+        if (opcao.classList.contains("is-oculta")) return;
+        var input = opcao.querySelector(".uc-disc-opt__input");
+        if (input && input.checked !== valor) {
+          input.checked = valor;
+          input.dispatchEvent(new Event("change", { bubbles: true }));
+        }
+      });
+      atualizar();
+    }
+
+    todas.addEventListener("click", function () { marcar(true); });
+    nenhuma.addEventListener("click", function () { marcar(false); });
+
+    if (busca) {
+      busca.addEventListener("input", function () {
+        var termo = normalizar(busca.value.trim());
+        var visiveis = 0;
+        opcoes.forEach(function (opcao) {
+          var ok = !termo || normalizar(opcao.textContent).indexOf(termo) !== -1;
+          opcao.classList.toggle("is-oculta", !ok);
+          if (ok) visiveis++;
+        });
+        vazio.hidden = visiveis > 0;
+      });
+      // Enter na busca não envia o formulário
+      busca.addEventListener("keydown", function (e) { if (e.key === "Enter") e.preventDefault(); });
+    }
+
+    // form.reset() não dispara "change": recalcula o contador depois de limpar o formulário
+    var formulario = lista.closest("form");
+    if (formulario && !formulario._ucResetDisc) {
+      formulario._ucResetDisc = true;
+      formulario.addEventListener("reset", function () {
+        setTimeout(function () {
+          formulario.querySelectorAll(".uc-disc-picker__list").forEach(function (l) {
+            if (l._ucChange) l._ucChange();
+          });
+        });
+      });
+    }
+
+    lista._ucChange = atualizar;
+    lista.addEventListener("change", atualizar);
+    atualizar();
+  }
+
+  ucDiscPicker.remover = remover;
+  window.ucDiscPicker = ucDiscPicker;
+
+  document.addEventListener("DOMContentLoaded", function () {
+    document.querySelectorAll(".uc-disc-picker__list").forEach(function (lista) {
+      ucDiscPicker(lista);
+    });
+  });
+})();

@@ -325,6 +325,9 @@ def responder_atividade(request, atividade_id):
             Historico.objects.create(
                 id_usuario=request.user,
                 acao=acao_historico,
+                id_portariafk=portaria,
+                id_alunofk=aluno,
+                id_professorfk=atividade.id_professorfk,
                 descricao=f'Resposta {"reenviada" if is_reenvio else "enviada"} para a atividade "{atividade.titulo}" (Portaria nº {portaria.numero_portaria}).'
             )
 
@@ -444,6 +447,9 @@ def refazer_atividade(request, atividade_id):
             Historico.objects.create(
                 id_usuario=request.user,
                 acao='resposta_reenviada',
+                id_portariafk=portaria,
+                id_alunofk=aluno,
+                id_professorfk=atividade.id_professorfk,
                 descricao=(
                     f'Atividade "{atividade.titulo}" refeita e enviada para nova avaliação '
                     f'(Portaria nº {portaria.numero_portaria}).'

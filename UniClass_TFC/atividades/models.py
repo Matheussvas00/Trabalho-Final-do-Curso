@@ -713,6 +713,21 @@ class Historico(models.Model):
     acao = models.CharField(max_length=50, choices=ACAO_CHOICES, default='login')
     descricao = models.TextField(blank=True, null=True)
 
+    # Vínculos usados nos filtros da tela de Histórico (opcionais: nem toda ação envolve
+    # uma portaria, um aluno ou um professor; o registro é mantido se eles forem excluídos)
+    id_portariafk = models.ForeignKey(
+        'Portaria', on_delete=models.SET_NULL, null=True, blank=True,
+        db_column='id_portariafk', related_name='historico_portaria'
+    )
+    id_alunofk = models.ForeignKey(
+        'Aluno', on_delete=models.SET_NULL, null=True, blank=True,
+        db_column='id_alunofk', related_name='historico_aluno'
+    )
+    id_professorfk = models.ForeignKey(
+        'Professor', on_delete=models.SET_NULL, null=True, blank=True,
+        db_column='id_professorfk', related_name='historico_professor'
+    )
+
     class Meta:
         db_table = 'historico'
         verbose_name = 'Histórico'

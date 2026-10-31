@@ -329,18 +329,17 @@
                         <div class="col-12">
                             <hr style="border-color:#eee;">
                             <label class="form-label fw-semibold" style="font-size:13px;">Disciplinas <span style="color:#FF6B00">*</span></label>
-                            <div style="display:flex; flex-wrap:wrap; gap:8px;">
+                            <div class="uc-disc-picker__list">
                                 {% for matricula in portaria.id_alunofk.matriculas.all %}
                                 {% with disc=matricula.codigo_disciplinafk %}
-                                <div class="form-check" style="background:#f8f9fa; padding:6px 12px; border-radius:8px; border:1px solid #dee2e6;">
-                                    <input class="form-check-input" type="checkbox" name="disciplinas"
+                                <label class="uc-disc-opt" for="ed_port_disc_{{ portaria.pk }}_{{ disc.codigo_disciplina }}">
+                                    <input class="uc-disc-opt__input" type="checkbox" name="disciplinas"
                                            value="{{ disc.codigo_disciplina }}"
                                            id="ed_port_disc_{{ portaria.pk }}_{{ disc.codigo_disciplina }}"
                                            {% for dp in portaria.disciplinas_portaria.all %}{% if dp.codigo_disciplinafk == disc %}checked{% endif %}{% endfor %}>
-                                    <label class="form-check-label" for="ed_port_disc_{{ portaria.pk }}_{{ disc.codigo_disciplina }}" style="font-size:13px;">
-                                        {{ disc.nome_disciplina }}
-                                    </label>
-                                </div>
+                                    <span class="uc-disc-opt__nome">{{ disc.nome_disciplina }}</span>
+                                    <span class="uc-disc-opt__cod">{{ disc.codigo_disciplina }}</span>
+                                </label>
                                 {% endwith %}
                                 {% empty %}
                                 <small class="text-muted">Aluno sem disciplinas matriculadas.</small>
@@ -412,6 +411,7 @@
 
     function loadAlunoDisciplinas(alunoId) {
         const listDiv = document.getElementById('cad_disciplinas_list');
+        if (window.ucDiscPicker) ucDiscPicker.remover(listDiv);
         if (!alunoId) {
             listDiv.innerHTML = '<small class="text-muted"><i class="fas fa-info-circle me-1"></i> Selecione um aluno para ver suas disciplinas.</small>';
             return;
@@ -425,17 +425,20 @@
                     listDiv.innerHTML = '<small class="text-muted">Este aluno não possui disciplinas matriculadas neste curso.</small>';
                 } else {
                     data.disciplinas.forEach(d => {
-                        const wrapper = document.createElement('div');
-                        wrapper.className = 'form-check';
-                        wrapper.style.cssText = 'background:#f8f9fa; padding:6px 12px; border-radius:8px; border:1px solid #dee2e6;';
-                        wrapper.innerHTML = `
-                            <input class="form-check-input" type="checkbox" name="disciplinas"
+                        const opcao = document.createElement('label');
+                        opcao.className = 'uc-disc-opt';
+                        opcao.htmlFor = `cad_disc_${d.codigo_disciplina}`;
+                        opcao.innerHTML = `
+                            <input class="uc-disc-opt__input" type="checkbox" name="disciplinas"
                                    value="${d.codigo_disciplina}" id="cad_disc_${d.codigo_disciplina}" checked>
-                            <label class="form-check-label" for="cad_disc_${d.codigo_disciplina}" style="font-size:13px;">
-                                ${d.nome_disciplina}
-                            </label>`;
-                        listDiv.appendChild(wrapper);
+                            <span class="uc-disc-opt__nome"></span>
+                            <span class="uc-disc-opt__cod"></span>`;
+                        opcao.querySelector('.uc-disc-opt__nome').textContent = d.nome_disciplina;
+                        opcao.querySelector('.uc-disc-opt__cod').textContent = d.codigo_disciplina;
+                        listDiv.appendChild(opcao);
                     });
+                    listDiv.classList.add('uc-disc-picker__list');
+                    if (window.ucDiscPicker) ucDiscPicker(listDiv);
                 }
             })
             .catch(() => {

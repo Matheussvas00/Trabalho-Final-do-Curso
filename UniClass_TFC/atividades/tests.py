@@ -15,7 +15,7 @@ from atividades.models import (
     Usuario, Curso, Aluno, Professor, Diretor,
     Disciplina, ProfessorDisciplina, AlunoDisciplina,
     Portaria, PortariaDisciplina, Atividade, RespostaAtividade,
-    PasswordResetToken, Notificacao, ArquivoArmazenado,
+    PasswordResetToken, Notificacao, ArquivoArmazenado, Historico,
 )
 from atividades.authentication.backends import (
     UniClassAuthBackend,
@@ -652,3 +652,85 @@ class FluxoTelasTests(TestCase):
         self.assertEqual(abrir.content, b"x" * 2048)
         self.client.logout()
         self.assertEqual(self.client.get('/media/' + resposta.arquivo).status_code, 302)
+
+
+# =========================================================
+# TESTES — FILTROS DO HISTÓRICO
+# =========================================================
+
+class HistoricoFiltrosTests(FluxoTelasTests.__base__):
+    """Vínculos do histórico com portaria, aluno e professor, e os filtros da tela."""
+
+    def setUp(self):
+        self.curso = criar_curso()
+        self.diretor = criar_diretor(self.curso)
+        self.aluno = criar_aluno(self.curso)
+        self.disciplina = criar_disciplina(self.curso)
+        self.professor = criar_professor(self.curso, email="prof.hist@unirv.edu.br")
+        AlunoDisciplina.objects.create(id_alunofk=self.aluno, codigo_disciplinafk=self.disciplina)
+        ProfessorDisciplina.objects.create(id_professorfk=self.professor, codigo_disciplinafk=self.disciplina)
+        self.portaria = criar_portaria(self.diretor, self.aluno, disciplinas=[self.disciplina], num="PORT-HIST")
+        self.atividade = criar_atividade(self.portaria, self.disciplina, self.professor)
+
+    def _entrar(self, usuario):
+        self.client.post(reverse('authentication:login'), {'email': usuario.email, 'senha': 'Senha@123'})
+
+    def _responder_e_aprovar(self):
+        self._entrar(self.aluno.id_aluno)
+        self.client.post(reverse('dashboard:responder_atividade', args=[self.atividade.pk]),
+                         {'descricao_resposta': 'Minha resposta'})
+        resposta = RespostaAtividade.objects.get(id_atividade=self.atividade)
+        self.client.logout()
+        self._entrar(self.professor.id_professor)
+        self.client.post(reverse('dashboard:validar_resposta_professor', args=[resposta.pk]), {})
+        self.client.logout()
+        return resposta
+
+    def test_acoes_registram_portaria_aluno_e_professor(self):
+        self._responder_e_aprovar()
+        aprovacao = Historico.objects.get(acao='resposta_aprovada_prof')
+        self.assertEqual(aprovacao.id_portariafk, self.portaria)
+        self.assertEqual(aprovacao.id_alunofk, self.aluno)
+        self.assertEqual(aprovacao.id_professorfk, self.professor)
+        envio = Historico.objects.get(acao='resposta_enviada')
+        self.assertEqual(envio.id_portariafk, self.portaria)
+
+    def test_filtro_por_portaria_aluno_professor_e_periodo(self):
+        self._responder_e_aprovar()
+        Historico.objects.create(id_usuario=self.diretor.id_diretor, acao='login', descricao='Login do diretor')
+        self._entrar(self.diretor.id_diretor)
+        url = reverse('dashboard:historico')
+
+        todos = self.client.get(url).context['historico']
+        por_portaria = self.client.get(url, {'portaria': self.portaria.pk}).context['historico']
+        por_aluno = self.client.get(url, {'aluno': self.aluno.pk}).context['historico']
+        por_professor = self.client.get(url, {'professor': self.professor.pk}).context['historico']
+        amanha = (date.today() + timedelta(days=2)).isoformat()
+        no_futuro = self.client.get(url, {'data_inicio': amanha}).context['historico']
+
+        acoes = lambda qs: sorted(h.acao for h in qs)
+        self.assertIn('login', acoes(todos))
+        self.assertEqual(acoes(por_portaria), ['resposta_aprovada_prof', 'resposta_enviada'])
+        self.assertEqual(acoes(por_aluno), ['resposta_aprovada_prof', 'resposta_enviada'])
+        self.assertEqual(acoes(por_professor), ['resposta_aprovada_prof', 'resposta_enviada'])
+        self.assertEqual(len(no_futuro), 0)
+
+    def test_migracao_preenche_vinculos_dos_registros_antigos(self):
+        import importlib
+        from django.apps import apps as django_apps
+        resposta = self._responder_e_aprovar()
+        antigo = Historico.objects.create(
+            id_usuario=self.diretor.id_diretor, acao='resposta_aprovada_dir',
+            descricao=f'Resposta #{resposta.pk} do aluno Lucas Rocha aprovada para a atividade "Atividade 1".')
+        portaria_txt = Historico.objects.create(
+            id_usuario=self.diretor.id_diretor, acao='portaria_criada',
+            descricao='Portaria nº PORT-HIST criada para o aluno Lucas Rocha (matrícula 20210001).')
+        migracao = importlib.import_module('atividades.migrations.0007_historico_vinculos')
+        migracao.preencher_vinculos(django_apps, None)
+        antigo.refresh_from_db()
+        portaria_txt.refresh_from_db()
+        self.assertEqual(antigo.id_portariafk, self.portaria)
+        self.assertEqual(antigo.id_alunofk, self.aluno)
+        self.assertEqual(antigo.id_professorfk, self.professor)
+        self.assertEqual(portaria_txt.id_portariafk, self.portaria)
+        self.assertEqual(portaria_txt.id_alunofk, self.aluno)

@@ -208,6 +208,9 @@ def cadastrar_atividade(request):
                         Historico.objects.create(
                             id_usuario=request.user,
                             acao='atividade_criada',
+                            id_portariafk=portaria,
+                            id_alunofk=portaria.id_alunofk,
+                            id_professorfk=professor,
                             descricao=f'Atividade "{titulo}" criada para a portaria nº {portaria.numero_portaria} — disciplina {disciplina.nome_disciplina}.'
                         )
                     messages.success(request, f"Atividade '{titulo}' criada com sucesso!")
@@ -361,6 +364,9 @@ def validar_resposta_professor(request, id_resposta):
         Historico.objects.create(
             id_usuario=request.user,
             acao='resposta_aprovada_prof',
+            id_portariafk=resposta.id_atividade.id_portariafk,
+            id_alunofk=resposta.id_alunofk,
+            id_professorfk=professor,
             descricao=f'Resposta #{resposta.pk} do aluno {resposta.id_alunofk.nome_completo} aprovada para a atividade "{resposta.id_atividade.titulo}".'
         )
     except ValueError as e:
@@ -405,6 +411,9 @@ def rejeitar_resposta_professor(request, id_resposta):
         Historico.objects.create(
             id_usuario=request.user,
             acao='resposta_rejeitada_prof',
+            id_portariafk=resposta.id_atividade.id_portariafk,
+            id_alunofk=resposta.id_alunofk,
+            id_professorfk=professor,
             descricao=f'Resposta #{resposta.pk} do aluno {resposta.id_alunofk.nome_completo} rejeitada para a atividade "{resposta.id_atividade.titulo}".'
         )
     except ValueError as e:

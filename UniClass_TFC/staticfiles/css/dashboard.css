@@ -1056,3 +1056,113 @@ tr.uc-row--inativo:hover td {
     opacity: .75;
 }
 
+/* ── Seleção de disciplinas (cadastro/edição de aluno, professor e portaria) ── */
+.uc-disc-picker__bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 14px;
+    margin-bottom: 8px;
+}
+.uc-disc-picker__busca {
+    position: relative;
+    flex: 1 1 200px;
+    min-width: 0;
+}
+.uc-disc-picker__busca i {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 12px;
+    color: var(--uc-text-muted, #8A93A4);
+    pointer-events: none;
+}
+.uc-disc-picker__busca input {
+    width: 100%;
+    padding: 6px 10px 6px 30px;
+    border: 1.5px solid var(--uc-border, #E8ECF2);
+    border-radius: 8px;
+    background: var(--uc-white, #fff);
+    color: var(--uc-text, #1C1C2E);
+    font-size: 13px;
+}
+.uc-disc-picker__busca input:focus {
+    outline: none;
+    border-color: var(--uc-orange, #FF6B00);
+}
+.uc-disc-picker__acoes {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-left: auto;
+    font-size: 12px;
+}
+.uc-disc-picker__count {
+    color: var(--uc-text-muted, #8A93A4);
+    white-space: nowrap;
+}
+.uc-disc-picker__link {
+    background: none;
+    border: none;
+    padding: 0;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--uc-orange, #FF6B00);
+    cursor: pointer;
+    white-space: nowrap;
+}
+.uc-disc-picker__link:hover { text-decoration: underline; }
+.uc-disc-picker__list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 8px;
+    max-height: 264px;
+    overflow-y: auto;
+    padding: 2px;
+}
+.uc-disc-opt {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0;
+    padding: 9px 12px;
+    min-width: 0;
+    border: 1.5px solid var(--uc-border, #E8ECF2);
+    border-radius: 10px;
+    background: var(--uc-white, #fff);
+    cursor: pointer;
+    transition: border-color .15s, background .15s;
+}
+.uc-disc-opt:hover { border-color: var(--uc-orange-light, #FF8C38); }
+.uc-disc-opt__input {
+    width: 18px;
+    height: 18px;
+    margin: 0;
+    flex-shrink: 0;
+    accent-color: var(--uc-orange, #FF6B00);
+    cursor: pointer;
+}
+.uc-disc-opt__nome {
+    flex: 1;
+    min-width: 0;
+    font-size: 13px;
+    line-height: 1.3;
+    color: var(--uc-text, #1C1C2E);
+}
+.uc-disc-opt__cod {
+    font-size: 11px;
+    color: var(--uc-text-muted, #8A93A4);
+    white-space: nowrap;
+}
+.uc-disc-opt:has(.uc-disc-opt__input:checked) {
+    border-color: var(--uc-orange, #FF6B00);
+    background: var(--uc-orange-faint, #FFF3EB);
+}
+.uc-disc-opt.is-oculta { display: none; }
+.uc-disc-picker__vazio {
+    grid-column: 1 / -1;
+    padding: 6px 2px;
+    font-size: 12px;
+    color: var(--uc-text-muted, #8A93A4);
+}

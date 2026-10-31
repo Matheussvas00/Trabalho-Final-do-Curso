@@ -760,18 +760,17 @@
                         <div class="col-12">
                             <hr style="border-color:#eee;">
                             <label class="form-label fw-semibold" style="font-size:13px;">Disciplinas <span style="color:#FF6B00">*</span></label>
-                            <div style="display:flex; flex-wrap:wrap; gap:8px;">
+                            <div class="uc-disc-picker__list">
                                 {% for matricula in p.id_alunofk.matriculas.all %}
                                 {% with disc=matricula.codigo_disciplinafk %}
-                                <div class="form-check" style="background:#f8f9fa; padding:6px 12px; border-radius:8px; border:1px solid #dee2e6;">
-                                    <input class="form-check-input" type="checkbox" name="disciplinas"
+                                <label class="uc-disc-opt" for="home_ed_disc_{{ p.pk }}_{{ disc.codigo_disciplina }}">
+                                    <input class="uc-disc-opt__input" type="checkbox" name="disciplinas"
                                            value="{{ disc.codigo_disciplina }}"
                                            id="home_ed_disc_{{ p.pk }}_{{ disc.codigo_disciplina }}"
                                            {% for dp in p.disciplinas_portaria.all %}{% if dp.codigo_disciplinafk == disc %}checked{% endif %}{% endfor %}>
-                                    <label class="form-check-label" for="home_ed_disc_{{ p.pk }}_{{ disc.codigo_disciplina }}" style="font-size:13px;">
-                                        {{ disc.nome_disciplina }}
-                                    </label>
-                                </div>
+                                    <span class="uc-disc-opt__nome">{{ disc.nome_disciplina }}</span>
+                                    <span class="uc-disc-opt__cod">{{ disc.codigo_disciplina }}</span>
+                                </label>
                                 {% endwith %}
                                 {% empty %}
                                 <small class="text-muted">Aluno sem disciplinas matriculadas.</small>

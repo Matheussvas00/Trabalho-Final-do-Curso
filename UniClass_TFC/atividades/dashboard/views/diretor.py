@@ -8,6 +8,10 @@ from django.contrib import messages
 from django.views.decorators.http import require_POST
 from django.db import transaction, IntegrityError
 from django.http import JsonResponse
+from django.db.models import Q
+from django.utils.dateparse import parse_date
+from django.utils import timezone
+from datetime import datetime, timedelta
 from atividades.models import (
     Aluno, Professor, Diretor, Portaria, PortariaDisciplina,
     Disciplina, ProfessorDisciplina, AlunoDisciplina, RespostaAtividade, Usuario, Curso,
@@ -661,6 +665,8 @@ def cadastrar_portaria(request):
     Historico.objects.create(
         id_usuario=request.user,
         acao='portaria_criada',
+        id_portariafk=portaria,
+        id_alunofk=aluno,
         descricao=f'Portaria nº {numero} criada para o aluno {aluno.nome_completo} (matrícula {aluno.matricula_aluno}).'
     )
     if is_ajax:
@@ -857,6 +863,9 @@ def validar_resposta_diretor(request, resposta_id):
             Historico.objects.create(
                 id_usuario=request.user,
                 acao='resposta_aprovada_dir',
+                id_portariafk=resposta.id_atividade.id_portariafk,
+                id_alunofk=resposta.id_alunofk,
+                id_professorfk=resposta.id_atividade.id_professorfk,
                 descricao=f'Resposta #{resposta.pk} do aluno {resposta.id_alunofk.nome_completo} aprovada para a atividade "{resposta.id_atividade.titulo}".'
             )
         else:
@@ -878,6 +887,9 @@ def validar_resposta_diretor(request, resposta_id):
             Historico.objects.create(
                 id_usuario=request.user,
                 acao='resposta_rejeitada_dir',
+                id_portariafk=resposta.id_atividade.id_portariafk,
+                id_alunofk=resposta.id_alunofk,
+                id_professorfk=resposta.id_atividade.id_professorfk,
                 descricao=f'Resposta #{resposta.pk} do aluno {resposta.id_alunofk.nome_completo} rejeitada para a atividade "{resposta.id_atividade.titulo}".'
             )
     except ValueError as e:
@@ -959,16 +971,61 @@ def historico_sistema(request):
     else:
         ctx = base_context(request)
 
-    # Filtrar histórico
-    historico_qs = Historico.objects.select_related('id_usuario').order_by('-data_hora')
+    historico_qs = Historico.objects.select_related(
+        'id_usuario', 'id_portariafk', 'id_alunofk', 'id_professorfk'
+    ).order_by('-data_hora')
 
-    # Filtro por tipo de ação
-    acao_filtro = request.GET.get('acao', '')
-    if acao_filtro:
-        historico_qs = historico_qs.filter(acao=acao_filtro)
+    # Opções dos filtros: o diretor vê as do seu curso; o administrador vê todas
+    curso = ctx.get('curso_diretor') if user.tipo_usuario == 'diretor' else None
+    portarias_opcoes = Portaria.objects.select_related('id_alunofk').order_by('-data_criacao')
+    alunos_opcoes = Aluno.objects.order_by('nome_aluno', 'sobrenome_aluno')
+    professores_opcoes = Professor.objects.order_by('nome_professor', 'sobrenome_professor')
+    if curso:
+        portarias_opcoes = portarias_opcoes.filter(id_diretorfk__curso_fk=curso)
+        alunos_opcoes = alunos_opcoes.filter(cursos=curso)
+        professores_opcoes = professores_opcoes.filter(
+            Q(cursos=curso) | Q(disciplinas_lecionadas__curso_fk=curso)
+        ).distinct()
 
-    ctx['historico'] = historico_qs[:100]  # últimos 100 registros
-    ctx['acao_filtro'] = acao_filtro
+    filtros = {
+        'acao': request.GET.get('acao', '').strip(),
+        'portaria': request.GET.get('portaria', '').strip(),
+        'aluno': request.GET.get('aluno', '').strip(),
+        'professor': request.GET.get('professor', '').strip(),
+        'data_inicio': request.GET.get('data_inicio', '').strip(),
+        'data_fim': request.GET.get('data_fim', '').strip(),
+    }
+
+    if filtros['acao']:
+        historico_qs = historico_qs.filter(acao=filtros['acao'])
+    if filtros['portaria'].isdigit():
+        historico_qs = historico_qs.filter(id_portariafk_id=int(filtros['portaria']))
+    if filtros['aluno'].isdigit():
+        # ações sobre o aluno e ações feitas pelo próprio aluno
+        aluno_id = int(filtros['aluno'])
+        historico_qs = historico_qs.filter(Q(id_alunofk_id=aluno_id) | Q(id_usuario_id=aluno_id))
+    if filtros['professor'].isdigit():
+        professor_id = int(filtros['professor'])
+        historico_qs = historico_qs.filter(Q(id_professorfk_id=professor_id) | Q(id_usuario_id=professor_id))
+
+    data_inicio = parse_date(filtros['data_inicio']) if filtros['data_inicio'] else None
+    data_fim = parse_date(filtros['data_fim']) if filtros['data_fim'] else None
+    # intervalo calculado aqui (horário de Brasília) para não depender das tabelas de fuso do MySQL
+    if data_inicio:
+        inicio = timezone.make_aware(datetime.combine(data_inicio, datetime.min.time()))
+        historico_qs = historico_qs.filter(data_hora__gte=inicio)
+    if data_fim:
+        fim = timezone.make_aware(datetime.combine(data_fim + timedelta(days=1), datetime.min.time()))
+        historico_qs = historico_qs.filter(data_hora__lt=fim)
+
+    ctx['total_encontrado'] = historico_qs.count()
+    ctx['historico'] = historico_qs[:100]  # os 100 mais recentes
+    ctx['filtros'] = filtros
+    ctx['filtro_ativo'] = any(filtros.values())
+    ctx['acao_filtro'] = filtros['acao']
     ctx['acoes_disponiveis'] = Historico.ACAO_CHOICES
+    ctx['portarias_opcoes'] = portarias_opcoes
+    ctx['alunos_opcoes'] = alunos_opcoes
+    ctx['professores_opcoes'] = professores_opcoes
     ctx['active_page'] = 'historico'
     return render(request, 'dashboard/historico.html', ctx)

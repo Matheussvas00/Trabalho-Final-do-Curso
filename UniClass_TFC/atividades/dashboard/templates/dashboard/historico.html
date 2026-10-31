@@ -77,6 +77,67 @@
         color: #6c757d;
         text-decoration: none;
     }
+    /* Filtros do histórico */
+    .hist-filtros {
+        background: var(--uc-white, #fff);
+        border: 1.5px solid var(--uc-border, #e9ecef);
+        border-radius: 12px;
+        padding: 16px 18px;
+        margin-bottom: 18px;
+    }
+    .hist-filtros__grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 12px 14px;
+    }
+    .hist-filtros__grid > div { min-width: 0; }
+    .hist-filtros label {
+        display: block;
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--uc-text-muted, #6c757d);
+        margin-bottom: 4px;
+    }
+    .hist-filtros select,
+    .hist-filtros input[type="date"] {
+        width: 100%;
+        padding: 7px 10px;
+        border-radius: 8px;
+        border: 1.5px solid var(--uc-border, #dee2e6);
+        background: var(--uc-bg, #fff);
+        color: var(--uc-text, #212529);
+        font-size: 14px;
+    }
+    .hist-filtros__acoes {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        margin-top: 14px;
+    }
+    .hist-filtros__acoes button {
+        padding: 7px 18px;
+        border-radius: 8px;
+        border: 1.5px solid var(--uc-orange, #e65c00);
+        background: var(--uc-orange, #e65c00);
+        color: #fff;
+        font-size: 14px;
+        cursor: pointer;
+    }
+    .hist-filtros__acoes a {
+        font-size: 13px;
+        color: var(--uc-text-muted, #6c757d);
+        text-decoration: none;
+    }
+    .hist-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 5px; }
+    .hist-tag {
+        font-size: 11px;
+        padding: 2px 8px;
+        border-radius: 20px;
+        background: var(--uc-orange-faint, #FFF3EB);
+        color: var(--uc-orange-dark, #D45400);
+        white-space: nowrap;
+    }
+    [data-theme="dark"] .hist-tag { color: var(--uc-orange-light, #FF8C38); }
 </style>
 {% endblock %}
 
@@ -115,19 +176,60 @@
             </div>
         </div>
 
-        <!-- Filtro -->
-        <form method="get" class="filter-bar">
-            <label for="acao-filtro" style="font-size:14px;font-weight:600;">Filtrar por ação:</label>
-            <select id="acao-filtro" name="acao">
-                <option value="">Todas as ações</option>
-                {% for valor, label in acoes_disponiveis %}
-                    <option value="{{ valor }}" {% if acao_filtro == valor %}selected{% endif %}>{{ label }}</option>
-                {% endfor %}
-            </select>
-            <button type="submit"><i class="fas fa-filter"></i> Filtrar</button>
-            {% if acao_filtro %}
-                <a href="{% url 'dashboard:historico' %}">Limpar filtro</a>
-            {% endif %}
+        <!-- Filtros -->
+        <form method="get" class="hist-filtros">
+            <div class="hist-filtros__grid">
+                <div>
+                    <label for="f-acao">Ação</label>
+                    <select id="f-acao" name="acao">
+                        <option value="">Todas</option>
+                        {% for valor, label in acoes_disponiveis %}
+                            <option value="{{ valor }}" {% if filtros.acao == valor %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label for="f-portaria">Portaria</label>
+                    <select id="f-portaria" name="portaria">
+                        <option value="">Todas</option>
+                        {% for p in portarias_opcoes %}
+                            <option value="{{ p.pk }}" {% if filtros.portaria == p.pk|stringformat:"s" %}selected{% endif %}>Nº {{ p.numero_portaria }} — {{ p.id_alunofk.nome_completo }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label for="f-aluno">Aluno</label>
+                    <select id="f-aluno" name="aluno">
+                        <option value="">Todos</option>
+                        {% for a in alunos_opcoes %}
+                            <option value="{{ a.pk }}" {% if filtros.aluno == a.pk|stringformat:"s" %}selected{% endif %}>{{ a.nome_completo }}{% if a.matricula_aluno %} ({{ a.matricula_aluno }}){% endif %}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label for="f-professor">Professor</label>
+                    <select id="f-professor" name="professor">
+                        <option value="">Todos</option>
+                        {% for pr in professores_opcoes %}
+                            <option value="{{ pr.pk }}" {% if filtros.professor == pr.pk|stringformat:"s" %}selected{% endif %}>{{ pr.nome_completo }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label for="f-inicio">De</label>
+                    <input type="date" id="f-inicio" name="data_inicio" value="{{ filtros.data_inicio }}">
+                </div>
+                <div>
+                    <label for="f-fim">Até</label>
+                    <input type="date" id="f-fim" name="data_fim" value="{{ filtros.data_fim }}">
+                </div>
+            </div>
+            <div class="hist-filtros__acoes">
+                <button type="submit"><i class="fas fa-filter"></i> Filtrar</button>
+                {% if filtro_ativo %}
+                    <a href="{% url 'dashboard:historico' %}"><i class="fas fa-times"></i> Limpar filtros</a>
+                {% endif %}
+            </div>
         </form>
 
         <!-- Lista de registros -->
@@ -135,7 +237,9 @@
             <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
                 <i class="fas fa-history" style="color:var(--uc-orange,#e65c00);font-size:18px;"></i>
                 <span style="font-weight:700;font-size:16px;">Registros do Histórico</span>
-                <span style="font-size:13px;color:#6c757d;">(últimos 100 registros)</span>
+                <span style="font-size:13px;color:#6c757d;">
+                    {% if total_encontrado > 100 %}({{ total_encontrado }} encontrados — exibindo os 100 mais recentes){% else %}({{ total_encontrado }} encontrado{{ total_encontrado|pluralize }}){% endif %}
+                </span>
             </div>
 
             {% if historico %}
@@ -171,6 +275,13 @@
                             <i class="fas fa-user" style="font-size:11px;"></i>
                             {{ entrada.id_usuario.email }}
                         </div>
+                        {% if entrada.id_portariafk or entrada.id_alunofk or entrada.id_professorfk %}
+                        <div class="hist-tags">
+                            {% if entrada.id_portariafk %}<span class="hist-tag"><i class="fas fa-file-alt"></i> Portaria {{ entrada.id_portariafk.numero_portaria }}</span>{% endif %}
+                            {% if entrada.id_alunofk %}<span class="hist-tag"><i class="fas fa-user-graduate"></i> {{ entrada.id_alunofk.nome_completo }}</span>{% endif %}
+                            {% if entrada.id_professorfk %}<span class="hist-tag"><i class="fas fa-chalkboard-teacher"></i> {{ entrada.id_professorfk.nome_completo }}</span>{% endif %}
+                        </div>
+                        {% endif %}
                     </div>
                     <div class="hist-meta">
                         {{ entrada.data_hora|date:"d/m/Y" }}<br>
@@ -182,7 +293,7 @@
                 <div style="text-align:center;padding:40px 20px;color:#6c757d;">
                     <i class="fas fa-history" style="font-size:40px;margin-bottom:12px;opacity:.4;display:block;"></i>
                     <p style="font-weight:600;margin-bottom:4px;">Nenhum registro encontrado</p>
-                    <p style="font-size:13px;">Nenhuma ação foi registrada no histórico ainda.</p>
+                    <p style="font-size:13px;">{% if filtro_ativo %}Nenhuma ação corresponde aos filtros escolhidos.{% else %}Nenhuma ação foi registrada no histórico ainda.{% endif %}</p>
                 </div>
             {% endif %}
         </div>
