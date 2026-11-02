@@ -97,7 +97,7 @@ def login_view(request):
     return render(request, 'authentication/login.html', context)
 
 
-@login_required(login_url='login')
+@login_required(login_url='authentication:login')
 def logout_view(request):
     """
     View de logout

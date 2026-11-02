@@ -198,7 +198,7 @@ SESSION_SAVE_EVERY_REQUEST = False
 # URLs de Autenticação
 LOGIN_URL = 'authentication:login'
 LOGIN_REDIRECT_URL = 'dashboard:index'
-LOGOUT_REDIRECT_URL = 'login'
+LOGOUT_REDIRECT_URL = 'authentication:login'
 
 # ── Email ──────────────────────────────────────────────────────────────
 # Backend SMTP — preencha EMAIL_HOST_USER e EMAIL_HOST_PASSWORD
