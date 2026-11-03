@@ -161,11 +161,11 @@ class Diretor(models.Model):
     curso_fk = models.ForeignKey(
         'Curso',
         on_delete=models.PROTECT,  # PROTECT para evitar exclusão de curso com diretor vinculado
-        null=False,  # Obrigatório - diretor DEVE ter um curso
-        blank=False,
+        null=True,  # Vazio apenas para diretor desvinculado (inativo); diretor ativo DEVE ter um curso
+        blank=True,
         db_column='curso_fk',
         related_name='diretores',
-        help_text='Curso que o diretor administra (obrigatório)'
+        help_text='Curso que o diretor administra (obrigatório para diretor ativo)'
     )
 
     class Meta:
@@ -182,8 +182,8 @@ class Diretor(models.Model):
 
     def save(self, *args, **kwargs):
         """Valida que o diretor tem curso vinculado e que o curso não tem outro diretor ativo"""
-        if not self.curso_fk:
-            raise ValueError("Diretor deve estar vinculado a um curso")
+        if not self.curso_fk_id and self.ativo:
+            raise ValueError("Diretor ativo deve estar vinculado a um curso")
         if self.ativo:
             outro = self.diretor_ativo_do_curso(self.curso_fk, excluir_pk=self.pk)
             if outro:

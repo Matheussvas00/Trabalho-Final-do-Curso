@@ -117,6 +117,44 @@ def home_diretor(request):
     return render(request, 'dashboard/home_diretor.html', ctx)
 
 
+def _vincular_existente(request, modelo, email, disciplinas_ids):
+    """Se já existe professor/aluno ativo com o e-mail, vincula ao curso do diretor em vez de recadastrar.
+
+    Retorna True quando tratou o caso (vinculou ou avisou); False quando o e-mail é novo.
+    """
+    existente = modelo.objects.filter(
+        **{f'id_{modelo.__name__.lower()}__email': email}, ativo=True
+    ).first()
+    if not existente:
+        return False
+    curso = Diretor.objects.get(id_diretor=request.user).curso_fk
+    tipo = modelo.__name__.lower()
+    if existente.cursos.filter(pk=curso.pk).exists():
+        messages.error(request, f'{existente.nome_completo} já está vinculado a este curso. Use Editar.')
+        return True
+    vinculo = ProfessorDisciplina if modelo is Professor else AlunoDisciplina
+    campo = 'id_professorfk' if modelo is Professor else 'id_alunofk'
+    with transaction.atomic():
+        existente.cursos.add(curso)
+        for disciplina in Disciplina.objects.filter(codigo_disciplina__in=disciplinas_ids, curso_fk=curso):
+            vinculo.objects.get_or_create(**{campo: existente, 'codigo_disciplinafk': disciplina})
+    messages.success(
+        request,
+        f'O {tipo} {existente.nome_completo} já tinha cadastro e foi vinculado ao curso {curso.nome_curso} '
+        f'(a senha atual dele foi mantida).'
+    )
+    return True
+
+
+def _desvincular_do_curso(request, obj, vinculo, campo):
+    """Remove o vínculo com o curso do diretor e com as disciplinas desse curso. Nada é apagado."""
+    curso = Diretor.objects.get(id_diretor=request.user).curso_fk
+    with transaction.atomic():
+        qtd = vinculo.objects.filter(**{campo: obj, 'codigo_disciplinafk__curso_fk': curso}).delete()[0]
+        obj.cursos.remove(curso)
+    return curso, qtd
+
+
 # ══════════════════════════════════════════════════════════════
 #  CRUD — PROFESSORES
 # ══════════════════════════════════════════════════════════════
@@ -159,6 +197,9 @@ def cadastrar_professor(request):
 
     if not disciplinas_ids:
         messages.error(request, 'É obrigatório vincular pelo menos uma disciplina ao professor.')
+        return redirect('dashboard:gerenciar_professores')
+
+    if _vincular_existente(request, Professor, email, disciplinas_ids):
         return redirect('dashboard:gerenciar_professores')
 
     if Usuario.objects.filter(email=email).exists():
@@ -306,6 +347,20 @@ def reativar_professor(request, professor_id):
     return redirect('dashboard:gerenciar_professores')
 
 
+@_diretor_required
+@require_POST
+def desvincular_professor(request, professor_id):
+    """Desvincula o professor do curso do diretor e das disciplinas desse curso."""
+    professor = get_object_or_404(Professor, pk=professor_id)
+    curso, qtd = _desvincular_do_curso(request, professor, ProfessorDisciplina, 'id_professorfk')
+    messages.success(
+        request,
+        f'Professor {professor.nome_completo} desvinculado do curso {curso.nome_curso} '
+        f'e de {qtd} disciplina(s). As atividades criadas por ele foram mantidas.'
+    )
+    return redirect('dashboard:gerenciar_professores')
+
+
 # ══════════════════════════════════════════════════════════════
 #  CRUD — ALUNOS
 # ══════════════════════════════════════════════════════════════
@@ -353,6 +408,9 @@ def cadastrar_aluno(request):
 
     if not disciplinas_ids:
         messages.error(request, 'Selecione pelo menos uma disciplina para o aluno.')
+        return redirect('dashboard:gerenciar_alunos')
+
+    if _vincular_existente(request, Aluno, email, disciplinas_ids):
         return redirect('dashboard:gerenciar_alunos')
 
     if Usuario.objects.filter(email=email).exists():
@@ -510,6 +568,20 @@ def reativar_aluno(request, aluno_id):
         usuario.save(update_fields=['email'])
 
     messages.success(request, f'Aluno {nome} reativado com sucesso.')
+    return redirect('dashboard:gerenciar_alunos')
+
+
+@_diretor_required
+@require_POST
+def desvincular_aluno(request, aluno_id):
+    """Desvincula o aluno do curso do diretor e das disciplinas desse curso."""
+    aluno = get_object_or_404(Aluno, pk=aluno_id)
+    curso, qtd = _desvincular_do_curso(request, aluno, AlunoDisciplina, 'id_alunofk')
+    messages.success(
+        request,
+        f'Aluno {aluno.nome_completo} desvinculado do curso {curso.nome_curso} '
+        f'e de {qtd} disciplina(s). Portarias e respostas dele foram mantidas.'
+    )
     return redirect('dashboard:gerenciar_alunos')
 
 

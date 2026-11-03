@@ -20,6 +20,7 @@ urlpatterns = [
     path('gerenciar/alunos/<int:aluno_id>/editar/', views.editar_aluno, name='editar_aluno'),
     path('gerenciar/alunos/<int:aluno_id>/Inativar/', views.Inativar_aluno, name='Inativar_aluno'),
     path('gerenciar/alunos/<int:aluno_id>/reativar/', views.reativar_aluno, name='reativar_aluno'),
+    path('gerenciar/alunos/<int:aluno_id>/desvincular/', views.desvincular_aluno, name='desvincular_aluno'),
 
     # Diretor — CRUD Professores
     path('gerenciar/professores/', views.gerenciar_professores, name='gerenciar_professores'),
@@ -27,6 +28,8 @@ urlpatterns = [
     path('gerenciar/professores/<int:professor_id>/editar/', views.editar_professor, name='editar_professor'),
     path('gerenciar/professores/<int:professor_id>/Inativar/', views.Inativar_professor, name='Inativar_professor'),
     path('gerenciar/professores/<int:professor_id>/reativar/', views.reativar_professor, name='reativar_professor'),
+    path('gerenciar/professores/<int:professor_id>/desvincular/', views.desvincular_professor,
+         name='desvincular_professor'),
 
     # Diretor — CRUD Portarias
     path('gerenciar/portarias/', views.gerenciar_portarias, name='gerenciar_portarias'),
@@ -47,6 +50,7 @@ urlpatterns = [
     path('admin/diretores/<int:diretor_id>/editar/', views.editar_diretor, name='editar_diretor'),
     path('admin/diretores/<int:diretor_id>/Inativar/', views.Inativar_diretor, name='Inativar_diretor'),
     path('admin/diretores/<int:diretor_id>/reativar/', views.reativar_diretor, name='reativar_diretor'),
+    path('admin/diretores/<int:diretor_id>/desvincular/', views.desvincular_diretor, name='desvincular_diretor'),
 
     # Admin — CRUD Cursos
     path('admin/cursos/', views.gerenciar_cursos, name='gerenciar_cursos'),

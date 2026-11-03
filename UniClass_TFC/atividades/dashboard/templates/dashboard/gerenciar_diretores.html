@@ -118,6 +118,15 @@
                                         data-bs-toggle="modal" data-bs-target="#modalEditarDiretor{{ d.pk }}">
                                     <i class="fas fa-edit"></i> Editar
                                 </button>
+                                {% if d.curso_fk_id %}
+                                <form method="post" action="{% url 'dashboard:desvincular_diretor' d.pk %}" class="d-inline"
+                                      onsubmit="return confirm('Desvincular {{ d.nome_completo|escapejs }} do curso? Sem curso ele fica inativo e o curso fica livre para outro diretor.');">
+                                    {% csrf_token %}
+                                    <button type="submit" class="uc-btn uc-btn--ghost uc-btn--sm" title="Desvincular do curso">
+                                        <i class="fas fa-unlink"></i> Desvincular
+                                    </button>
+                                </form>
+                                {% endif %}
                                 {% if d.ativo %}
                                 <button type="button" class="uc-btn uc-btn--danger uc-btn--sm"
                                         data-bs-toggle="modal" data-bs-target="#modalInativarDiretor{{ d.pk }}">

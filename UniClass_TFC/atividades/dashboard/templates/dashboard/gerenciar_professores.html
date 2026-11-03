@@ -112,6 +112,13 @@
                                         data-bs-toggle="modal" data-bs-target="#modalEditarProf{{ prof.pk }}">
                                     <i class="fas fa-edit"></i> Editar
                                 </button>
+                                <form method="post" action="{% url 'dashboard:desvincular_professor' prof.pk %}" class="d-inline"
+                                      onsubmit="return confirm('Desvincular {{ prof.nome_completo|escapejs }} do curso e das disciplinas dele neste curso?');">
+                                    {% csrf_token %}
+                                    <button type="submit" class="uc-btn uc-btn--ghost uc-btn--sm" title="Desvincular do curso">
+                                        <i class="fas fa-unlink"></i> Desvincular
+                                    </button>
+                                </form>
                                 {% if prof.ativo %}
                                 <button type="button" class="uc-btn uc-btn--danger uc-btn--sm"
                                         data-bs-toggle="modal" data-bs-target="#modalInativarProf{{ prof.pk }}">

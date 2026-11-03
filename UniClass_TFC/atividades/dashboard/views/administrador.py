@@ -228,6 +228,13 @@ def reativar_diretor(request, diretor_id):
     diretor = get_object_or_404(Diretor, pk=diretor_id)
     nome = diretor.nome_completo
 
+    if not diretor.curso_fk_id:
+        messages.error(
+            request,
+            f'{nome} está sem curso. Use Editar para vincular um curso antes de reativar.'
+        )
+        return redirect('dashboard:gerenciar_diretores')
+
     outro = Diretor.diretor_ativo_do_curso(diretor.curso_fk, excluir_pk=diretor.pk)
     if outro:
         messages.error(
@@ -247,6 +254,35 @@ def reativar_diretor(request, diretor_id):
         usuario.save(update_fields=['email'])
 
     messages.success(request, f'Diretor {nome} reativado com sucesso.')
+    return redirect('dashboard:gerenciar_diretores')
+
+
+@_admin_required
+@require_POST
+def desvincular_diretor(request, diretor_id):
+    """Desvincula o diretor do curso. Sem curso ele fica inativo (sem acesso) e o curso fica livre."""
+    diretor = get_object_or_404(Diretor, pk=diretor_id)
+    nome = diretor.nome_completo
+    if not diretor.curso_fk_id:
+        messages.info(request, f'{nome} já está sem curso.')
+        return redirect('dashboard:gerenciar_diretores')
+
+    nome_curso = diretor.curso_fk.nome_curso
+    diretor.curso_fk = None
+    diretor.ativo = False
+    diretor.save(update_fields=['curso_fk', 'ativo'])
+
+    usuario = diretor.id_diretor
+    prefix = f'_inativo_{diretor_id}_'
+    if not usuario.email.startswith(prefix):
+        usuario.email = f'{prefix}{usuario.email}'
+        usuario.save(update_fields=['email'])
+
+    messages.success(
+        request,
+        f'Diretor {nome} desvinculado do curso {nome_curso}. O curso está livre para outro diretor. '
+        f'Para vincular {nome} a um curso, use Editar e depois Reativar.'
+    )
     return redirect('dashboard:gerenciar_diretores')
 
 
@@ -319,6 +355,22 @@ def editar_curso_admin(request, curso_id):
 def Inativar_curso_admin(request, curso_id):
     """Inativa um curso. Nada é apagado: diretor, disciplinas, alunos e portarias continuam no banco."""
     curso = get_object_or_404(Curso, pk=curso_id)
+    diretor = Diretor.diretor_ativo_do_curso(curso)
+    if diretor:
+        messages.error(
+            request,
+            f'Não é possível inativar o curso "{curso.nome_curso}": o diretor {diretor.nome_completo} '
+            f'está vinculado a ele. Desvincule ou inative o diretor antes.'
+        )
+        return redirect('dashboard:gerenciar_cursos')
+    qtd_prof = curso.professores.filter(ativo=True).count()
+    if qtd_prof:
+        messages.error(
+            request,
+            f'Não é possível inativar o curso "{curso.nome_curso}": há {qtd_prof} professor(es) ativo(s) '
+            f'vinculado(s) a ele. Desvincule ou inative os professores antes.'
+        )
+        return redirect('dashboard:gerenciar_cursos')
     curso.ativo = False
     curso.save(update_fields=['ativo'])
     messages.success(
