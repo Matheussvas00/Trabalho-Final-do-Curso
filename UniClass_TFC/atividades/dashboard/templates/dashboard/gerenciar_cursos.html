@@ -65,7 +65,14 @@
                            data-search-table="tabelaCursos" data-search-counter="countCursos">
                     <button id="searchCursos-clear" class="uc-search-clear"><i class="fas fa-times"></i></button>
                 </div>
-                <div class="uc-search-info">Exibindo <strong id="countCursos">{{ cursos|length }}</strong> curso{{ cursos|length|pluralize }}</div>
+                <div style="display:flex;align-items:center;gap:10px;">
+                    <div class="uc-search-info">Exibindo <strong id="countCursos">{{ cursos|length }}</strong> curso{{ cursos|length|pluralize }}</div>
+                    <button type="button" id="btnFiltroInativos" data-showing="false"
+                            class="uc-btn uc-btn--outline uc-btn--sm" onclick="toggleInativos()"
+                            title="Mostrar/ocultar cursos inativos">
+                        <i class="fas fa-eye-slash me-1"></i> Ver Inativos
+                    </button>
+                </div>
             </div>
             <div class="uc-card__body" style="padding:0;">
                 {% if cursos %}
@@ -83,7 +90,7 @@
                     </thead>
                     <tbody>
                         {% for c in cursos %}
-                        <tr>
+                        <tr data-inactive="{{ c.ativo|yesno:'false,true' }}">
                             <td class="uc-td-num">{{ forloop.counter }}</td>
                             <td>
                                 <i class="fas fa-graduation-cap me-1" style="color:var(--uc-orange)"></i>
@@ -150,7 +157,8 @@
                 </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <form method="post" action="{% url 'dashboard:cadastrar_curso_admin' %}">
+            <form method="post" action="{% url 'dashboard:cadastrar_curso_admin' %}"
+                  onsubmit="this.querySelector('[type=submit]').disabled = true;">
                 {% csrf_token %}
                 <div class="modal-body p-4">
                     <label class="form-label fw-semibold" style="font-size:13px;">Nome do Curso <span style="color:#FF6B00">*</span></label>
@@ -183,7 +191,8 @@
                 </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <form method="post" action="{% url 'dashboard:editar_curso_admin' c.pk %}">
+            <form method="post" action="{% url 'dashboard:editar_curso_admin' c.pk %}"
+                  onsubmit="this.querySelector('[type=submit]').disabled = true;">
                 {% csrf_token %}
                 <div class="modal-body p-4">
                     <label class="form-label fw-semibold" style="font-size:13px;">Nome do Curso</label>
@@ -256,12 +265,34 @@
         document.getElementById('ucMain').classList.toggle('expanded');
         localStorage.setItem('uc_sb', document.getElementById('ucSidebar').classList.contains('collapsed'));
     }
+    function contarVisiveis() {
+        const visiveis = Array.from(document.querySelectorAll('#tabelaCursos tbody tr[data-inactive]'))
+            .filter(r => r.style.display !== 'none').length;
+        const contador = document.getElementById('countCursos');
+        if (contador) contador.textContent = visiveis;
+    }
     document.addEventListener('DOMContentLoaded', function () {
         if (localStorage.getItem('uc_sb') === 'true') {
             document.getElementById('ucSidebar').classList.add('collapsed');
             document.getElementById('ucMain').classList.add('expanded');
         }
+        // Ocultar cursos inativos por padrão
+        document.querySelectorAll('tr[data-inactive="true"]').forEach(r => r.style.display = 'none');
+        contarVisiveis();
     });
+
+    function toggleInativos() {
+        const btn = document.getElementById('btnFiltroInativos');
+        const showing = btn.dataset.showing === 'true';
+        document.querySelectorAll('tr[data-inactive="true"]').forEach(r => {
+            r.style.display = showing ? 'none' : '';
+        });
+        btn.dataset.showing = showing ? 'false' : 'true';
+        btn.innerHTML = showing
+            ? '<i class="fas fa-eye-slash me-1"></i> Ver Inativos'
+            : '<i class="fas fa-eye me-1"></i> Ocultar Inativos';
+        contarVisiveis();
+    }
 </script>
 {% endblock %}
 

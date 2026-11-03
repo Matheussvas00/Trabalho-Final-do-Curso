@@ -266,17 +266,29 @@ def gerenciar_cursos(request):
 @require_POST
 def cadastrar_curso_admin(request):
     """Cadastra um novo curso."""
-    nome = request.POST.get('nome_curso', '').strip()
+    nome = ' '.join(request.POST.get('nome_curso', '').split())
 
     if not nome:
         messages.error(request, 'O nome do curso é obrigatório.')
         return redirect('dashboard:gerenciar_cursos')
 
-    if Curso.objects.filter(nome_curso=nome).exists():
-        messages.error(request, 'Já existe um curso com esse nome.')
-        return redirect('dashboard:gerenciar_cursos')
+    with transaction.atomic():
+        # Trava a tabela de cursos durante a checagem: dois envios ao mesmo tempo
+        # (clique duplo) não conseguem criar o mesmo curso duas vezes.
+        list(Curso.objects.select_for_update().values_list('pk', flat=True))
+        existente = Curso.objects.filter(nome_curso__iexact=nome).first()
+        if existente:
+            if existente.ativo:
+                messages.error(request, 'Já existe um curso com esse nome.')
+            else:
+                messages.error(
+                    request,
+                    f'O curso "{existente.nome_curso}" já existe e está inativo. '
+                    f'Use "Ver Inativos" e clique em Reativar.'
+                )
+            return redirect('dashboard:gerenciar_cursos')
+        Curso.objects.create(nome_curso=nome)
 
-    Curso.objects.create(nome_curso=nome)
     messages.success(request, f'Curso "{nome}" cadastrado com sucesso.')
     return redirect('dashboard:gerenciar_cursos')
 
@@ -286,13 +298,13 @@ def cadastrar_curso_admin(request):
 def editar_curso_admin(request, curso_id):
     """Atualiza o nome de um curso."""
     curso = get_object_or_404(Curso, pk=curso_id)
-    nome  = request.POST.get('nome_curso', '').strip()
+    nome = ' '.join(request.POST.get('nome_curso', '').split())
 
     if not nome:
         messages.error(request, 'O nome do curso é obrigatório.')
         return redirect('dashboard:gerenciar_cursos')
 
-    if Curso.objects.filter(nome_curso=nome).exclude(pk=curso_id).exists():
+    if Curso.objects.filter(nome_curso__iexact=nome).exclude(pk=curso_id).exists():
         messages.error(request, 'Já existe outro curso com esse nome.')
         return redirect('dashboard:gerenciar_cursos')
 
