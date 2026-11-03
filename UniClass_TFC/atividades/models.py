@@ -59,6 +59,7 @@ class Curso(models.Model):
     """Cursos oferecidos pela faculdade"""
     id_curso = models.AutoField(primary_key=True)
     nome_curso = models.CharField(max_length=100)
+    ativo = models.BooleanField(default=True, help_text='False = curso inativado (os dados são mantidos)')
 
     class Meta:
         db_table = 'curso'

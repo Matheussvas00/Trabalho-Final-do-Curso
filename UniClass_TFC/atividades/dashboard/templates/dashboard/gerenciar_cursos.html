@@ -77,6 +77,7 @@
                             <th>Nome do Curso</th>
                             <th class="text-center">Disciplinas</th>
                             <th class="text-center">Alunos</th>
+                            <th class="text-center">Status</th>
                             <th class="uc-th-actions">Ações</th>
                         </tr>
                     </thead>
@@ -90,20 +91,37 @@
                             </td>
                             <td class="text-center"><span class="uc-badge uc-badge--pending">{{ c.disciplinas.count }}</span></td>
                             <td class="text-center"><span class="uc-badge uc-badge--pending">{{ c.alunos.count }}</span></td>
+                            <td class="text-center">
+                                {% if c.ativo %}
+                                    <span class="uc-badge uc-badge--success">Ativo</span>
+                                {% else %}
+                                    <span class="uc-badge uc-badge--danger">Inativo</span>
+                                {% endif %}
+                            </td>
                             <td class="uc-td-actions">
                                 <button type="button" class="uc-btn uc-btn--outline uc-btn--sm"
                                         data-bs-toggle="modal" data-bs-target="#modalEditarCurso{{ c.pk }}">
                                     <i class="fas fa-edit"></i> Editar
                                 </button>
+                                {% if c.ativo %}
                                 <button type="button" class="uc-btn uc-btn--danger uc-btn--sm"
                                         data-bs-toggle="modal" data-bs-target="#modalInativarCurso{{ c.pk }}">
-                                    <i class="fas fa-user-slash"></i> Inativar
+                                    <i class="fas fa-ban"></i> Inativar
                                 </button>
+                                {% else %}
+                                <form method="post" action="{% url 'dashboard:reativar_curso_admin' c.pk %}" style="display:inline;"
+                                      onsubmit="this.querySelector('[type=submit]').disabled = true;">
+                                    {% csrf_token %}
+                                    <button type="submit" class="uc-btn uc-btn--success uc-btn--sm">
+                                        <i class="fas fa-check"></i> Reativar
+                                    </button>
+                                </form>
+                                {% endif %}
                             </td>
                         </tr>
                         {% endfor %}
                         <tr id="tabelaCursos-empty" class="uc-search-empty-row" style="display:none;">
-                            <td colspan="3"><i class="fas fa-search me-2"></i>Nenhum curso encontrado para essa busca.</td>
+                            <td colspan="6"><i class="fas fa-search me-2"></i>Nenhum curso encontrado para essa busca.</td>
                         </tr>
                     </tbody>
                 </table>
@@ -195,32 +213,28 @@
         <div class="modal-content" style="border-radius:12px; overflow:hidden;">
             <div class="modal-header" style="background:#dc3545; color:#fff; border:none;">
                 <h5 class="modal-title">
-                    <i class="fas fa-exclamation-triangle me-2"></i> Confirmar Exclusão
+                    <i class="fas fa-exclamation-triangle me-2"></i> Confirmar Inativação
                 </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <form method="post" action="{% url 'dashboard:Inativar_curso_admin' c.pk %}">
+            <form method="post" action="{% url 'dashboard:Inativar_curso_admin' c.pk %}"
+                  onsubmit="this.querySelector('[type=submit]').disabled = true;">
                 {% csrf_token %}
                 <div class="modal-body p-4">
-                    <p>Tem certeza que deseja Inativar o curso:</p>
+                    <p>Tem certeza que deseja inativar o curso:</p>
                     <div style="background:#f8f9fa; padding:12px 16px; border-radius:8px; margin:8px 0;">
                         <strong><i class="fas fa-graduation-cap me-1" style="color:var(--uc-orange)"></i> {{ c.nome_curso }}</strong>
                     </div>
-                    {% if c.disciplinas.count %}
-                    <div class="uc-alert uc-alert--warning mt-3" style="margin-bottom:0;">
-                        <i class="fas fa-exclamation-triangle"></i>
-                        <span>Este curso possui <strong>{{ c.disciplinas.count }} disciplina{{ c.disciplinas.count|pluralize }}</strong> vinculada{{ c.disciplinas.count|pluralize }}. Elas também serão removidas.</span>
-                    </div>
-                    {% endif %}
-                    <p class="text-danger mt-3 mb-0" style="font-size:13px;">
-                        <i class="fas fa-exclamation-circle me-1"></i>
-                        Esta ação é irreversível.
+                    <p class="text-muted mt-3 mb-0" style="font-size:13px;">
+                        <i class="fas fa-info-circle me-1"></i>
+                        O curso deixa de aparecer nos cadastros de diretor e de disciplina. Nada é apagado:
+                        diretor, disciplinas, alunos e portarias continuam no sistema, e o curso pode ser reativado depois.
                     </p>
                 </div>
                 <div class="modal-footer" style="border:none; padding-top:0;">
                     <button type="button" class="uc-btn uc-btn--ghost uc-btn--sm" data-bs-dismiss="modal">Cancelar</button>
                     <button type="submit" class="uc-btn uc-btn--danger uc-btn--sm">
-                        <i class="fas fa-user-slash me-1"></i> Inativar
+                        <i class="fas fa-ban me-1"></i> Inativar
                     </button>
                 </div>
             </form>

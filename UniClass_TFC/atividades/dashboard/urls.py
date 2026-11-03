@@ -53,6 +53,7 @@ urlpatterns = [
     path('admin/cursos/cadastrar/', views.cadastrar_curso_admin, name='cadastrar_curso_admin'),
     path('admin/cursos/<int:curso_id>/editar/', views.editar_curso_admin, name='editar_curso_admin'),
     path('admin/cursos/<int:curso_id>/Inativar/', views.Inativar_curso_admin, name='Inativar_curso_admin'),
+    path('admin/cursos/<int:curso_id>/reativar/', views.reativar_curso_admin, name='reativar_curso_admin'),
 
     # Admin — CRUD Disciplinas
     path('admin/disciplinas/', views.gerenciar_disciplinas, name='gerenciar_disciplinas'),

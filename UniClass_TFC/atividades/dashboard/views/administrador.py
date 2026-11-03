@@ -108,6 +108,13 @@ def cadastrar_diretor(request):
         messages.error(request, 'Curso não encontrado.')
         return redirect('dashboard:gerenciar_diretores')
 
+    if not curso_obj.ativo:
+        messages.error(
+            request,
+            f'O curso {curso_obj.nome_curso} está inativo. Reative o curso antes de cadastrar um diretor.'
+        )
+        return redirect('dashboard:gerenciar_diretores')
+
     atual = Diretor.diretor_ativo_do_curso(curso_obj)
     if atual:
         messages.error(
@@ -150,6 +157,9 @@ def editar_diretor(request, diretor_id):
 
     try:
         curso_obj = Curso.objects.get(pk=curso_id)
+        if not curso_obj.ativo and curso_obj.pk != diretor.curso_fk_id:
+            messages.error(request, f'O curso {curso_obj.nome_curso} está inativo.')
+            return redirect('dashboard:gerenciar_diretores')
         diretor.curso_fk = curso_obj
         diretor.curso_diretor = curso_obj.nome_curso  # Sincroniza o campo de texto com o curso vinculado
     except Curso.DoesNotExist:
@@ -295,11 +305,26 @@ def editar_curso_admin(request, curso_id):
 @_admin_required
 @require_POST
 def Inativar_curso_admin(request, curso_id):
-    """Remove um curso."""
+    """Inativa um curso. Nada é apagado: diretor, disciplinas, alunos e portarias continuam no banco."""
     curso = get_object_or_404(Curso, pk=curso_id)
-    nome  = curso.nome_curso
-    curso.delete()
-    messages.success(request, f'Curso "{nome}" excluído com sucesso.')
+    curso.ativo = False
+    curso.save(update_fields=['ativo'])
+    messages.success(
+        request,
+        f'Curso "{curso.nome_curso}" inativado. Ele não aparece mais nos cadastros, '
+        f'mas todos os dados foram mantidos.'
+    )
+    return redirect('dashboard:gerenciar_cursos')
+
+
+@_admin_required
+@require_POST
+def reativar_curso_admin(request, curso_id):
+    """Reativa um curso inativado."""
+    curso = get_object_or_404(Curso, pk=curso_id)
+    curso.ativo = True
+    curso.save(update_fields=['ativo'])
+    messages.success(request, f'Curso "{curso.nome_curso}" reativado com sucesso.')
     return redirect('dashboard:gerenciar_cursos')
 
 
@@ -338,6 +363,12 @@ def cadastrar_disciplina(request):
         return redirect('dashboard:gerenciar_disciplinas')
 
     curso = get_object_or_404(Curso, pk=curso_id)
+    if not curso.ativo:
+        messages.error(
+            request,
+            f'O curso {curso.nome_curso} está inativo. Reative o curso antes de cadastrar disciplinas.'
+        )
+        return redirect('dashboard:gerenciar_disciplinas')
 
     # Cria a disciplina (sem vincular professores - isso é feito ao cadastrar/editar professor)
     disciplina = Disciplina.objects.create(
@@ -360,7 +391,11 @@ def editar_disciplina(request, disciplina_codigo):
 
     curso_id = request.POST.get('curso_fk', '').strip()
     if curso_id:
-        disciplina.curso_fk = get_object_or_404(Curso, pk=curso_id)
+        novo_curso = get_object_or_404(Curso, pk=curso_id)
+        if not novo_curso.ativo and novo_curso.pk != disciplina.curso_fk_id:
+            messages.error(request, f'O curso {novo_curso.nome_curso} está inativo.')
+            return redirect('dashboard:gerenciar_disciplinas')
+        disciplina.curso_fk = novo_curso
 
     disciplina.save()
 

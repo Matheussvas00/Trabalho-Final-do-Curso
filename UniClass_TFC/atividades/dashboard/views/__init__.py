@@ -47,6 +47,7 @@ from .administrador import (
     cadastrar_curso_admin,
     editar_curso_admin,
     Inativar_curso_admin,
+    reativar_curso_admin,
     gerenciar_disciplinas,
     cadastrar_disciplina,
     editar_disciplina,

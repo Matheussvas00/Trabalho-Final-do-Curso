@@ -153,7 +153,7 @@
                             <select name="curso_fk" class="form-select" required style="border-radius:8px; border:2px solid #e0e0e0;">
                                 <option value="">— Selecione um curso —</option>
                                 {% for curso in cursos %}
-                                <option value="{{ curso.pk }}">{{ curso.nome_curso }}</option>
+                                <option value="{{ curso.pk }}" {% if not curso.ativo %}disabled{% endif %}>{{ curso.nome_curso }}{% if not curso.ativo %} — curso inativo{% endif %}</option>
                                 {% endfor %}
                             </select>
                         </div>
@@ -203,8 +203,8 @@
                             <label class="form-label fw-semibold" style="font-size:13px;">Curso</label>
                             <select name="curso_fk" class="form-select" required style="border-radius:8px; border:2px solid #e0e0e0;">
                                 {% for curso in cursos %}
-                                <option value="{{ curso.pk }}" {% if curso.pk == disc.curso_fk.pk %}selected{% endif %}>
-                                    {{ curso.nome_curso }}
+                                <option value="{{ curso.pk }}" {% if curso.pk == disc.curso_fk.pk %}selected{% elif not curso.ativo %}disabled{% endif %}>
+                                    {{ curso.nome_curso }}{% if not curso.ativo %} — curso inativo{% endif %}
                                 </option>
                                 {% endfor %}
                             </select>

@@ -181,8 +181,8 @@
                             <select name="curso_fk" class="form-select" required style="border-radius:8px; border:2px solid #e0e0e0;">
                                 <option value="">Selecione um curso</option>
                                 {% for curso in cursos %}
-                                <option value="{{ curso.pk }}" {% if curso.diretor_ativo %}disabled{% endif %}>
-                                    {{ curso.nome_curso }}{% if curso.diretor_ativo %} — já tem diretor ({{ curso.diretor_ativo.nome_completo }}){% endif %}
+                                <option value="{{ curso.pk }}" {% if curso.diretor_ativo or not curso.ativo %}disabled{% endif %}>
+                                    {{ curso.nome_curso }}{% if not curso.ativo %} — curso inativo{% elif curso.diretor_ativo %} — já tem diretor ({{ curso.diretor_ativo.nome_completo }}){% endif %}
                                 </option>
                                 {% endfor %}
                             </select>
@@ -258,8 +258,8 @@
                                 <option value="">Selecione um curso</option>
                                 {% for curso in cursos %}
                                 <option value="{{ curso.pk }}" {% if d.curso_fk and d.curso_fk.pk == curso.pk %}selected{% endif %}
-                                        {% if curso.diretor_ativo and curso.diretor_ativo.pk != d.pk %}disabled{% endif %}>
-                                    {{ curso.nome_curso }}{% if curso.diretor_ativo and curso.diretor_ativo.pk != d.pk %} — já tem diretor ({{ curso.diretor_ativo.nome_completo }}){% endif %}
+                                        {% if curso.diretor_ativo and curso.diretor_ativo.pk != d.pk %}disabled{% elif not curso.ativo and d.curso_fk_id != curso.pk %}disabled{% endif %}>
+                                    {{ curso.nome_curso }}{% if not curso.ativo %} — curso inativo{% elif curso.diretor_ativo and curso.diretor_ativo.pk != d.pk %} — já tem diretor ({{ curso.diretor_ativo.nome_completo }}){% endif %}
                                 </option>
                                 {% endfor %}
                             </select>
